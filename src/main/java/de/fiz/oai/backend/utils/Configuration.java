@@ -23,6 +23,10 @@ public class Configuration {
 
     private boolean applicationConfigured = false;
 
+    private Configuration() {
+        loadConfiguration();
+    }
+
     public static synchronized Configuration getInstance() {
         if (instance == null) {
             instance = new Configuration();

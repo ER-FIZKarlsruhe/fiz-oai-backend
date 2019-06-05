@@ -31,14 +31,11 @@ public class ClusterManager {
         Configuration config = Configuration.getInstance();
         keyspace = config.getProperty("cassandra.keyspace");
         String cassandraNodes = config.getProperty("cassandra.nodes");
-        Collection<InetSocketAddress> addresses = parseCassandraHostConfig(cassandraNodes);
+        Collection<InetSocketAddress> addresses = parseCassandraHostConfig(cassandraNodes, config);
 
         String username = config.getProperty("cassandra.username");
         String password = config.getProperty("cassandra.password");
 
-        // first attempt here was to use
-        // cluster = Cluster.builder().addContactPointsWithPorts(addresses).build();
-        // doesn't work as the port declaration is ignored
         Builder builder = Cluster.builder();
         builder.withSocketOptions(new SocketOptions()
                 .setReadTimeoutMillis(60000));
@@ -89,7 +86,7 @@ public class ClusterManager {
         return cluster;
     }
 
-    private Collection<InetSocketAddress> parseCassandraHostConfig(String cassandraConfigStr) {
+    private Collection<InetSocketAddress> parseCassandraHostConfig(String cassandraConfigStr, Configuration config) {
         // TODO: need to support IPv6 addresses here at some point
         Collection<InetSocketAddress> result = new HashSet<>();
         String[] splits = cassandraConfigStr.split(",");
