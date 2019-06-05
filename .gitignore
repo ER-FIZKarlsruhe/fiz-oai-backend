@@ -11,7 +11,8 @@ lib/
 .project
 .link_to_grails_plugins
 .settings
-target
+target/classes
+target/generated-sources
 target-eclipse
 .classpath
 .project
