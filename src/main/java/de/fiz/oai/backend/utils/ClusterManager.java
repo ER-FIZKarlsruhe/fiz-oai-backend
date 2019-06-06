@@ -4,6 +4,7 @@ import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashSet;
 
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import org.apache.commons.lang3.StringUtils;
 
 import com.datastax.driver.core.Cluster;
@@ -23,6 +24,7 @@ public class ClusterManager {
 
     private final Cluster cluster;
     private final String keyspace;
+    private final String replicationFactor;
 
     private Session[] sessions = null;
     private int rrSessionCounter = 0;
@@ -30,6 +32,7 @@ public class ClusterManager {
     private ClusterManager() {
         Configuration config = Configuration.getInstance();
         keyspace = config.getProperty("cassandra.keyspace");
+        replicationFactor = config.getProperty("cassandra.replication.factor");
         String cassandraNodes = config.getProperty("cassandra.nodes");
         Collection<InetSocketAddress> addresses = parseCassandraHostConfig(cassandraNodes, config);
 
@@ -49,7 +52,7 @@ public class ClusterManager {
         cluster = builder.build();
         String cassandraSessionsStr = config.getProperty("cassandra.sessions");
         int cassandraSessions = DEFAULT_CASSANDRA_SESSIONS;
-        if (cassandraSessionsStr != null) {
+        if (StringUtils.isNotBlank(cassandraSessionsStr)) {
             try {
                 cassandraSessions = Integer.parseInt(cassandraSessionsStr);
             } catch (NumberFormatException e) {
@@ -66,7 +69,7 @@ public class ClusterManager {
         return instance;
     }
 
-    public Session getCassandraSession() {
+    public Session getCassandraSession() throws Exception {
         int currentSession;
         synchronized (this) {
             currentSession = rrSessionCounter++;
@@ -76,10 +79,30 @@ public class ClusterManager {
         }
         Session session = sessions[currentSession];
         if (session == null || session.isClosed()) {
+            createKeyspace();
             session = cluster.connect(keyspace);
+
             sessions[currentSession] = session;
         }
         return session;
+    }
+
+    private void createKeyspace() throws Exception {
+        if (StringUtils.isBlank(replicationFactor)) {
+            throw new Exception("Cannot create keyspace " + keyspace + " because the property cassandra.replication.factor is not set.");
+        }
+
+        Session session = cluster.connect();
+
+        final StringBuilder createStmt = new StringBuilder();
+        createStmt.append("CREATE KEYSPACE IF NOT EXISTS ");
+        createStmt.append(keyspace);
+        createStmt.append(" WITH REPLICATION = ");
+        createStmt.append(replicationFactor);
+
+        session.execute(createStmt.toString());
+        session.close();
+        session = null;
     }
 
     public Cluster getCluster() {
