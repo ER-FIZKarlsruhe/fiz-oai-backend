@@ -13,7 +13,7 @@ public interface DAOItem {
      *            the identifier
      * @return the item
      */
-    Item read(String identifier);
+    Item read(String identifier) throws Exception;
 
     /**
      * Create a new Item.

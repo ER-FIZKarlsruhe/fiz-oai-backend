@@ -1,18 +1,20 @@
 package de.fiz.oai.backend.models;
 
+import java.util.UUID;
+
 public class Item {
 
-    private String uuid;
+    private UUID uuid;
     private String identifier;
     private Boolean deleteFlag;
     private String content;
 
 
-    public String getUuid() {
+    public UUID getUuid() {
         return uuid;
     }
 
-    public void setUuid(String uuid) {
+    public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }
 

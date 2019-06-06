@@ -3,6 +3,8 @@ package de.fiz.oai.backend.utils;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import de.fiz.oai.backend.dao.DAOItem;
+import de.fiz.oai.backend.dao.impl.CassandraDAOItem;
 import org.apache.commons.lang3.StringUtils;
 
 public class CassandraUtils {
@@ -30,6 +32,13 @@ public class CassandraUtils {
         createStmt.append(replicationFactor);
 
         session.execute(createStmt.toString());
+
+        // Create tables
+        session.execute("USE " + keyspace);
+        session.execute("CREATE TABLE oai_item (uuid timeuuid, identifier text, deletedflag boolean, content text, PRIMARY KEY (uuid));");
+        session.execute("CREATE INDEX IF NOT EXISTS oai_item_identifier_idx ON oai_item (identifier)");
     }
+
+
 
 }

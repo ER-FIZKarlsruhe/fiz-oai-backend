@@ -29,7 +29,7 @@ public class ClusterManager {
     private Session[] sessions = null;
     private int rrSessionCounter = 0;
 
-    private ClusterManager() {
+    private ClusterManager() throws Exception {
         Configuration config = Configuration.getInstance();
         keyspace = config.getProperty("cassandra.keyspace");
         replicationFactor = config.getProperty("cassandra.replication.factor");
@@ -60,16 +60,21 @@ public class ClusterManager {
         }
         numberOfCassandraSessions = cassandraSessions;
         sessions = new Session[numberOfCassandraSessions];
+
+        // Check and create keyspace and tables if not exists
+        Session session = cluster.connect();
+        CassandraUtils.createKeyspace(session, replicationFactor, keyspace);
+        session.close();
     }
 
-    public static ClusterManager getInstance() {
+    public static ClusterManager getInstance() throws Exception {
         if (instance == null) {
             instance = new ClusterManager();
         }
         return instance;
     }
 
-    public Session getCassandraSession() throws Exception {
+    public Session getCassandraSession() {
         int currentSession;
         synchronized (this) {
             currentSession = rrSessionCounter++;
@@ -79,11 +84,7 @@ public class ClusterManager {
         }
         Session session = sessions[currentSession];
         if (session == null || session.isClosed()) {
-            session = cluster.connect();
-            CassandraUtils.createKeyspace(session, replicationFactor, keyspace);
-            session.close();
             session = cluster.connect(keyspace);
-
             sessions[currentSession] = session;
         }
         return session;
