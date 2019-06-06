@@ -79,30 +79,14 @@ public class ClusterManager {
         }
         Session session = sessions[currentSession];
         if (session == null || session.isClosed()) {
-            createKeyspace();
+            session = cluster.connect();
+            CassandraUtils.createKeyspace(session, replicationFactor, keyspace);
+            session.close();
             session = cluster.connect(keyspace);
 
             sessions[currentSession] = session;
         }
         return session;
-    }
-
-    private void createKeyspace() throws Exception {
-        if (StringUtils.isBlank(replicationFactor)) {
-            throw new Exception("Cannot create keyspace " + keyspace + " because the property cassandra.replication.factor is not set.");
-        }
-
-        Session session = cluster.connect();
-
-        final StringBuilder createStmt = new StringBuilder();
-        createStmt.append("CREATE KEYSPACE IF NOT EXISTS ");
-        createStmt.append(keyspace);
-        createStmt.append(" WITH REPLICATION = ");
-        createStmt.append(replicationFactor);
-
-        session.execute(createStmt.toString());
-        session.close();
-        session = null;
     }
 
     public Cluster getCluster() {
