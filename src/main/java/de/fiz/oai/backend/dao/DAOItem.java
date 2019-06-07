@@ -22,7 +22,7 @@ public interface DAOItem {
      *            the item
      * @return the item created (in case uuid are processed in the method)
      */
-    Item create(Item item);
+    Item create(Item item) throws Exception;
 
     /**
      * Search for Items.
@@ -45,5 +45,5 @@ public interface DAOItem {
      * @param identifier
      *            the identifier
      */
-    void delete(String identifier);
+    void delete(String identifier) throws Exception;
 }
