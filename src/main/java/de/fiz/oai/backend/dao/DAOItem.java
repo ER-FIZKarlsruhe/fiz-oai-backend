@@ -7,7 +7,7 @@ import java.util.List;
 public interface DAOItem {
 
     /**
-     * Create a new Item.
+     * Read an Item.
      *
      * @param identifier
      *            the identifier
