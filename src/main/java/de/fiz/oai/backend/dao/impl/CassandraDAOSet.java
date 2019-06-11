@@ -27,15 +27,21 @@ public class CassandraDAOSet implements DAOSet {
         ResultSet rs = session.execute(query);
         Row resultRow = rs.one();
         if (resultRow != null) {
-            final Set set = new Set();
-            set.setIdentifierSelector(resultRow.getString(SET_IDENTIFIERSELECTOR));
-            set.setName(resultRow.getString(SET_NAME));
-            set.setSearchUrl(resultRow.getString(SET_SEARCHURL));
+            final Set set = populateSet(resultRow);
 
             return set;
         }
         return null;
     }
+
+    private Set populateSet(Row resultRow) {
+        final Set set = new Set();
+        set.setIdentifierSelector(resultRow.getString(SET_IDENTIFIERSELECTOR));
+        set.setName(resultRow.getString(SET_NAME));
+        set.setSearchUrl(resultRow.getString(SET_SEARCHURL));
+        return set;
+    }
+
     public List<Set> readAll() throws Exception {
         ClusterManager manager = ClusterManager.getInstance();
         Session session = manager.getCassandraSession();
@@ -45,10 +51,7 @@ public class CassandraDAOSet implements DAOSet {
         String query = "SELECT * FROM oai_set";
         ResultSet rs = session.execute(query);
         for (final Row row : rs) {
-            final Set set = new Set();
-            set.setIdentifierSelector(row.getString(SET_IDENTIFIERSELECTOR));
-            set.setName(row.getString(SET_NAME));
-            set.setSearchUrl(row.getString(SET_SEARCHURL));
+            final Set set = populateSet(row);
 
             allSets.add(set);
         }

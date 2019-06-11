@@ -25,15 +25,20 @@ public class CassandraDAOItem implements DAOItem {
         ResultSet rs = session.execute(query);
         Row resultRow = rs.one();
         if (resultRow != null) {
-            final Item item = new Item();
-            item.setContent(resultRow.getString(ITEM_CONTENT));
-            item.setDeleteFlag(resultRow.getBool(ITEM_DELETEDFLAG));
-            item.setIdentifier(resultRow.getString(ITEM_IDENTIFIER));
-            item.setUuid(resultRow.getUUID(ITEM_UUID));
+            final Item item = populateItem(resultRow);
 
             return item;
         }
         return null;
+    }
+
+    private Item populateItem(Row resultRow) {
+        final Item item = new Item();
+        item.setContent(resultRow.getString(ITEM_CONTENT));
+        item.setDeleteFlag(resultRow.getBool(ITEM_DELETEDFLAG));
+        item.setIdentifier(resultRow.getString(ITEM_IDENTIFIER));
+        item.setUuid(resultRow.getUUID(ITEM_UUID));
+        return item;
     }
 
     public Item create(Item item) throws Exception {
