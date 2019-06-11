@@ -19,12 +19,22 @@ public class CassandraDAOSet implements DAOSet {
     public static final String SET_SEARCHURL = "searchurl";
     public static final String SET_IDENTIFIERSELECTOR = "identifierselector";
 
+    public static final String TABLENAME_SET = "oai_set";
+
     public Set read(String name) throws Exception {
         ClusterManager manager = ClusterManager.getInstance();
         Session session = manager.getCassandraSession();
 
-        String query = "SELECT * FROM oai_set WHERE name='" + name + "'";
-        ResultSet rs = session.execute(query);
+        final StringBuilder selectStmt = new StringBuilder();
+        selectStmt.append("SELECT * FROM ");
+        selectStmt.append(TABLENAME_SET);
+        selectStmt.append(" WHERE name=?");
+
+        PreparedStatement prepared = session.prepare(selectStmt.toString());
+
+        BoundStatement bound = prepared.bind(name);
+
+        ResultSet rs = session.execute(bound);
         Row resultRow = rs.one();
         if (resultRow != null) {
             final Set set = populateSet(resultRow);
@@ -48,7 +58,7 @@ public class CassandraDAOSet implements DAOSet {
 
         final List<Set> allSets = new ArrayList<Set>();
 
-        String query = "SELECT * FROM oai_set";
+        String query = "SELECT * FROM " + TABLENAME_SET;
         ResultSet rs = session.execute(query);
         for (final Row row : rs) {
             final Set set = populateSet(row);
@@ -68,7 +78,9 @@ public class CassandraDAOSet implements DAOSet {
         }
 
         StringBuilder insertStmt = new StringBuilder();
-        insertStmt.append("INSERT INTO oai_set (");
+        insertStmt.append("INSERT INTO ");
+        insertStmt.append(TABLENAME_SET);
+        insertStmt.append(" (");
         insertStmt.append(SET_NAME);
         insertStmt.append(", ");
         insertStmt.append(SET_SEARCHURL);
@@ -94,7 +106,9 @@ public class CassandraDAOSet implements DAOSet {
         Session session = manager.getCassandraSession();
 
         StringBuilder deleteStmt = new StringBuilder();
-        deleteStmt.append("DELETE FROM oai_set WHERE ");
+        deleteStmt.append("DELETE FROM ");
+        deleteStmt.append(TABLENAME_SET);
+        deleteStmt.append(" WHERE ");
         deleteStmt.append(SET_NAME);
         deleteStmt.append("=?");
 

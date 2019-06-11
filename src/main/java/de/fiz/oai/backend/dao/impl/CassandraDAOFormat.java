@@ -19,12 +19,22 @@ public class CassandraDAOFormat implements DAOFormat {
     public static final String FORMAT_CROSSWALKSTYLESHEET = "crosswalkstylesheet";
     public static final String FORMAT_IDENTIFIERXPATH = "identifierxpath";
 
+    public static final String TABLENAME_FORMAT = "oai_format";
+
     public Format read(String metadataPrefix) throws Exception {
         ClusterManager manager = ClusterManager.getInstance();
         Session session = manager.getCassandraSession();
 
-        String query = "SELECT * FROM oai_format WHERE metadataprefix='" + metadataPrefix + "'";
-        ResultSet rs = session.execute(query);
+        final StringBuilder selectStmt = new StringBuilder();
+        selectStmt.append("SELECT * FROM ");
+        selectStmt.append(TABLENAME_FORMAT);
+        selectStmt.append(" WHERE metadataprefix=?");
+
+        PreparedStatement prepared = session.prepare(selectStmt.toString());
+
+        BoundStatement bound = prepared.bind(metadataPrefix);
+
+        ResultSet rs = session.execute(bound);
         Row resultRow = rs.one();
         if (resultRow != null) {
             final Format format = populateFormat(resultRow);
@@ -39,7 +49,7 @@ public class CassandraDAOFormat implements DAOFormat {
 
         final List<Format> allFormats = new ArrayList<Format>();
 
-        String query = "SELECT * FROM oai_format";
+        String query = "SELECT * FROM " + TABLENAME_FORMAT;
         ResultSet rs = session.execute(query);
         for (final Row row : rs) {
             final Format format = populateFormat(row);
@@ -69,7 +79,9 @@ public class CassandraDAOFormat implements DAOFormat {
         }
 
         StringBuilder insertStmt = new StringBuilder();
-        insertStmt.append("INSERT INTO oai_format (");
+        insertStmt.append("INSERT INTO ");
+        insertStmt.append(TABLENAME_FORMAT);
+        insertStmt.append(" (");
         insertStmt.append(FORMAT_CROSSWALKSTYLESHEET);
         insertStmt.append(", ");
         insertStmt.append(FORMAT_IDENTIFIERXPATH);
@@ -99,7 +111,9 @@ public class CassandraDAOFormat implements DAOFormat {
         Session session = manager.getCassandraSession();
 
         StringBuilder deleteStmt = new StringBuilder();
-        deleteStmt.append("DELETE FROM oai_format WHERE ");
+        deleteStmt.append("DELETE FROM ");
+        deleteStmt.append(TABLENAME_FORMAT);
+        deleteStmt.append(" WHERE ");
         deleteStmt.append(FORMAT_METADATAPREFIX);
         deleteStmt.append("=?");
 
