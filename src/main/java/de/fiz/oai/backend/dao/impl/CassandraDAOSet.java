@@ -10,6 +10,7 @@ import de.fiz.oai.backend.utils.ClusterManager;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CassandraDAOSet implements DAOSet {
@@ -39,18 +40,20 @@ public class CassandraDAOSet implements DAOSet {
         ClusterManager manager = ClusterManager.getInstance();
         Session session = manager.getCassandraSession();
 
+        final List<Set> allSets = new ArrayList<Set>();
+
         String query = "SELECT * FROM oai_set";
         ResultSet rs = session.execute(query);
-        Row resultRow = rs.one();
-        if (resultRow != null) {
+        for (final Row row : rs) {
             final Set set = new Set();
-            set.setIdentifierSelector(resultRow.getString(SET_IDENTIFIERSELECTOR));
-            set.setName(resultRow.getString(SET_NAME));
-            set.setSearchUrl(resultRow.getString(SET_SEARCHURL));
+            set.setIdentifierSelector(row.getString(SET_IDENTIFIERSELECTOR));
+            set.setName(row.getString(SET_NAME));
+            set.setSearchUrl(row.getString(SET_SEARCHURL));
 
-            return set;
+            allSets.add(set);
         }
-        return null;
+
+        return allSets;
     }
 
     public Set create(Set set) throws Exception {
@@ -78,25 +81,23 @@ public class CassandraDAOSet implements DAOSet {
         return set;
     }
 
-    public void delete(String identifier) throws Exception {
+    public void delete(String name) throws Exception {
 
-        if (StringUtils.isBlank(identifier)) {
-            throw new IOException("Item's identifier to delete cannot be empty!");
+        if (StringUtils.isBlank(name)) {
+            throw new IOException("Set's name to delete cannot be empty!");
         }
 
         ClusterManager manager = ClusterManager.getInstance();
         Session session = manager.getCassandraSession();
 
-        StringBuilder updateStmt = new StringBuilder();
-        updateStmt.append("UPDATE oai_item SET ");
-        updateStmt.append(ITEM_DELETEDFLAG);
-        updateStmt.append("=? WHERE ");
-        updateStmt.append(ITEM_IDENTIFIER);
-        updateStmt.append("=?");
+        StringBuilder deleteStmt = new StringBuilder();
+        deleteStmt.append("DELETE FROM oai_set WHERE ");
+        deleteStmt.append(SET_NAME);
+        deleteStmt.append("=?");
 
-        PreparedStatement prepared = session.prepare(updateStmt.toString());
+        PreparedStatement prepared = session.prepare(deleteStmt.toString());
 
-        BoundStatement bound = prepared.bind(true, identifier);
+        BoundStatement bound = prepared.bind(name);
         session.execute(bound);
     }
 }
