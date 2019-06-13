@@ -5,11 +5,13 @@ import de.fiz.oai.backend.dao.impl.CassandraDAOItem;
 import de.fiz.oai.backend.models.Item;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
-@Path("/items")
+@Path("/item")
 public class ItemController extends AbstractController{
 
     @Context
@@ -20,7 +22,8 @@ public class ItemController extends AbstractController{
     @GET
     @Path("/{identifier}")
     @Produces(MediaType.APPLICATION_XML)
-    public String getItem(@PathParam("identifier") String identifier)
+    public String getItem(@PathParam("identifier") String identifier, @Context HttpServletRequest request,
+                          @Context HttpServletResponse response)
             throws Exception {
         checkApplicationReady();
 
@@ -35,7 +38,8 @@ public class ItemController extends AbstractController{
 
     @DELETE
     @Path("/{identifier}")
-    public void deleteItem(@PathParam("identifier") String identifier)
+    public void deleteItem(@PathParam("identifier") String identifier, @Context HttpServletRequest request,
+                           @Context HttpServletResponse response)
             throws Exception {
         checkApplicationReady();
 
@@ -44,12 +48,12 @@ public class ItemController extends AbstractController{
 
 
     @POST
-    @Consumes("multipart/form-data")
-    public void createItem(@Multipart(value = "content", type = "text/xml") String content) {
+    @Consumes(MediaType.TEXT_XML)
+    public void createItem(String content, @Context HttpServletRequest request,
+                           @Context HttpServletResponse response) {
         checkApplicationReady();
 
-        final Item item;
-
+        System.out.println(content);
     }
 
 }
