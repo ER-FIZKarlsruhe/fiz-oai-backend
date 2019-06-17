@@ -10,6 +10,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 @Path("/item")
 public class ItemController extends AbstractController{
@@ -21,8 +23,8 @@ public class ItemController extends AbstractController{
 
     @GET
     @Path("/{identifier}")
-    @Produces(MediaType.APPLICATION_XML)
-    public String getItem(@PathParam("identifier") String identifier, @Context HttpServletRequest request,
+    @Produces(MediaType.APPLICATION_JSON)
+    public Item getItem(@PathParam("identifier") String identifier, @Context HttpServletRequest request,
                           @Context HttpServletResponse response)
             throws Exception {
         checkApplicationReady();
@@ -30,7 +32,7 @@ public class ItemController extends AbstractController{
         final Item item = daoItem.read(identifier);
 
         if (item != null) {
-            return item.getContent();
+            return item;
         }
 
         return null;
