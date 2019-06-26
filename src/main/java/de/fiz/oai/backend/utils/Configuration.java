@@ -46,12 +46,23 @@ public class Configuration {
     }
 
     protected String getTomcatConfigFolder() {
+        String confFolderPath = null;
+        
+        //Is a dedicated oai-backend conf folder defined?
+        String oaiBackendConfRoot = System.getProperty("oai.backend.conf.folder");
+
+        //Catalina conf is fallback
         String tomcatRoot = System.getProperty("catalina.base");
-        if (tomcatRoot == null || tomcatRoot.length() == 0) {
-            return null;
+        
+        if (oaiBackendConfRoot != null && !oaiBackendConfRoot.isEmpty()) {
+          confFolderPath = new File(oaiBackendConfRoot).getAbsolutePath();
+        } else if (tomcatRoot != null || !tomcatRoot.isEmpty()) {
+          confFolderPath = new File(tomcatRoot, "conf").getAbsolutePath();
         }
-        File folder = new File(tomcatRoot, "conf");
-        return folder.getAbsolutePath();
+
+        LOGGER.info("Use confFolderPath: " + confFolderPath);
+        
+        return confFolderPath;
     }
 
     protected boolean readConfigFromFile(String folder, String filename) {
