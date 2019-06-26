@@ -3,7 +3,6 @@ package de.fiz.oai.backend.dao.impl;
 import com.datastax.driver.core.*;
 import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.models.Format;
-import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.utils.ClusterManager;
 import org.apache.commons.lang3.StringUtils;
 

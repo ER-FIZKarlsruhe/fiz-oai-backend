@@ -42,7 +42,7 @@ public class CassandraUtils {
         session.execute(useStmt.toString());
 
         final StringBuilder createTableItemStmt = new StringBuilder();
-        createTableItemStmt.append("CREATE TABLE ");
+        createTableItemStmt.append("CREATE TABLE IF NOT EXISTS ");
         createTableItemStmt.append(CassandraDAOItem.TABLENAME_ITEM);
         createTableItemStmt.append(" (");
         createTableItemStmt.append(CassandraDAOItem.ITEM_UUID);
@@ -66,7 +66,7 @@ public class CassandraUtils {
         session.execute(createIndexItemStmt.toString());
 
         final StringBuilder createTableSetStmt = new StringBuilder();
-        createTableSetStmt.append("CREATE TABLE ");
+        createTableSetStmt.append("CREATE TABLE IF NOT EXISTS ");
         createTableSetStmt.append(CassandraDAOSet.TABLENAME_SET);
         createTableSetStmt.append(" (");
         createTableSetStmt.append(CassandraDAOSet.SET_NAME);
@@ -80,7 +80,7 @@ public class CassandraUtils {
         session.execute(createTableSetStmt.toString());
 
         final StringBuilder createTableFormatStmt = new StringBuilder();
-        createTableFormatStmt.append("CREATE TABLE ");
+        createTableFormatStmt.append("CREATE TABLE IF NOT EXISTS ");
         createTableFormatStmt.append(CassandraDAOFormat.TABLENAME_FORMAT);
         createTableFormatStmt.append(" (");
         createTableFormatStmt.append(CassandraDAOFormat.FORMAT_METADATAPREFIX);

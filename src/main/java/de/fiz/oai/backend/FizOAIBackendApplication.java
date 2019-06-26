@@ -1,11 +1,11 @@
 package de.fiz.oai.backend;
 
-import javax.servlet.GenericServlet;
-import java.io.IOException;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import java.util.HashSet;
+import java.util.Set;
+import javax.ws.rs.core.Application;
 
+import de.fiz.oai.backend.controller.ItemController;
+import de.fiz.oai.backend.controller.VersionController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,19 +16,17 @@ import de.fiz.oai.backend.utils.CassandraUtils;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.Cluster;
 
-public class Application extends GenericServlet {
+public class FizOAIBackendApplication extends Application {
 
     private static final long serialVersionUID = -1156196714908290948L;
 
-    private Logger LOGGER = LoggerFactory.getLogger(Application.class);
+    private Logger LOGGER = LoggerFactory.getLogger(FizOAIBackendApplication.class);
 
     private boolean applicationReady = false;
 
-    private static Application instance;
+    private static FizOAIBackendApplication instance;
 
-    @Override
-    public void init() throws ServletException {
-        super.init();
+    public FizOAIBackendApplication() {
         instance = this;
         LOGGER.info("FIZ OAI Backend starting");
         Configuration config = Configuration.getInstance();
@@ -48,7 +46,7 @@ public class Application extends GenericServlet {
         }
     }
 
-    public static Application getInstance() {
+    public static FizOAIBackendApplication getInstance() {
         return instance;
     }
 
@@ -57,21 +55,12 @@ public class Application extends GenericServlet {
     }
 
     @Override
-    public void service(ServletRequest arg0, ServletResponse arg1) throws ServletException, IOException {
+    public Set<Class<?>> getClasses() {
+        Set<Class<?>> classes = new HashSet<Class<?>>();
+        classes.add(VersionController.class);
+        classes.add(ItemController.class);
+        return classes;
     }
 
-    @Override
-    public String getServletInfo() {
-        return "FIZ OAI Backend Application";
-    }
 
-    @Override
-    public void destroy() {
-        super.destroy();
-        try {
-            ClusterManager.getInstance().getCluster().close();
-        }
-        catch (Exception e) {
-        }
-    }
 }

@@ -96,7 +96,7 @@ public class ClusterManager {
 
     private Collection<InetSocketAddress> parseCassandraHostConfig(String cassandraConfigStr, Configuration config) {
         // TODO: need to support IPv6 addresses here at some point
-        Collection<InetSocketAddress> result = new HashSet<>();
+        Collection<InetSocketAddress> result = new HashSet<InetSocketAddress>();
         String[] splits = cassandraConfigStr.split(",");
         for (String split : splits) {
             String[] server = split.split(":");
