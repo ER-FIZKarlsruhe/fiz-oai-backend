@@ -9,7 +9,7 @@ public abstract class AbstractController {
 
     protected void checkApplicationReady() {
         FizOAIBackendApplication application = FizOAIBackendApplication.getInstance();
-        if (!application.isApplicationReady()) {
+        if (application == null || !application.isApplicationReady()) {
             throw new WebApplicationException(Response.Status.SERVICE_UNAVAILABLE);
         }
     }

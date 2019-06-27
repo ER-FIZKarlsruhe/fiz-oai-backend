@@ -1,45 +1,57 @@
 package de.fiz.oai.backend.models;
 
-import java.util.UUID;
+import java.util.List;
 
 public class Item {
 
-    private UUID uuid;
-    private String identifier;
-    private Boolean deleteFlag;
-    private String content;
+  private String identifier;
 
+  private String datestamp;
+  
+  private Boolean deleteFlag;
+  
+  private List<String> sets;
+  
+  private String ingestFormat;
 
-    public UUID getUuid() {
-        return uuid;
-    }
+  public String getIdentifier() {
+    return identifier;
+  }
 
-    public void setUuid(UUID uuid) {
-        this.uuid = uuid;
-    }
+  public void setIdentifier(String identifier) {
+    this.identifier = identifier;
+  }
 
-    public String getIdentifier() {
-        return identifier;
-    }
+  public String getDatestamp() {
+    return datestamp;
+  }
 
-    public void setIdentifier(String identifier) {
-        this.identifier = identifier;
-    }
+  public void setDatestamp(String datestamp) {
+    this.datestamp = datestamp;
+  }
 
-    public Boolean getDeleteFlag() {
-        return deleteFlag;
-    }
+  public Boolean isDeleteFlag() {
+    return deleteFlag;
+  }
 
-    public void setDeleteFlag(Boolean deleteFlag) {
-        this.deleteFlag = deleteFlag;
-    }
+  public void setDeleteFlag(Boolean deleteFlag) {
+    this.deleteFlag = deleteFlag;
+  }
 
-    public String getContent() {
-        return content;
-    }
+  public List<String> getSets() {
+    return sets;
+  }
 
-    public void setContent(String content) {
-        this.content = content;
-    }
+  public void setSets(List<String> sets) {
+    this.sets = sets;
+  }
 
+  public String getIngestFormat() {
+    return ingestFormat;
+  }
+
+  public void setIngestFormat(String ingestFormat) {
+    this.ingestFormat = ingestFormat;
+  }
+  
 }

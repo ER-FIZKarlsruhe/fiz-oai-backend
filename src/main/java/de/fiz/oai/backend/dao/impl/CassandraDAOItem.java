@@ -1,21 +1,27 @@
 package de.fiz.oai.backend.dao.impl;
 
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.utils.UUIDs;
-import de.fiz.oai.backend.dao.DAOItem;
-import de.fiz.oai.backend.models.Item;
-import de.fiz.oai.backend.utils.ClusterManager;
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
+
+import de.fiz.oai.backend.dao.DAOItem;
+import de.fiz.oai.backend.models.Item;
+import de.fiz.oai.backend.utils.ClusterManager;
+
 public class CassandraDAOItem implements DAOItem {
 
-    public static final String ITEM_CONTENT = "content";
-    public static final String ITEM_DELETEDFLAG = "deletedflag";
     public static final String ITEM_IDENTIFIER = "identifier";
-    public static final String ITEM_UUID = "uuid";
+    public static final String ITEM_DATESTAMP = "datestamp";
+    public static final String ITEM_DELETEFLAG = "deleteflag";
+    public static final String ITEM_SETS = "sets";
+    public static final String ITEM_INGESTFORMAT = "ingestFormat";
 
     public static final String TABLENAME_ITEM = "oai_item";
 
@@ -44,10 +50,14 @@ public class CassandraDAOItem implements DAOItem {
 
     private Item populateItem(Row resultRow) {
         final Item item = new Item();
-        item.setContent(resultRow.getString(ITEM_CONTENT));
-        item.setDeleteFlag(resultRow.getBool(ITEM_DELETEDFLAG));
         item.setIdentifier(resultRow.getString(ITEM_IDENTIFIER));
-        item.setUuid(resultRow.getUUID(ITEM_UUID));
+        item.setDatestamp(resultRow.getString(ITEM_DATESTAMP));
+        item.setDeleteFlag(resultRow.getBool(ITEM_DELETEFLAG));
+        item.setSets(resultRow.getList(ITEM_SETS, String.class));
+        item.setIngestFormat(resultRow.getString(ITEM_INGESTFORMAT));
+        
+        
+        
         return item;
     }
 
@@ -55,35 +65,33 @@ public class CassandraDAOItem implements DAOItem {
         ClusterManager manager = ClusterManager.getInstance();
         Session session = manager.getCassandraSession();
 
-        if (StringUtils.isBlank(item.getContent())) {
-            throw new IOException("Item's content cannot be empty!");
-        }
         if (StringUtils.isBlank(item.getIdentifier())) {
             throw new IOException("Item's identifier cannot be empty!");
         }
-        if (item.getDeleteFlag()==null) {
+ 
+        if (item.isDeleteFlag() == null) {
             item.setDeleteFlag(false);
         }
-        if (item.getUuid()==null || StringUtils.isBlank(item.getUuid().toString())) {
-            item.setUuid(UUIDs.timeBased());
-        }
+
 
         StringBuilder insertStmt = new StringBuilder();
         insertStmt.append("INSERT INTO ");
         insertStmt.append(TABLENAME_ITEM);
         insertStmt.append(" (");
-        insertStmt.append(ITEM_CONTENT);
-        insertStmt.append(", ");
-        insertStmt.append(ITEM_DELETEDFLAG);
-        insertStmt.append(", ");
         insertStmt.append(ITEM_IDENTIFIER);
         insertStmt.append(", ");
-        insertStmt.append(ITEM_UUID);
+        insertStmt.append(ITEM_DATESTAMP);
+        insertStmt.append(", ");
+        insertStmt.append(ITEM_DELETEFLAG);
+        insertStmt.append(", ");
+        insertStmt.append(ITEM_SETS);
+        insertStmt.append(", ");
+        insertStmt.append(ITEM_INGESTFORMAT);
         insertStmt.append(") VALUES (?, ?, ?, ?)");
 
         PreparedStatement prepared = session.prepare(insertStmt.toString());
 
-        BoundStatement bound = prepared.bind(item.getContent(), item.getDeleteFlag(), item.getIdentifier(), item.getUuid());
+        BoundStatement bound = prepared.bind(item.getIdentifier(), item.getDatestamp(), item.isDeleteFlag(), item.getSets(), item.getIngestFormat());
         session.execute(bound);
 
         return item;
@@ -106,7 +114,7 @@ public class CassandraDAOItem implements DAOItem {
         updateStmt.append("UPDATE ");
         updateStmt.append(TABLENAME_ITEM);
         updateStmt.append(" SET ");
-        updateStmt.append(ITEM_DELETEDFLAG);
+        updateStmt.append(ITEM_DELETEFLAG);
         updateStmt.append("=? WHERE ");
         updateStmt.append(ITEM_IDENTIFIER);
         updateStmt.append("=?");

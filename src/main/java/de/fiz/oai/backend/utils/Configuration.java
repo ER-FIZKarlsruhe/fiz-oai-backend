@@ -39,13 +39,13 @@ public class Configuration {
     }
 
     private void loadConfiguration() {
-        if (readConfigFromFile(getTomcatConfigFolder(), CONFIG_FILENAME)) {
+        if (readConfigFromFile(getConfigFolder(), CONFIG_FILENAME)) {
             printConfiguration();
             applicationConfigured = true;
         }
     }
 
-    protected String getTomcatConfigFolder() {
+    protected String getConfigFolder() {
         String confFolderPath = null;
         
         //Is a dedicated oai-backend conf folder defined?
@@ -56,7 +56,7 @@ public class Configuration {
         
         if (oaiBackendConfRoot != null && !oaiBackendConfRoot.isEmpty()) {
           confFolderPath = new File(oaiBackendConfRoot).getAbsolutePath();
-        } else if (tomcatRoot != null || !tomcatRoot.isEmpty()) {
+        } else if (tomcatRoot != null && !tomcatRoot.isEmpty()) {
           confFolderPath = new File(tomcatRoot, "conf").getAbsolutePath();
         }
 

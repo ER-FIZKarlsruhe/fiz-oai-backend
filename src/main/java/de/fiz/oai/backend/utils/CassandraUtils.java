@@ -45,15 +45,18 @@ public class CassandraUtils {
         createTableItemStmt.append("CREATE TABLE IF NOT EXISTS ");
         createTableItemStmt.append(CassandraDAOItem.TABLENAME_ITEM);
         createTableItemStmt.append(" (");
-        createTableItemStmt.append(CassandraDAOItem.ITEM_UUID);
-        createTableItemStmt.append(" timeuuid, ");
         createTableItemStmt.append(CassandraDAOItem.ITEM_IDENTIFIER);
         createTableItemStmt.append(" text, ");
-        createTableItemStmt.append(CassandraDAOItem.ITEM_DELETEDFLAG);
+        createTableItemStmt.append(CassandraDAOItem.ITEM_DATESTAMP);
+        createTableItemStmt.append(" text, ");
+        createTableItemStmt.append(CassandraDAOItem.ITEM_DELETEFLAG);
         createTableItemStmt.append(" boolean, ");
-        createTableItemStmt.append(CassandraDAOItem.ITEM_CONTENT);
+        createTableItemStmt.append(CassandraDAOItem.ITEM_SETS);
+        createTableItemStmt.append(" list, ");
+        createTableItemStmt.append(CassandraDAOItem.ITEM_INGESTFORMAT);
         createTableItemStmt.append(" text, PRIMARY KEY (");
-        createTableItemStmt.append(CassandraDAOItem.ITEM_UUID);
+        createTableItemStmt.append(CassandraDAOItem.ITEM_IDENTIFIER);
+        
         createTableItemStmt.append("));");
         session.execute(createTableItemStmt.toString());
 
