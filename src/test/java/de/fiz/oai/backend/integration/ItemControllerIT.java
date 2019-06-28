@@ -78,8 +78,6 @@ public class ItemControllerIT extends JerseyTest {
   
   @Test
   public void testGetItem() throws Exception {
-    LOGGER.info("testGetItem");
-
     Item item = new Item();
     item.setIdentifier("65465456");
     item.setDatestamp("1972-05-20T20:33:18.772Z");
@@ -89,24 +87,28 @@ public class ItemControllerIT extends JerseyTest {
     
     when(daoItem.read("65465456")).thenReturn(item);
     
-    Response response = target("/item/65465456").request().get();
+    Response response = target("/item/65465456").queryParam("format", "oai_dc").request().get();
     
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
     assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
  
     String content = response.readEntity(String.class);
-    LOGGER.info("item json: " + content);
     assertEquals("Content of response is: ", "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}", content);
   }
   
+  @Test
+  public void testGetItemMissingFormat() throws Exception {
+    
+    Response response = target("/item/65465456").request().get();
+    
+    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
   
   @Test
   public void testGetItemNotFound() throws Exception {
-    LOGGER.info("testGetItemNotFound");
-
     when(daoItem.read("123Fragerei")).thenReturn(null);
     
-    Response response = target("/item/123Fragerei").request().get();
+    Response response = target("/item/123Fragerei").queryParam("format", "oai_dc").request().get();
     
     assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -114,27 +116,48 @@ public class ItemControllerIT extends JerseyTest {
   
   @Test
   public void testSearchItems() throws Exception {
-    LOGGER.info("testSearchItems");
-    
     when(daoItem.search(any(), any(), any(), any(), any(), any()))
     .thenReturn(getTestItemList());
 
     Response response = target("/item").queryParam("offset", 0).queryParam("rows", 20).queryParam("set", "abc")
-    .queryParam("format", "oai_dc").queryParam("from", "").queryParam("until", "").queryParam("content", "").request()
+    .queryParam("format", "oai_dc").queryParam("from", "1970-01-01T00:00:01Z").queryParam("until", "2970-01-01T00:00:01Z").queryParam("content", "").request()
     .get();
     
-    String content = response.readEntity(String.class);
     
-    LOGGER.info("testSearchItems response: " + content);
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
     assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+  }
+  
+  @Test
+  public void testSearchItemsMissingFormatParameter() throws Exception {
+    Response response = target("/item").queryParam("offset", 0).queryParam("rows", 20).queryParam("set", "abc")
+    .queryParam("format", "").queryParam("from", "1970-01-01T00:00:01Z").queryParam("until", "2970-01-01T00:00:01Z").queryParam("content", "").request()
+    .get();
+    
+    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+  
+  @Test
+  public void testSearchItemsInvalidFromParameter() throws Exception {
+    Response response = target("/item").queryParam("offset", 0).queryParam("rows", 20).queryParam("set", "abc")
+    .queryParam("format", "oai_dc").queryParam("from", "ABGS").queryParam("until", "2970-01-01T00:00:01Z").queryParam("content", "").request()
+    .get();
+    
+    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+  
+  @Test
+  public void testSearchItemsInvalidUntilParameter() throws Exception {
+    Response response = target("/item").queryParam("offset", 0).queryParam("rows", 20).queryParam("set", "abc")
+    .queryParam("format", "oai_dc").queryParam("from", "1970-01-01T00:00:01Z").queryParam("until", "1970-01T00:00:01Z").queryParam("content", "").request()
+    .get();
+    
+    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   
   @Test
   public void testDeleteItem() throws Exception {
-    LOGGER.info("testDeleteItem");
-
     doNothing().when(daoItem).delete("65465456");
     
     Response response = target("/item/65465456").request().delete();
@@ -145,8 +168,6 @@ public class ItemControllerIT extends JerseyTest {
   
   @Test
   public void testDeleteItemEmptyIdentifier() throws Exception {
-    LOGGER.info("testDeleteItemEmptyIdentifier");
-
     doThrow(IOException.class).when(daoItem).delete(" ");
     
     Response response = target("/item/%20").request().delete();
@@ -156,8 +177,6 @@ public class ItemControllerIT extends JerseyTest {
   
   @Test
   public void testDeleteItemNotFound() throws Exception {
-    LOGGER.info("testDeleteItemNotFound");
-
     doThrow(NotFoundException.class).when(daoItem).delete("123Fragerei");
     
     Response response = target("/item/123Fragerei").request().delete();
@@ -168,8 +187,6 @@ public class ItemControllerIT extends JerseyTest {
   
   @Test
   public void testCreateItem() throws Exception {
-    LOGGER.info("testCreateItem");
-    
     Item item = new Item();
     item.setIdentifier("65465456");
     item.setDatestamp("1972-05-20T20:33:18.772Z");
@@ -192,8 +209,6 @@ public class ItemControllerIT extends JerseyTest {
     form.field("item", json, MediaType.APPLICATION_JSON_TYPE);
     FormDataBodyPart fdp = new FormDataBodyPart("content", xml, MediaType.TEXT_XML_TYPE);
     form.bodyPart(fdp);
-    
-    
 
     when(daoItem.create(any(Item.class))).thenReturn(item);
     
@@ -204,8 +219,6 @@ public class ItemControllerIT extends JerseyTest {
   
   @Test
   public void testCreateItemBadIdentifier() throws Exception {
-    LOGGER.info("testCreateItemBadIdentifier");
-    
     //The json use an identifier that is not in the xml!
     String json = "{\"identifier\":\"NotInXml\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
     
@@ -232,8 +245,6 @@ public class ItemControllerIT extends JerseyTest {
   
   @Test
   public void testUpdateItem() throws Exception {
-    LOGGER.info("testUpdateItem");
-    
     Item item = new Item();
     item.setIdentifier("65465456");
     item.setDatestamp("1972-05-20T20:33:18.772Z");
@@ -258,16 +269,40 @@ public class ItemControllerIT extends JerseyTest {
     form.bodyPart(fdp);
     
     when(daoItem.create(any(Item.class))).thenReturn(item);
+    when(daoItem.read(any())).thenReturn(item);
     
     Response response = target("/item/65465456").request().put(Entity.entity(form, form.getMediaType()));
-    LOGGER.error(response.getStatusInfo().getReasonPhrase());
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
   }
   
   @Test
-  public void testUpdateItemBadIdentifierInJson() throws Exception {
-    LOGGER.info("testUpdateItemBadIdentifier");
+  public void testUpdateItemIdentifierNotFound() throws Exception {
+    //The json use an identifier that is not in the xml!
+    String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
     
+    String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n" + 
+        "    <dc:title>testCreateItem</dc:title>\n" + 
+        "    <dc:date>2019-01-01T08:00:00Z</dc:date>\n" + 
+        "    <dc:type>text</dc:type>\n" + 
+        "    <dc:format>application/pdf</dc:format>\n" + 
+        "    <dc:identifier>65465456</dc:identifier>\n" + 
+        "    <dc:source>Some exmaple source</dc:source>\n" + 
+        "    <dc:publisher>FIZ Karlsruhe</dc:publisher>\n" + 
+        "  </oai_dc:dc>";
+    
+    FormDataMultiPart form = new FormDataMultiPart();
+    form.field("item", json, MediaType.APPLICATION_JSON_TYPE);
+    FormDataBodyPart fdp = new FormDataBodyPart("content", xml, MediaType.TEXT_XML_TYPE);
+    form.bodyPart(fdp);
+
+    when(daoItem.read(any())).thenReturn(null);//This will trigger the NotFound!
+    
+    Response response = target("/item/65465456").request().put(Entity.entity(form, form.getMediaType()));
+    assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+  
+  @Test
+  public void testUpdateItemBadIdentifierInJson() throws Exception {
     //The json use an identifier that is not in the xml!
     String json = "{\"identifier\":\"NotInXml\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
     
@@ -293,8 +328,6 @@ public class ItemControllerIT extends JerseyTest {
   
   @Test
   public void testUpdateItemBadIdentifierInXml() throws Exception {
-    LOGGER.info("testUpdateItemBadIdentifier");
-    
     //The json use an identifier that is not in the xml!
     String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
     
@@ -320,8 +353,6 @@ public class ItemControllerIT extends JerseyTest {
   
   @Test
   public void testUpdateItemBadIdentifierInPath() throws Exception {
-    LOGGER.info("testUpdateItemBadIdentifier");
-    
     //The json use an identifier that is not in the xml!
     String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
     

@@ -1,5 +1,6 @@
 package de.fiz.oai.backend.dao.impl;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -25,7 +26,7 @@ public class CassandraDAOItem implements DAOItem {
 
     public static final String TABLENAME_ITEM = "oai_item";
 
-    public Item read(String identifier) throws Exception {
+    public Item read(String identifier) throws IOException {
         ClusterManager manager = ClusterManager.getInstance();
         Session session = manager.getCassandraSession();
 
@@ -61,7 +62,7 @@ public class CassandraDAOItem implements DAOItem {
         return item;
     }
 
-    public Item create(Item item) throws Exception {
+    public Item create(Item item) throws IOException {
         ClusterManager manager = ClusterManager.getInstance();
         Session session = manager.getCassandraSession();
 
@@ -105,7 +106,7 @@ public class CassandraDAOItem implements DAOItem {
         return null;
     }
 
-    public void delete(String identifier) throws Exception {
+    public void delete(String identifier) throws IOException {
         ClusterManager manager = ClusterManager.getInstance();
         Session session = manager.getCassandraSession();
 

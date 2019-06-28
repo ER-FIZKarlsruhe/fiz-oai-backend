@@ -29,7 +29,7 @@ public class ClusterManager {
     private Session[] sessions = null;
     private int rrSessionCounter = 0;
 
-    private ClusterManager() throws Exception {
+    private ClusterManager() {
         Configuration config = Configuration.getInstance();
         keyspace = config.getProperty("cassandra.keyspace");
         replicationFactor = config.getProperty("cassandra.replication.factor");
@@ -67,7 +67,7 @@ public class ClusterManager {
         session.close();
     }
 
-    public static ClusterManager getInstance() throws Exception {
+    public static ClusterManager getInstance() {
         if (instance == null) {
             instance = new ClusterManager();
         }

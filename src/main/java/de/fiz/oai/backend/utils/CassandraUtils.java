@@ -22,9 +22,9 @@ public class CassandraUtils {
         return resultBuilder.toString();
     }
 
-    public static void createKeyspace(Session session, String replicationFactor, String keyspace) throws Exception {
+    public static void createKeyspace(Session session, String replicationFactor, String keyspace) {
         if (StringUtils.isBlank(replicationFactor)) {
-            throw new Exception("Cannot create keyspace " + keyspace + " because the property cassandra.replication.factor is not set.");
+            throw new RuntimeException("Cannot create keyspace " + keyspace + " because the property cassandra.replication.factor is not set.");
         }
 
         final StringBuilder createStmt = new StringBuilder();
