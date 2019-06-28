@@ -100,7 +100,8 @@ public class CassandraDAOItem implements DAOItem {
         return item;
     }
 
-    public List<Item> search(String sort, Integer offset, Integer rows, String query) {
+    //FIXME Move into a service class that has access to cassandra and elasticsearch
+    public List<Item> search(Integer offset, Integer rows, String set, String format,String from,String until) {
         return null;
     }
 

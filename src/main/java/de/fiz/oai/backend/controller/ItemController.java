@@ -2,6 +2,7 @@ package de.fiz.oai.backend.controller;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.servlet.ServletContext;
@@ -12,9 +13,11 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -51,12 +54,47 @@ public class ItemController extends AbstractController {
 
     final Item item = daoItem.read(identifier);
     LOGGER.info("getItem: " + item);
-    if (item != null) {
-      return item;
+    
+    if (item == null) {
+      throw new WebApplicationException(Status.NOT_FOUND);
+    }
+
+    return item;
+  }
+  
+  
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  public List<Item> searchItems(
+      @QueryParam("offset") Integer offset, 
+      @QueryParam("rows") Integer rows, 
+      @QueryParam("set") String set, 
+      @QueryParam("format") String format, 
+      @QueryParam("from ") String from , 
+      @QueryParam("until ") String until , 
+      @QueryParam("content ") String content , 
+      @Context HttpServletRequest request,
+      @Context HttpServletResponse response) throws Exception {
+
+    LOGGER.info("offset: " + offset);
+    LOGGER.info("rows: " + rows);
+    LOGGER.info("set: " + set);
+    LOGGER.info("format: " + format);
+    LOGGER.info("from: " + from);
+    LOGGER.info("until: " + until);
+    LOGGER.info("content: " + content);
+    
+    final List<Item> items = daoItem.search(offset, rows, set, format, from, until);
+    LOGGER.info("searchItems: " + items);
+    
+    if (items != null) {
+      return items;
     }
 
     return null;
   }
+  
+  
 
   @DELETE
   @Path("/{identifier}")
@@ -81,6 +119,11 @@ public class ItemController extends AbstractController {
       @Context HttpServletRequest request, @Context HttpServletResponse response) {
     LOGGER.info("createItem item: " + item.toString());
 
+    if (!content.contains(item.getIdentifier())) {
+      throw new WebApplicationException("Cannot find the identifier in the content!", Status.BAD_REQUEST);
+    }
+
+    
     Item newItem = null;
     
     //Overwrite datestamp!
@@ -96,7 +139,7 @@ public class ItemController extends AbstractController {
     try {
       newItem = daoItem.create(item);
       
-      //TODO create content
+      //TODO save content
       
     } catch (NotFoundException e) {
       throw new WebApplicationException(Status.NOT_FOUND);
@@ -108,6 +151,54 @@ public class ItemController extends AbstractController {
     LOGGER.info("createItem content: " + content);
     
     return newItem;
+  }
+  
+  @PUT
+  @Path("/{identifier}")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Item updateItem(@PathParam("identifier") String identifier, @FormDataParam("content") String content, @FormDataParam("item") Item item,
+      @Context HttpServletRequest request, @Context HttpServletResponse response) {
+    LOGGER.info("updateItem content: " + content);
+    LOGGER.info("updateItem item: " + item.toString());
+
+    if (!identifier.equals(item.getIdentifier())) {
+      throw new WebApplicationException("The identifier in the path and the item json does not match!", Status.BAD_REQUEST);
+    }
+    
+    if (!content.contains(identifier)) {
+      throw new WebApplicationException("Cannot find the identifier in the content!", Status.BAD_REQUEST);
+    }
+    
+    
+    Item updateItem = null;
+    
+    //Overwrite datestamp!
+    item.setDatestamp(format.format(new Date()));
+    
+    //Validate item
+    //TODO ingestFormat exists?
+    
+    //TODO given sets exists?
+    
+    //TODO IngestFormat: Exists?
+    //TODO Xsd Validate the content against the ingestFormat! 
+    
+    try {
+      updateItem = daoItem.create(item);
+      
+      //TODO save content
+      
+    } catch (NotFoundException e) {
+      throw new WebApplicationException(Status.NOT_FOUND);
+    } catch (Exception e) {
+      LOGGER.error("An unexpected exception occured", e);
+      throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+    }
+    
+    LOGGER.info("createItem content: " + content);
+    
+    return updateItem;
   }
 
   public DAOItem getDaoItem() {
