@@ -19,7 +19,7 @@ public class VersionController extends AbstractController{
     @Produces(MediaType.TEXT_PLAIN)
     public String getVersion() throws IOException {
 
-        LOGGER.info("getVersion called");
+        LOGGER.debug("getVersion called");
 
         return "0.1.0";
     }

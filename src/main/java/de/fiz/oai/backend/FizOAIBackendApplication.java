@@ -1,22 +1,18 @@
 package de.fiz.oai.backend;
 
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.core.Application;
-
-import de.fiz.oai.backend.controller.ItemController;
-import de.fiz.oai.backend.controller.VersionController;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.server.ResourceConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.fiz.oai.backend.utils.Configuration;
-import de.fiz.oai.backend.utils.ClusterManager;
-import de.fiz.oai.backend.utils.CassandraUtils;
-
-import com.datastax.driver.core.Session;
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Session;
 
-public class FizOAIBackendApplication extends Application {
+import de.fiz.oai.backend.utils.CassandraUtils;
+import de.fiz.oai.backend.utils.ClusterManager;
+import de.fiz.oai.backend.utils.Configuration;
+
+public class FizOAIBackendApplication extends ResourceConfig {
 
     private static final long serialVersionUID = -1156196714908290948L;
 
@@ -44,6 +40,8 @@ public class FizOAIBackendApplication extends Application {
                 LOGGER.error("FIZ OAI Backend NOT started: {}", e.getLocalizedMessage());
             }
         }
+        
+        register(MultiPartFeature.class);
     }
 
     public static FizOAIBackendApplication getInstance() {
@@ -53,14 +51,5 @@ public class FizOAIBackendApplication extends Application {
     public boolean isApplicationReady() {
         return applicationReady;
     }
-
-    @Override
-    public Set<Class<?>> getClasses() {
-        Set<Class<?>> classes = new HashSet<Class<?>>();
-        classes.add(VersionController.class);
-        classes.add(ItemController.class);
-        return classes;
-    }
-
 
 }

@@ -1,6 +1,5 @@
 package de.fiz.oai.backend.dao.impl;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -12,6 +11,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 
 import de.fiz.oai.backend.dao.DAOItem;
+import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.utils.ClusterManager;
 
@@ -66,13 +66,12 @@ public class CassandraDAOItem implements DAOItem {
         Session session = manager.getCassandraSession();
 
         if (StringUtils.isBlank(item.getIdentifier())) {
-            throw new IOException("Item's identifier cannot be empty!");
+            throw new IllegalArgumentException("Item's identifier cannot be empty!");
         }
  
         if (item.isDeleteFlag() == null) {
             item.setDeleteFlag(false);
         }
-
 
         StringBuilder insertStmt = new StringBuilder();
         insertStmt.append("INSERT INTO ");
@@ -92,8 +91,12 @@ public class CassandraDAOItem implements DAOItem {
         PreparedStatement prepared = session.prepare(insertStmt.toString());
 
         BoundStatement bound = prepared.bind(item.getIdentifier(), item.getDatestamp(), item.isDeleteFlag(), item.getSets(), item.getIngestFormat());
-        session.execute(bound);
+        ResultSet result = session.execute(bound);
 
+        if(!result.wasApplied()) {
+          throw new NotFoundException("The creation was not applied for the given item.");
+        }
+        
         return item;
     }
 
@@ -102,14 +105,13 @@ public class CassandraDAOItem implements DAOItem {
     }
 
     public void delete(String identifier) throws Exception {
-
-        if (StringUtils.isBlank(identifier)) {
-            throw new IOException("Item's identifier to delete cannot be empty!");
-        }
-
         ClusterManager manager = ClusterManager.getInstance();
         Session session = manager.getCassandraSession();
 
+        if (StringUtils.isBlank(identifier)) {
+          throw new IllegalArgumentException("identifier cannot be empty!");
+      }
+        
         StringBuilder updateStmt = new StringBuilder();
         updateStmt.append("UPDATE ");
         updateStmt.append(TABLENAME_ITEM);
@@ -122,6 +124,10 @@ public class CassandraDAOItem implements DAOItem {
         PreparedStatement prepared = session.prepare(updateStmt.toString());
 
         BoundStatement bound = prepared.bind(true, identifier);
-        session.execute(bound);
+        ResultSet result = session.execute(bound);
+        
+        if(!result.wasApplied()) {
+          throw new NotFoundException("The ddeletion was not applied for the given identifier.");
+        }
     }
 }

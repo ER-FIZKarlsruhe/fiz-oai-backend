@@ -53,5 +53,11 @@ public class Item {
   public void setIngestFormat(String ingestFormat) {
     this.ingestFormat = ingestFormat;
   }
+
+  @Override
+  public String toString() {
+    return "Item [identifier=" + identifier + ", datestamp=" + datestamp + ", deleteFlag=" + deleteFlag + ", sets="
+        + sets + ", ingestFormat=" + ingestFormat + "]";
+  }
   
 }
