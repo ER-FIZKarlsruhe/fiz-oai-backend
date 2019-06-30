@@ -3,8 +3,10 @@ package de.fiz.oai.backend.models;
 public class Set {
 
     private String name;
-    private String searchUrl;
-    private String identifierSelector;
+    
+    private String spec;
+    
+    private String description;
 
     public String getName() {
         return name;
@@ -14,19 +16,21 @@ public class Set {
         this.name = name;
     }
 
-    public String getSearchUrl() {
-        return searchUrl;
+    public String getSpec() {
+      return spec;
     }
 
-    public void setSearchUrl(String searchUrl) {
-        this.searchUrl = searchUrl;
+    public void setSpec(String spec) {
+      this.spec = spec;
     }
 
-    public String getIdentifierSelector() {
-        return identifierSelector;
+    public String getDescription() {
+      return description;
     }
 
-    public void setIdentifierSelector(String identifierSelector) {
-        this.identifierSelector = identifierSelector;
+    public void setDescription(String description) {
+      this.description = description;
     }
+
+
 }

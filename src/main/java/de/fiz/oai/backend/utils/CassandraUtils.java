@@ -1,13 +1,14 @@
 package de.fiz.oai.backend.utils;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import de.fiz.oai.backend.dao.DAOItem;
+
 import de.fiz.oai.backend.dao.impl.CassandraDAOFormat;
 import de.fiz.oai.backend.dao.impl.CassandraDAOItem;
 import de.fiz.oai.backend.dao.impl.CassandraDAOSet;
-import org.apache.commons.lang3.StringUtils;
 
 public class CassandraUtils {
 
@@ -74,9 +75,9 @@ public class CassandraUtils {
         createTableSetStmt.append(" (");
         createTableSetStmt.append(CassandraDAOSet.SET_NAME);
         createTableSetStmt.append(" text, ");
-        createTableSetStmt.append(CassandraDAOSet.SET_SEARCHURL);
+        createTableSetStmt.append(CassandraDAOSet.SET_SPEC);
         createTableSetStmt.append(" text, ");
-        createTableSetStmt.append(CassandraDAOSet.SET_IDENTIFIERSELECTOR);
+        createTableSetStmt.append(CassandraDAOSet.SET_DESCRIPTION);
         createTableSetStmt.append(" text, PRIMARY KEY (");
         createTableSetStmt.append(CassandraDAOSet.SET_NAME);
         createTableSetStmt.append("));");

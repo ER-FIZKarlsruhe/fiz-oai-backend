@@ -35,6 +35,7 @@ import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.dao.impl.CassandraDAOItem;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Item;
+import de.fiz.oai.backend.models.SearchResult;
 
 @Path("/item")
 public class ItemController extends AbstractController {
@@ -55,7 +56,7 @@ public class ItemController extends AbstractController {
   public Item getItem(@PathParam("identifier") String identifier, @QueryParam("format") String format ,  @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws Exception {
 
-    if (format == null || StringUtils.isBlank(format)) {
+    if (StringUtils.isBlank(format)) {
       throw new BadRequestException("format QueryParam cannot be empty!");
     }
     
@@ -72,7 +73,7 @@ public class ItemController extends AbstractController {
   
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public List<Item> searchItems(
+  public SearchResult<Item> searchItems(
       @QueryParam("offset") Integer offset, 
       @QueryParam("rows") Integer rows, 
       @QueryParam("set") String set, 
@@ -83,20 +84,20 @@ public class ItemController extends AbstractController {
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws Exception {
 
-    LOGGER.info("offset: " + offset);
-    LOGGER.info("rows: " + rows);
-    LOGGER.info("set: " + set);
-    LOGGER.info("format: " + format);
-    LOGGER.info("from: " + from);
-    LOGGER.info("until: " + until);
-    LOGGER.info("content: " + content);
+    LOGGER.debug("offset: " + offset);
+    LOGGER.debug("rows: " + rows);
+    LOGGER.debug("set: " + set);
+    LOGGER.debug("format: " + format);
+    LOGGER.debug("from: " + from);
+    LOGGER.debug("until: " + until);
+    LOGGER.debug("content: " + content);
     
-    if (format == null || StringUtils.isBlank(format)) {
+    if (StringUtils.isBlank(format)) {
       throw new BadRequestException("format QueryParam cannot be empty!");
     }
     
     try {
-      if (from != null && !StringUtils.isBlank(from)) {
+      if (!StringUtils.isBlank(from)) {
         dateFormat.parse(from);
       }
     } catch(ParseException e) {
@@ -104,19 +105,23 @@ public class ItemController extends AbstractController {
     }
     
     try {
-      if (until != null && !StringUtils.isBlank(until)) {
+      if (!StringUtils.isBlank(until)) {
         dateFormat.parse(until);
       }
     } catch(ParseException e) {
       throw new BadRequestException("Invalid until QueryParam!");
     }
     
-    
+    //TODO Use an SearchService instead of dao 
     final List<Item> items = daoItem.search(offset, rows, set, format, from, until);
     LOGGER.info("searchItems: " + items);
+    SearchResult<Item> result = new SearchResult<Item>();
     
     if (items != null) {
-      return items;
+      result.setData(items);
+      result.setSize(items.size());
+      result.setTotal(items.size());
+      return result;
     }
 
     return null;

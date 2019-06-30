@@ -1,6 +1,7 @@
 package de.fiz.oai.backend.integration;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -37,6 +38,7 @@ import de.fiz.oai.backend.controller.ItemController;
 import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Item;
+import de.fiz.oai.backend.models.SearchResult;
 
 
 public class ItemControllerIT extends JerseyTest {
@@ -123,9 +125,12 @@ public class ItemControllerIT extends JerseyTest {
     .queryParam("format", "oai_dc").queryParam("from", "1970-01-01T00:00:01Z").queryParam("until", "2970-01-01T00:00:01Z").queryParam("content", "").request()
     .get();
     
-    
+    SearchResult searchResult = response.readEntity(SearchResult.class);
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
     assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+    assertEquals("Total results must be 100", 100, searchResult.getTotal());
+    assertEquals("Result size must be 100", 100, searchResult.getSize());
+    assertNotNull("result list must not be null", searchResult.getData());
   }
   
   @Test

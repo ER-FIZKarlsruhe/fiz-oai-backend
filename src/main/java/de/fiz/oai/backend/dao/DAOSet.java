@@ -2,6 +2,7 @@ package de.fiz.oai.backend.dao;
 
 import de.fiz.oai.backend.models.Set;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface DAOSet {
@@ -14,7 +15,7 @@ public interface DAOSet {
      *            the name
      * @return the Set
      */
-    Set read(String name) throws Exception;
+    Set read(String name) throws IOException;
 
     /**
      * Create a new Set.
@@ -23,14 +24,14 @@ public interface DAOSet {
      *            the Set
      * @return the Set created (in case uuid are processed in the method)
      */
-    Set create(Set Set) throws Exception;
+    Set create(Set Set) throws IOException;
 
     /**
      * Search for Sets.
      *
      * @return the Sets
      */
-    List<Set> readAll() throws Exception;
+    List<Set> readAll() throws IOException;
 
     /**
      * Delete an Set.
@@ -38,5 +39,5 @@ public interface DAOSet {
      * @param name
      *            the name
      */
-    void delete(String name) throws Exception;
+    void delete(String name) throws IOException;
 }

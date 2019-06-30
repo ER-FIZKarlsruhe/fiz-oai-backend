@@ -16,12 +16,12 @@ import java.util.List;
 public class CassandraDAOSet implements DAOSet {
 
     public static final String SET_NAME = "name";
-    public static final String SET_SEARCHURL = "searchurl";
-    public static final String SET_IDENTIFIERSELECTOR = "identifierselector";
+    public static final String SET_SPEC = "spec";
+    public static final String SET_DESCRIPTION = "description";
 
     public static final String TABLENAME_SET = "oai_set";
 
-    public Set read(String name) throws Exception {
+    public Set read(String name) throws IOException {
         ClusterManager manager = ClusterManager.getInstance();
         Session session = manager.getCassandraSession();
 
@@ -46,13 +46,13 @@ public class CassandraDAOSet implements DAOSet {
 
     private Set populateSet(Row resultRow) {
         final Set set = new Set();
-        set.setIdentifierSelector(resultRow.getString(SET_IDENTIFIERSELECTOR));
+        set.setSpec(resultRow.getString(SET_SPEC));
         set.setName(resultRow.getString(SET_NAME));
-        set.setSearchUrl(resultRow.getString(SET_SEARCHURL));
+        set.setDescription(resultRow.getString(SET_DESCRIPTION));
         return set;
     }
 
-    public List<Set> readAll() throws Exception {
+    public List<Set> readAll() throws IOException {
         ClusterManager manager = ClusterManager.getInstance();
         Session session = manager.getCassandraSession();
 
@@ -69,7 +69,7 @@ public class CassandraDAOSet implements DAOSet {
         return allSets;
     }
 
-    public Set create(Set set) throws Exception {
+    public Set create(Set set) throws IOException {
         ClusterManager manager = ClusterManager.getInstance();
         Session session = manager.getCassandraSession();
 
@@ -83,20 +83,20 @@ public class CassandraDAOSet implements DAOSet {
         insertStmt.append(" (");
         insertStmt.append(SET_NAME);
         insertStmt.append(", ");
-        insertStmt.append(SET_SEARCHURL);
+        insertStmt.append(SET_SPEC);
         insertStmt.append(", ");
-        insertStmt.append(SET_IDENTIFIERSELECTOR);
+        insertStmt.append(SET_DESCRIPTION);
         insertStmt.append(") VALUES (?, ?, ?)");
 
         PreparedStatement prepared = session.prepare(insertStmt.toString());
 
-        BoundStatement bound = prepared.bind(set.getName(), set.getSearchUrl(), set.getIdentifierSelector());
+        BoundStatement bound = prepared.bind(set.getName(), set.getSpec(), set.getDescription());
         session.execute(bound);
 
         return set;
     }
 
-    public void delete(String name) throws Exception {
+    public void delete(String name) throws IOException {
 
         if (StringUtils.isBlank(name)) {
             throw new IOException("Set's name to delete cannot be empty!");
