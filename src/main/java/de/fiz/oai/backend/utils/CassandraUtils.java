@@ -7,6 +7,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 
 import de.fiz.oai.backend.dao.impl.CassandraDAOContent;
+import de.fiz.oai.backend.dao.impl.CassandraDAOCrosswalk;
 import de.fiz.oai.backend.dao.impl.CassandraDAOFormat;
 import de.fiz.oai.backend.dao.impl.CassandraDAOItem;
 import de.fiz.oai.backend.dao.impl.CassandraDAOSet;
@@ -113,6 +114,22 @@ public class CassandraUtils {
         createTableSetStmt.append(CassandraDAOContent.CONTENT_IDENTIFIER + ", " + CassandraDAOContent.CONTENT_FORMAT);
         createTableSetStmt.append("));");
         session.execute(createTableContentStmt.toString());
+        
+        final StringBuilder createTableCrosswalkStmt = new StringBuilder();
+        createTableSetStmt.append("CREATE TABLE IF NOT EXISTS ");
+        createTableSetStmt.append(CassandraDAOCrosswalk.TABLENAME_CROSSWALK);
+        createTableSetStmt.append(" (");
+        createTableSetStmt.append(CassandraDAOCrosswalk.CROSSWALK_NAME);
+        createTableSetStmt.append(" text, ");
+        createTableSetStmt.append(CassandraDAOCrosswalk.CROSSWALK_FORMAT_FROM);
+        createTableSetStmt.append(" text, ");
+        createTableSetStmt.append(CassandraDAOCrosswalk.CROSSWALK_FORMAT_TO);
+        createTableSetStmt.append(" text, ");
+        createTableSetStmt.append(CassandraDAOCrosswalk.CROSSWALK_XSLT_STYLESHEET);
+        createTableSetStmt.append(" blob, PRIMARY KEY (");
+        createTableSetStmt.append(CassandraDAOCrosswalk.CROSSWALK_NAME);
+        createTableSetStmt.append("));");
+        session.execute(createTableCrosswalkStmt.toString());
     }
 
 
