@@ -46,7 +46,7 @@ public class SetController extends AbstractController {
   @GET
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
-  public Set getItem(@PathParam("name") String name ,  @Context HttpServletRequest request,
+  public Set getSet(@PathParam("name") String name ,  @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws Exception {
 
     if (name == null || StringUtils.isBlank(name)) {
@@ -54,7 +54,6 @@ public class SetController extends AbstractController {
     }
     
     final Set set = daoSet.read(name);
-    LOGGER.info("readset: " + set);
     
     if (set == null) {
       throw new WebApplicationException(Status.NOT_FOUND);
@@ -124,7 +123,7 @@ public class SetController extends AbstractController {
   @Path("/{name}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Set updateItem(@PathParam("name") String name, Set set,
+  public Set updateSet(@PathParam("name") String name, Set set,
       @Context HttpServletRequest request, @Context HttpServletResponse response) {
 
     if (StringUtils.isBlank( set.getName())) {

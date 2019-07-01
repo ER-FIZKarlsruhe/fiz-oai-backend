@@ -25,7 +25,6 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
-import org.glassfish.jersey.test.TestProperties;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -106,7 +105,7 @@ public class SetControllerIT extends JerseyTest {
   public void testGetSetNotFound() throws Exception {
     when(daoSet.read("notfound")).thenReturn(null);
 
-    Response response = target("/item/notfound").request().get();
+    Response response = target("/set/notfound").request().get();
 
     assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }

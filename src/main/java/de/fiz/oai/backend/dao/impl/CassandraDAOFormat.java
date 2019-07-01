@@ -15,12 +15,11 @@ public class CassandraDAOFormat implements DAOFormat {
     public static final String FORMAT_METADATAPREFIX = "metadataprefix";
     public static final String FORMAT_SCHEMALOCATION = "schemalocation";
     public static final String FORMAT_SCHEMANAMESPACE = "schemanamespace";
-    public static final String FORMAT_CROSSWALKSTYLESHEET = "crosswalkstylesheet";
     public static final String FORMAT_IDENTIFIERXPATH = "identifierxpath";
 
     public static final String TABLENAME_FORMAT = "oai_format";
 
-    public Format read(String metadataPrefix) throws Exception {
+    public Format read(String metadataPrefix) throws IOException {
         ClusterManager manager = ClusterManager.getInstance();
         Session session = manager.getCassandraSession();
 
@@ -42,7 +41,9 @@ public class CassandraDAOFormat implements DAOFormat {
         }
         return null;
     }
-    public List<Format> readAll() throws Exception {
+    
+    
+    public List<Format> readAll() throws IOException {
         ClusterManager manager = ClusterManager.getInstance();
         Session session = manager.getCassandraSession();
 
@@ -61,7 +62,6 @@ public class CassandraDAOFormat implements DAOFormat {
 
     private Format populateFormat(Row row) {
         final Format format = new Format();
-        format.setCrosswalkStyleSheet(row.getString(FORMAT_CROSSWALKSTYLESHEET));
         format.setIdentifierXpath(row.getString(FORMAT_IDENTIFIERXPATH));
         format.setMetadataPrefix(row.getString(FORMAT_METADATAPREFIX));
         format.setSchemaLocation(row.getString(FORMAT_SCHEMALOCATION));
@@ -69,7 +69,7 @@ public class CassandraDAOFormat implements DAOFormat {
         return format;
     }
 
-    public Format create(Format format) throws Exception {
+    public Format create(Format format) throws IOException {
         ClusterManager manager = ClusterManager.getInstance();
         Session session = manager.getCassandraSession();
 
@@ -81,8 +81,6 @@ public class CassandraDAOFormat implements DAOFormat {
         insertStmt.append("INSERT INTO ");
         insertStmt.append(TABLENAME_FORMAT);
         insertStmt.append(" (");
-        insertStmt.append(FORMAT_CROSSWALKSTYLESHEET);
-        insertStmt.append(", ");
         insertStmt.append(FORMAT_IDENTIFIERXPATH);
         insertStmt.append(", ");
         insertStmt.append(FORMAT_METADATAPREFIX);
@@ -94,13 +92,13 @@ public class CassandraDAOFormat implements DAOFormat {
 
         PreparedStatement prepared = session.prepare(insertStmt.toString());
 
-        BoundStatement bound = prepared.bind(format.getCrosswalkStyleSheet(), format.getIdentifierXpath(), format.getMetadataPrefix(), format.getSchemaLocation(), format.getSchemaNamespace());
+        BoundStatement bound = prepared.bind(format.getIdentifierXpath(), format.getMetadataPrefix(), format.getSchemaLocation(), format.getSchemaNamespace());
         session.execute(bound);
 
         return format;
     }
 
-    public void delete(String metadataPrefix) throws Exception {
+    public void delete(String metadataPrefix) throws IOException {
 
         if (StringUtils.isBlank(metadataPrefix)) {
             throw new IOException("Format's MetadataPrefix to delete cannot be empty!");

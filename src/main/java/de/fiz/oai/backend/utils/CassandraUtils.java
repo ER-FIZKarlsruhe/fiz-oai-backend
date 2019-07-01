@@ -93,8 +93,6 @@ public class CassandraUtils {
         createTableFormatStmt.append(" text, ");
         createTableFormatStmt.append(CassandraDAOFormat.FORMAT_SCHEMANAMESPACE);
         createTableFormatStmt.append(" text, ");
-        createTableFormatStmt.append(CassandraDAOFormat.FORMAT_CROSSWALKSTYLESHEET);
-        createTableFormatStmt.append(" text, ");
         createTableFormatStmt.append(CassandraDAOFormat.FORMAT_IDENTIFIERXPATH);
         createTableFormatStmt.append(" text, PRIMARY KEY (");
         createTableFormatStmt.append(CassandraDAOFormat.FORMAT_METADATAPREFIX);
