@@ -129,7 +129,7 @@ public class CassandraDAOItem implements DAOItem {
         ResultSet result = session.execute(bound);
         
         if(!result.wasApplied()) {
-          throw new NotFoundException("The ddeletion was not applied for the given identifier.");
+          throw new NotFoundException("The deletion was not applied for the given identifier and format.");
         }
     }
 }

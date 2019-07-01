@@ -4,6 +4,7 @@ import com.datastax.driver.core.*;
 import com.datastax.driver.core.utils.UUIDs;
 import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.dao.DAOSet;
+import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.utils.ClusterManager;
@@ -115,6 +116,10 @@ public class CassandraDAOSet implements DAOSet {
         PreparedStatement prepared = session.prepare(deleteStmt.toString());
 
         BoundStatement bound = prepared.bind(name);
-        session.execute(bound);
+        ResultSet result = session.execute(bound);
+        
+        if(!result.wasApplied()) {
+          throw new NotFoundException("The deletion was not applied for the given identifier and format.");
+        }
     }
 }

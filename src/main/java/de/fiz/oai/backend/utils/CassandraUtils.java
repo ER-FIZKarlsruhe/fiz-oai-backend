@@ -6,6 +6,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 
+import de.fiz.oai.backend.dao.impl.CassandraDAOContent;
 import de.fiz.oai.backend.dao.impl.CassandraDAOFormat;
 import de.fiz.oai.backend.dao.impl.CassandraDAOItem;
 import de.fiz.oai.backend.dao.impl.CassandraDAOSet;
@@ -98,6 +99,20 @@ public class CassandraUtils {
         createTableFormatStmt.append(CassandraDAOFormat.FORMAT_METADATAPREFIX);
         createTableFormatStmt.append("));");
         session.execute(createTableFormatStmt.toString());
+        
+        final StringBuilder createTableContentStmt = new StringBuilder();
+        createTableSetStmt.append("CREATE TABLE IF NOT EXISTS ");
+        createTableSetStmt.append(CassandraDAOContent.TABLENAME_CONTENT);
+        createTableSetStmt.append(" (");
+        createTableSetStmt.append(CassandraDAOContent.CONTENT_IDENTIFIER);
+        createTableSetStmt.append(" text, ");
+        createTableSetStmt.append(CassandraDAOContent.CONTENT_FORMAT);
+        createTableSetStmt.append(" text, ");
+        createTableSetStmt.append(CassandraDAOContent.CONTENT_CONTENT);
+        createTableSetStmt.append(" blob, PRIMARY KEY (");
+        createTableSetStmt.append(CassandraDAOContent.CONTENT_IDENTIFIER + ", " + CassandraDAOContent.CONTENT_FORMAT);
+        createTableSetStmt.append("));");
+        session.execute(createTableContentStmt.toString());
     }
 
 

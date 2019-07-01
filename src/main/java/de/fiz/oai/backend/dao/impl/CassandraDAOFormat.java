@@ -2,6 +2,7 @@ package de.fiz.oai.backend.dao.impl;
 
 import com.datastax.driver.core.*;
 import de.fiz.oai.backend.dao.DAOFormat;
+import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.utils.ClusterManager;
 import org.apache.commons.lang3.StringUtils;
@@ -117,6 +118,10 @@ public class CassandraDAOFormat implements DAOFormat {
         PreparedStatement prepared = session.prepare(deleteStmt.toString());
 
         BoundStatement bound = prepared.bind(metadataPrefix);
-        session.execute(bound);
+        ResultSet result = session.execute(bound);
+        
+        if(!result.wasApplied()) {
+          throw new NotFoundException("The deletion was not applied for the given identifier and format.");
+        }
     }
 }
