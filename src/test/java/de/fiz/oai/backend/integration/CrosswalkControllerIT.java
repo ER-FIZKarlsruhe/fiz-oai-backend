@@ -7,7 +7,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -32,17 +31,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.controller.CrosswalkController;
-import de.fiz.oai.backend.dao.DAOCrosswalk;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Crosswalk;
-import de.fiz.oai.backend.models.Format;
+import de.fiz.oai.backend.service.CrosswalkService;
 
 public class CrosswalkControllerIT extends JerseyTest {
 
   private Logger LOGGER = LoggerFactory.getLogger(CrosswalkControllerIT.class);
 
   @Mock
-  private DAOCrosswalk daoCrosswalk;
+  private CrosswalkService crosswalkService;
 
   @Mock
   HttpServletRequest request;
@@ -59,7 +57,7 @@ public class CrosswalkControllerIT extends JerseyTest {
 
       @Override
       protected void configure() {
-        bind(daoCrosswalk).to(DAOCrosswalk.class);
+        bind(crosswalkService).to(CrosswalkService.class);
         bind(request).to(HttpServletRequest.class);
         bind(response).to(HttpServletResponse.class);
       }
@@ -81,7 +79,7 @@ public class CrosswalkControllerIT extends JerseyTest {
     crosswalk.setFormatTo("oai_dc");
     crosswalk.setXsltStylesheet("Please use an Xslt stylesheet here!".getBytes());
 
-    when(daoCrosswalk.read(any())).thenReturn(crosswalk);
+    when(crosswalkService.read(any())).thenReturn(crosswalk);
 
     Response response = target("/crosswalk/Oai2Marc").request().get();
 
@@ -109,7 +107,7 @@ public class CrosswalkControllerIT extends JerseyTest {
   
   @Test
   public void testGetCrosswalkNotFound() throws Exception {
-    when(daoCrosswalk.read(any())).thenReturn(null);
+    when(crosswalkService.read(any())).thenReturn(null);
 
     Response response = target("/crosswalk/wer").request().get();
 
@@ -119,7 +117,7 @@ public class CrosswalkControllerIT extends JerseyTest {
   
   @Test
   public void testGetAllCrosswalks() throws Exception {
-    when(daoCrosswalk.readAll()).thenReturn(getTestCrosswalkList());
+    when(crosswalkService.readAll()).thenReturn(getTestCrosswalkList());
 
     Response response = target("/crosswalk").request().get();
 
@@ -137,7 +135,7 @@ public class CrosswalkControllerIT extends JerseyTest {
 
   @Test
   public void testDeleteCrosswalk() throws Exception {
-    doNothing().when(daoCrosswalk).delete(any());
+    doNothing().when(crosswalkService).delete(any());
 
     Response response = target("/crosswalk/123456").request().delete();
 
@@ -155,7 +153,7 @@ public class CrosswalkControllerIT extends JerseyTest {
   
   @Test
   public void testDeleteCrosswalkNotFound() throws Exception {
-    doThrow(NotFoundException.class).when(daoCrosswalk).delete(any());
+    doThrow(NotFoundException.class).when(crosswalkService).delete(any());
 
     Response response = target("/crosswalk/wer").request().delete();
 
@@ -172,7 +170,7 @@ public class CrosswalkControllerIT extends JerseyTest {
     crosswalk.setFormatTo("oai_dc");
     crosswalk.setXsltStylesheet("Please use an Xslt stylesheet here!".getBytes());
 
-    when(daoCrosswalk.create(any())).thenReturn(crosswalk);
+    when(crosswalkService.create(any())).thenReturn(crosswalk);
 
     Response response = target("crosswalk").request().post(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"UGxlYXNlIHVzZSBhbiBYc2x0IHN0eWxlc2hlZXQgaGVyZSE=\"}"));

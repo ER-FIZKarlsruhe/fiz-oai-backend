@@ -25,10 +25,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.fiz.oai.backend.dao.DAOCrosswalk;
-import de.fiz.oai.backend.dao.impl.CassandraDAOCrosswalk;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Crosswalk;
+import de.fiz.oai.backend.service.CrosswalkService;
+import de.fiz.oai.backend.service.impl.CrosswalkServiceImpl;
 
 @Path("/crosswalk")
 public class CrosswalkController extends AbstractController {
@@ -37,7 +37,7 @@ public class CrosswalkController extends AbstractController {
   ServletContext servletContext;
 
   @Inject
-  DAOCrosswalk daoCrosswalk = new CassandraDAOCrosswalk();
+  CrosswalkService crosswalkService = new CrosswalkServiceImpl();
 
   private Logger LOGGER = LoggerFactory.getLogger(CrosswalkController.class);
 
@@ -53,7 +53,7 @@ public class CrosswalkController extends AbstractController {
 
     Crosswalk crosswalk;
     try {
-      crosswalk = daoCrosswalk.read(name);
+      crosswalk = crosswalkService.read(name);
     } catch (IOException e) {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
@@ -70,7 +70,7 @@ public class CrosswalkController extends AbstractController {
   public List<Crosswalk> getAllCrosswalks(@Context HttpServletRequest request, @Context HttpServletResponse response) {
     List<Crosswalk> crosswalks;
     try {
-      crosswalks = daoCrosswalk.readAll();
+      crosswalks = crosswalkService.readAll();
     } catch (IOException e) {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
@@ -88,7 +88,7 @@ public class CrosswalkController extends AbstractController {
     }
 
     try {
-      daoCrosswalk.delete(name);
+      crosswalkService.delete(name);
     } catch (NotFoundException e) {
       throw new WebApplicationException(Status.NOT_FOUND);
     } catch (IOException ioe) {
@@ -125,15 +125,11 @@ public class CrosswalkController extends AbstractController {
     if (!Pattern.matches("[A-Za-z0-9\\-_\\.!~\\*'\\(\\)]+", crosswalk.getFormatTo())) {
       throw new WebApplicationException("Crosswalk formatTo does not match regex!", Status.BAD_REQUEST);
     }
-
-    // TODO add more validations
-    // Does the format (referenced by formatFrom) exists?
-    // Does the format (referenced by formatTo) exists?
     
     Crosswalk newCrosswalk = null;
 
     try {
-      newCrosswalk = daoCrosswalk.create(newCrosswalk);
+      newCrosswalk = crosswalkService.create(newCrosswalk);
     } catch (IOException e) {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
