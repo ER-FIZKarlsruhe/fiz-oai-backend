@@ -26,10 +26,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.fiz.oai.backend.dao.DAOSet;
-import de.fiz.oai.backend.dao.impl.CassandraDAOSet;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Set;
+import de.fiz.oai.backend.service.SetService;
+import de.fiz.oai.backend.service.impl.SetServiceImpl;
 
 @Path("/set")
 public class SetController extends AbstractController {
@@ -38,7 +38,7 @@ public class SetController extends AbstractController {
   ServletContext servletContext;
 
   @Inject
-  DAOSet daoSet = new CassandraDAOSet();
+  SetService setService = new SetServiceImpl();
 
   private Logger LOGGER = LoggerFactory.getLogger(SetController.class);
   
@@ -53,7 +53,7 @@ public class SetController extends AbstractController {
       throw new BadRequestException("name QueryParam cannot be empty!");
     }
     
-    final Set set = daoSet.read(name);
+    final Set set = setService.read(name);
     
     if (set == null) {
       throw new WebApplicationException(Status.NOT_FOUND);
@@ -66,9 +66,7 @@ public class SetController extends AbstractController {
   @Produces(MediaType.APPLICATION_JSON)
   public List<Set> getAllSets( @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws Exception {
-
-    final List<Set> setList = daoSet.readAll();
-    LOGGER.info("readset: " + setList);
+    final List<Set> setList = setService.readAll();
     
     return setList;
   }
@@ -83,7 +81,7 @@ public class SetController extends AbstractController {
     }
 
     try {
-      daoSet.delete(name);
+      setService.delete(name);
     } catch (NotFoundException e) {
       throw new WebApplicationException(Status.NOT_FOUND);
     }
@@ -110,12 +108,12 @@ public class SetController extends AbstractController {
     Set newSet = null;
     
     try {
-      newSet = daoSet.create(newSet);
+      newSet = setService.create(set);
+    } catch (NotFoundException nfe) {
+      throw new  WebApplicationException(Status.NOT_FOUND);
     } catch (IOException e) {
-      throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
-    }
-    
-    LOGGER.info("newSet: " + newSet);
+      throw new  WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+    } 
     return newSet;
   }
   
@@ -142,19 +140,17 @@ public class SetController extends AbstractController {
       throw new WebApplicationException("The name in the path and the set json does not match!", Status.BAD_REQUEST);
     }
     
+    Set updateSet = null;
+    
     try {
-      Set oldSet = daoSet.read(name);
-
-      if (oldSet == null) {
-        throw new WebApplicationException(Status.NOT_FOUND);
-      }
-      daoSet.create(set);
-      
+      updateSet = setService.update(set);
+    } catch (NotFoundException nfe) {
+      throw new  WebApplicationException(Status.NOT_FOUND);
     } catch (IOException e) {
       throw new  WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     } 
     
-    return set;
+    return updateSet;
   }
   
 }

@@ -32,16 +32,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.controller.SetController;
-import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Set;
+import de.fiz.oai.backend.service.SetService;
 
 public class SetControllerIT extends JerseyTest {
 
   private Logger LOGGER = LoggerFactory.getLogger(SetControllerIT.class);
 
   @Mock
-  private DAOSet daoSet;
+  private SetService setService;
 
   @Mock
   HttpServletRequest request;
@@ -58,7 +58,7 @@ public class SetControllerIT extends JerseyTest {
 
       @Override
       protected void configure() {
-        bind(daoSet).to(DAOSet.class);
+        bind(setService).to(SetService.class);
         bind(request).to(HttpServletRequest.class);
         bind(response).to(HttpServletResponse.class);
       }
@@ -79,7 +79,7 @@ public class SetControllerIT extends JerseyTest {
     set.setSpec("fiz:iee");
     set.setDescription("This set contains the organization unit IEE");
 
-    when(daoSet.read("iee")).thenReturn(set);
+    when(setService.read("iee")).thenReturn(set);
 
     Response response = target("/set/iee").request().get();
 
@@ -103,7 +103,7 @@ public class SetControllerIT extends JerseyTest {
 
   @Test
   public void testGetSetNotFound() throws Exception {
-    when(daoSet.read("notfound")).thenReturn(null);
+    when(setService.read("notfound")).thenReturn(null);
 
     Response response = target("/set/notfound").request().get();
 
@@ -112,7 +112,7 @@ public class SetControllerIT extends JerseyTest {
 
   @Test
   public void testGetAllSets() throws Exception {
-    when(daoSet.readAll()).thenReturn(getTestSetList());
+    when(setService.readAll()).thenReturn(getTestSetList());
 
     Response response = target("/set").request().get();
 
@@ -127,7 +127,7 @@ public class SetControllerIT extends JerseyTest {
 
   @Test
   public void testDeleteSet() throws Exception {
-    doNothing().when(daoSet).delete("65465456");
+    doNothing().when(setService).delete("65465456");
 
     Response response = target("/set/65465456").request().delete();
 
@@ -136,7 +136,7 @@ public class SetControllerIT extends JerseyTest {
 
   @Test
   public void testDeleteSetEmptyName() throws Exception {
-    doThrow(IOException.class).when(daoSet).delete("%20");
+    doThrow(IOException.class).when(setService).delete("%20");
 
     Response response = target("/set/%20").request().delete();
 
@@ -145,7 +145,7 @@ public class SetControllerIT extends JerseyTest {
 
   @Test
   public void testDeleteSetNotFound() throws Exception {
-    doThrow(NotFoundException.class).when(daoSet).delete("123Fragerei");
+    doThrow(NotFoundException.class).when(setService).delete("123Fragerei");
 
     Response response = target("/set/123Fragerei").request().delete();
 
@@ -159,7 +159,7 @@ public class SetControllerIT extends JerseyTest {
     set.setSpec("fiz:iee");
     set.setDescription("This set contains the organization unit IEE");
 
-    when(daoSet.create(any())).thenReturn(set);
+    when(setService.create(any())).thenReturn(set);
 
     Response response = target("set").request().post(Entity.json(
         "{\"name\":\"iee\",\"spec\":\"fiz:iee\",\"description\":\"This set contains the organization unit IEE\"}"));
@@ -199,9 +199,7 @@ public class SetControllerIT extends JerseyTest {
     set.setSpec("fiz:iee");
     set.setDescription("This set contains the organization unit IEE");
 
-    when(daoSet.create(any())).thenReturn(set);
-    when(daoSet.read(any())).thenReturn(set);
-    
+    when(setService.update(any())).thenReturn(set);
     
     Response response = target("set/iee").request().put(Entity.json(
         "{\"name\":\"iee\",\"spec\":\"fiz:iee\",\"description\":\"This set contains the organization unit IEE\"}"));
@@ -228,7 +226,7 @@ public class SetControllerIT extends JerseyTest {
   }
   
   @Test
-  public void testCreateUpdateInvalidSpec() throws Exception {
+  public void testUpdateSetInvalidSpec() throws Exception {
     Response response = target("set/iee").request().put(Entity.json(
         "{\"name\":\"iee\",\"spec\":\"fiz iee\",\"description\":\"This set contains the organization unit IEE\"}")); //spec must not have whitespace!
 
@@ -236,7 +234,7 @@ public class SetControllerIT extends JerseyTest {
   }
   
   @Test
-  public void testCreateUpdateNameDoesNotMatch() throws Exception {
+  public void testUpdateSetNameDoesNotMatch() throws Exception {
     Response response = target("set/ieee").request().put(Entity.json(
         "{\"name\":\"iee\",\"spec\":\"fiz:iee\",\"description\":\"This set contains the organization unit IEE\"}")); //spec must not have whitespace!
     String content = response.readEntity(String.class);
@@ -246,8 +244,7 @@ public class SetControllerIT extends JerseyTest {
   
   @Test
   public void testUpdateSetNotFound() throws Exception {
-  
-    when(daoSet.read(any())).thenReturn(null);
+    doThrow(NotFoundException.class).when(setService).update(any());
     
     Response response = target("set/iee").request().put(Entity.json(
         "{\"name\":\"iee\",\"spec\":\"fiz:iee\",\"description\":\"This set contains the organization unit IEE\"}"));
