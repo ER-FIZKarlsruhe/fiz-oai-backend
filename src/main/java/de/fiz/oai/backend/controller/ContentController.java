@@ -22,13 +22,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import de.fiz.oai.backend.dao.DAOContent;
-import de.fiz.oai.backend.dao.impl.CassandraDAOContent;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Content;
+import de.fiz.oai.backend.service.ContentService;
+import de.fiz.oai.backend.service.impl.ContentServiceImpl;
 
 @Path("/content")
 public class ContentController extends AbstractController {
@@ -37,9 +35,7 @@ public class ContentController extends AbstractController {
   ServletContext servletContext;
 
   @Inject
-  DAOContent daoContent = new CassandraDAOContent();
-
-  private Logger LOGGER = LoggerFactory.getLogger(ContentController.class);
+  ContentService contentService = new ContentServiceImpl();
 
   @GET
   @Path("/{identifier}/{format}")
@@ -57,7 +53,7 @@ public class ContentController extends AbstractController {
 
     Content content;
     try {
-      content = daoContent.read(identifier, format);
+      content = contentService.read(identifier, format);
     } catch (IOException e) {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
@@ -81,7 +77,7 @@ public class ContentController extends AbstractController {
     
     List<Content> content;
     try {
-      content = daoContent.readFormats(identifier);
+      content = contentService.readFormats(identifier);
     } catch (IOException e) {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
@@ -109,7 +105,7 @@ public class ContentController extends AbstractController {
     }
 
     try {
-      daoContent.delete(identifier, format);
+      contentService.delete(identifier, format);
     } catch (NotFoundException e) {
       throw new WebApplicationException(Status.NOT_FOUND);
     } catch (IOException ioe) {
@@ -147,7 +143,7 @@ public class ContentController extends AbstractController {
     Content newContent = null;
 
     try {
-      newContent = daoContent.create(newContent);
+      newContent = contentService.create(newContent);
     } catch (IOException e) {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }

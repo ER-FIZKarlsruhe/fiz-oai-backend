@@ -31,16 +31,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.controller.ContentController;
-import de.fiz.oai.backend.dao.DAOContent;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Content;
+import de.fiz.oai.backend.service.ContentService;
 
 public class ContentControllerIT extends JerseyTest {
 
   private Logger LOGGER = LoggerFactory.getLogger(ContentControllerIT.class);
 
   @Mock
-  private DAOContent daoContent;
+  private ContentService contentService;
 
   @Mock
   HttpServletRequest request;
@@ -57,7 +57,7 @@ public class ContentControllerIT extends JerseyTest {
 
       @Override
       protected void configure() {
-        bind(daoContent).to(DAOContent.class);
+        bind(contentService).to(ContentService.class);
         bind(request).to(HttpServletRequest.class);
         bind(response).to(HttpServletResponse.class);
       }
@@ -78,7 +78,7 @@ public class ContentControllerIT extends JerseyTest {
     content.setFormat("oai_dc");
     content.setContent("Wann wirds endlich wieder Sommer".getBytes());
 
-    when(daoContent.read(any(), any())).thenReturn(content);
+    when(contentService.read(any(), any())).thenReturn(content);
 
     Response response = target("/content/123456/oai_dc").request().get();
 
@@ -112,7 +112,7 @@ public class ContentControllerIT extends JerseyTest {
   
   @Test
   public void testGetContentNotFound() throws Exception {
-    when(daoContent.read(any(),any())).thenReturn(null);
+    when(contentService.read(any(),any())).thenReturn(null);
 
     Response response = target("/content/wer/oai_dc").request().get();
 
@@ -134,7 +134,7 @@ public class ContentControllerIT extends JerseyTest {
 
     List<Content> contentList = Arrays.asList(new Content[]{content1, content2});
     
-    when(daoContent.readFormats(any())).thenReturn(contentList);
+    when(contentService.readFormats(any())).thenReturn(contentList);
 
     Response response = target("/content/123456").request().get();
 
@@ -158,7 +158,7 @@ public class ContentControllerIT extends JerseyTest {
   
   @Test
   public void testGetContentAllFormatsNotFound() throws Exception {
-    when(daoContent.readFormats(any())).thenReturn(null);
+    when(contentService.readFormats(any())).thenReturn(null);
 
     Response response = target("/content/weroderwas").request().get();
 
@@ -168,7 +168,7 @@ public class ContentControllerIT extends JerseyTest {
 
   @Test
   public void testDeleteContent() throws Exception {
-    doNothing().when(daoContent).delete(any(),any());
+    doNothing().when(contentService).delete(any(),any());
 
     Response response = target("/content/123456/oai_dc").request().delete();
 
@@ -193,7 +193,7 @@ public class ContentControllerIT extends JerseyTest {
   
   @Test
   public void testDeleteContentNotFound() throws Exception {
-    doThrow(NotFoundException.class).when(daoContent).delete(any(),any());
+    doThrow(NotFoundException.class).when(contentService).delete(any(),any());
 
     Response response = target("/content/wer/oai_dc").request().delete();
 
@@ -209,7 +209,7 @@ public class ContentControllerIT extends JerseyTest {
     content.setFormat("oai_dc");
     content.setContent("Wann wirds endlich wieder Sommer".getBytes());
 
-    when(daoContent.create(any())).thenReturn(content);
+    when(contentService.create(any())).thenReturn(content);
 
     Response response = target("content").request().post(Entity.json(
         "{\"identifier\":\"123456\",\"format\":\"oai_dc\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
