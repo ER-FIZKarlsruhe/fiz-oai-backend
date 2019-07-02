@@ -3,8 +3,6 @@ package de.fiz.oai.backend.controller;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
 
 import javax.inject.Inject;
 import javax.servlet.ServletContext;
@@ -30,12 +28,11 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-import de.fiz.oai.backend.dao.DAOItem;
-import de.fiz.oai.backend.dao.impl.CassandraDAOItem;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
+import de.fiz.oai.backend.service.ItemService;
+import de.fiz.oai.backend.service.impl.ItemServiceImpl;
 
 @Path("/item")
 public class ItemController extends AbstractController {
@@ -46,8 +43,8 @@ public class ItemController extends AbstractController {
   ServletContext servletContext;
 
   @Inject
-  DAOItem daoItem = new CassandraDAOItem();
-
+  ItemService itemService = new ItemServiceImpl();
+  
   private Logger LOGGER = LoggerFactory.getLogger(ItemController.class);
 
   @GET
@@ -60,7 +57,7 @@ public class ItemController extends AbstractController {
       throw new BadRequestException("format QueryParam cannot be empty!");
     }
     
-    final Item item = daoItem.read(identifier);
+    final Item item = itemService.read(identifier);
     LOGGER.info("getItem: " + item);
     
     if (item == null) {
@@ -111,20 +108,10 @@ public class ItemController extends AbstractController {
     } catch(ParseException e) {
       throw new BadRequestException("Invalid until QueryParam!");
     }
-    
-    //TODO Use an SearchService instead of dao 
-    final List<Item> items = daoItem.search(offset, rows, set, format, from, until);
-    LOGGER.info("searchItems: " + items);
-    SearchResult<Item> result = new SearchResult<Item>();
-    
-    if (items != null) {
-      result.setData(items);
-      result.setSize(items.size());
-      result.setTotal(items.size());
-      return result;
-    }
 
-    return null;
+    SearchResult<Item> result = itemService.search(offset, rows, set, format, from, until);
+
+    return result;
   }
   
   
@@ -139,7 +126,7 @@ public class ItemController extends AbstractController {
     }
 
     try {
-      daoItem.delete(identifier);
+      itemService.delete(identifier);
     } catch (NotFoundException e) {
       throw new WebApplicationException(Status.NOT_FOUND);
     }
@@ -155,25 +142,10 @@ public class ItemController extends AbstractController {
     if (!content.contains(item.getIdentifier())) {
       throw new WebApplicationException("Cannot find the identifier in the content!", Status.BAD_REQUEST);
     }
-
-    
     Item newItem = null;
     
-    //Overwrite datestamp!
-    item.setDatestamp(dateFormat.format(new Date()));
-    //Validate item
-    //TODO ingestFormat exists?
-    
-    //TODO given sets exists?
-    
-    //TODO IngestFormat: Exists?
-    //TODO Xsd Validate the content against the ingestFormat! 
-    
     try {
-      newItem = daoItem.create(item);
-      
-      //TODO save content
-      
+      newItem = itemService.create(item);
     } catch (NotFoundException e) {
       throw new WebApplicationException(Status.NOT_FOUND);
     } catch (Exception e) {
@@ -203,27 +175,9 @@ public class ItemController extends AbstractController {
     
     Item updateItem = null;
     try {
-      Item oldItem = daoItem.read(identifier);
-
-      if (oldItem == null) {
-        throw new WebApplicationException(Status.NOT_FOUND);
-      }
-      
-      //Overwrite datestamp!
-      item.setDatestamp(dateFormat.format(new Date()));
-      
-      //Validate item
-      //TODO ingestFormat exists?
-      
-      //TODO given sets exists?
-      
-      //TODO IngestFormat: Exists?
-      //TODO Xsd Validate the content against the ingestFormat! 
-
-      updateItem = daoItem.create(item);
-      
-      //TODO save content
-      
+      updateItem = itemService.update(item);
+    } catch (NotFoundException e) {
+      throw new  WebApplicationException(Status.NOT_FOUND);
     } catch (IOException e) {
       throw new  WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     } 
@@ -231,14 +185,6 @@ public class ItemController extends AbstractController {
     LOGGER.info("createItem content: " + content);
     
     return updateItem;
-  }
-
-  public DAOItem getDaoItem() {
-    return daoItem;
-  }
-
-  public void setDaoItem(DAOItem daoItem) {
-    this.daoItem = daoItem;
   }
 
 }

@@ -35,18 +35,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.controller.ItemController;
-import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
+import de.fiz.oai.backend.service.ItemService;
 
 
 public class ItemControllerIT extends JerseyTest {
 
   private Logger LOGGER = LoggerFactory.getLogger(ItemControllerIT.class);
 
+
   @Mock
-  private DAOItem daoItem;
+  private ItemService itemService;
+
   
   @Mock
   HttpServletRequest request;
@@ -63,7 +65,7 @@ public class ItemControllerIT extends JerseyTest {
       
       @Override
       protected void configure() {
-          bind(daoItem).to(DAOItem.class);
+          bind(itemService).to(ItemService.class);
           bind(request).to(HttpServletRequest.class);
           bind(response).to(HttpServletResponse.class);
       }
@@ -87,7 +89,7 @@ public class ItemControllerIT extends JerseyTest {
     item.setSets(List.of("foo", "bar", "baz"));
     item.setIngestFormat("radar");
     
-    when(daoItem.read("65465456")).thenReturn(item);
+    when(itemService.read("65465456")).thenReturn(item);
     
     Response response = target("/item/65465456").queryParam("format", "oai_dc").request().get();
     
@@ -108,7 +110,7 @@ public class ItemControllerIT extends JerseyTest {
   
   @Test
   public void testGetItemNotFound() throws Exception {
-    when(daoItem.read("123Fragerei")).thenReturn(null);
+    when(itemService.read("123Fragerei")).thenReturn(null);
     
     Response response = target("/item/123Fragerei").queryParam("format", "oai_dc").request().get();
     
@@ -118,8 +120,7 @@ public class ItemControllerIT extends JerseyTest {
   
   @Test
   public void testSearchItems() throws Exception {
-    when(daoItem.search(any(), any(), any(), any(), any(), any()))
-    .thenReturn(getTestItemList());
+    when(itemService.search(any(), any(), any(), any(), any(), any())).thenReturn(getTestSearchResult());
 
     Response response = target("/item").queryParam("offset", 0).queryParam("rows", 20).queryParam("set", "abc")
     .queryParam("format", "oai_dc").queryParam("from", "1970-01-01T00:00:01Z").queryParam("until", "2970-01-01T00:00:01Z").queryParam("content", "").request()
@@ -163,7 +164,7 @@ public class ItemControllerIT extends JerseyTest {
   
   @Test
   public void testDeleteItem() throws Exception {
-    doNothing().when(daoItem).delete("65465456");
+    doNothing().when(itemService).delete("65465456");
     
     Response response = target("/item/65465456").request().delete();
     
@@ -173,7 +174,7 @@ public class ItemControllerIT extends JerseyTest {
   
   @Test
   public void testDeleteItemEmptyIdentifier() throws Exception {
-    doThrow(IOException.class).when(daoItem).delete(" ");
+    doThrow(IOException.class).when(itemService).delete(" ");
     
     Response response = target("/item/%20").request().delete();
     
@@ -182,7 +183,7 @@ public class ItemControllerIT extends JerseyTest {
   
   @Test
   public void testDeleteItemNotFound() throws Exception {
-    doThrow(NotFoundException.class).when(daoItem).delete("123Fragerei");
+    doThrow(NotFoundException.class).when(itemService).delete("123Fragerei");
     
     Response response = target("/item/123Fragerei").request().delete();
     
@@ -215,7 +216,7 @@ public class ItemControllerIT extends JerseyTest {
     FormDataBodyPart fdp = new FormDataBodyPart("content", xml, MediaType.TEXT_XML_TYPE);
     form.bodyPart(fdp);
 
-    when(daoItem.create(any(Item.class))).thenReturn(item);
+    when(itemService.create(any(Item.class))).thenReturn(item);
     
     Response response = target("/item").request().post(Entity.entity(form, form.getMediaType()));
     
@@ -273,8 +274,7 @@ public class ItemControllerIT extends JerseyTest {
     FormDataBodyPart fdp = new FormDataBodyPart("content", xml, MediaType.TEXT_XML_TYPE);
     form.bodyPart(fdp);
     
-    when(daoItem.create(any(Item.class))).thenReturn(item);
-    when(daoItem.read(any())).thenReturn(item);
+    when(itemService.update(any(Item.class))).thenReturn(item);
     
     Response response = target("/item/65465456").request().put(Entity.entity(form, form.getMediaType()));
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
@@ -300,7 +300,7 @@ public class ItemControllerIT extends JerseyTest {
     FormDataBodyPart fdp = new FormDataBodyPart("content", xml, MediaType.TEXT_XML_TYPE);
     form.bodyPart(fdp);
 
-    when(daoItem.read(any())).thenReturn(null);//This will trigger the NotFound!
+    doThrow(NotFoundException.class).when(itemService).update(any());
     
     Response response = target("/item/65465456").request().put(Entity.entity(form, form.getMediaType()));
     assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -382,7 +382,7 @@ public class ItemControllerIT extends JerseyTest {
   }
   
   
-  private List<Item> getTestItemList() {
+  private SearchResult<Item> getTestSearchResult() {
     List<Item> items = new ArrayList<Item>();
     
     for (int i = 0; i < 100; i++) {
@@ -391,8 +391,15 @@ public class ItemControllerIT extends JerseyTest {
       
       items.add(item);
     }
+    
+    SearchResult<Item> result = new SearchResult<Item>();
+    result.setData(items);
+    result.setTotal(items.size());
+    result.setSize(items.size());
+    result.setOffset(0);
+    
     LOGGER.info("getTestItemList size: " + items.size());
-    return items;
+    return result;
   }
   
 }
