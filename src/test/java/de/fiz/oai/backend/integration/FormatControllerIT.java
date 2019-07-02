@@ -32,16 +32,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.controller.FormatController;
-import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Format;
+import de.fiz.oai.backend.service.FormatService;
 
 public class FormatControllerIT extends JerseyTest {
 
   private Logger LOGGER = LoggerFactory.getLogger(FormatControllerIT.class);
 
   @Mock
-  private DAOFormat daoFormat;
+  private FormatService formatService;
 
   @Mock
   HttpServletRequest request;
@@ -58,7 +58,7 @@ public class FormatControllerIT extends JerseyTest {
 
       @Override
       protected void configure() {
-        bind(daoFormat).to(DAOFormat.class);
+        bind(formatService).to(FormatService.class);
         bind(request).to(HttpServletRequest.class);
         bind(response).to(HttpServletResponse.class);
       }
@@ -81,7 +81,7 @@ public class FormatControllerIT extends JerseyTest {
     format.setIdentifierXpath("/identifier");
     
 
-    when(daoFormat.read("oai_dc")).thenReturn(format);
+    when(formatService.read("oai_dc")).thenReturn(format);
 
     Response response = target("/format/oai_dc").request().get();
 
@@ -105,7 +105,7 @@ public class FormatControllerIT extends JerseyTest {
 
   @Test
   public void testGetFormatNotFound() throws Exception {
-    when(daoFormat.read("notfound")).thenReturn(null);
+    when(formatService.read("notfound")).thenReturn(null);
 
     Response response = target("/format/notfound").request().get();
 
@@ -114,7 +114,7 @@ public class FormatControllerIT extends JerseyTest {
 
   @Test
   public void testGetAllFormats() throws Exception {
-    when(daoFormat.readAll()).thenReturn(getTestFormatList());
+    when(formatService.readAll()).thenReturn(getTestFormatList());
 
     Response response = target("/format").request().get();
 
@@ -129,7 +129,7 @@ public class FormatControllerIT extends JerseyTest {
 
   @Test
   public void testDeleteFormat() throws Exception {
-    doNothing().when(daoFormat).delete("oai_dc");
+    doNothing().when(formatService).delete("oai_dc");
 
     Response response = target("/format/oai_dc").request().delete();
 
@@ -138,7 +138,7 @@ public class FormatControllerIT extends JerseyTest {
 
   @Test
   public void testDeleteFormatEmptyName() throws Exception {
-    doThrow(IOException.class).when(daoFormat).delete("%20");
+    doThrow(IOException.class).when(formatService).delete("%20");
 
     Response response = target("/format/%20").request().delete();
 
@@ -147,7 +147,7 @@ public class FormatControllerIT extends JerseyTest {
 
   @Test
   public void testDeleteFormatNotFound() throws Exception {
-    doThrow(NotFoundException.class).when(daoFormat).delete("123Fragerei");
+    doThrow(NotFoundException.class).when(formatService).delete("123Fragerei");
 
     Response response = target("/format/123Fragerei").request().delete();
 
@@ -162,7 +162,7 @@ public class FormatControllerIT extends JerseyTest {
     format.setSchemaNamespace("http://www.openarchives.org/OAI/2.0/oai_dc/");
     format.setIdentifierXpath("/identifier");
 
-    when(daoFormat.create(any())).thenReturn(format);
+    when(formatService.create(any())).thenReturn(format);
 
     Response response = target("format").request().post(Entity.json(
         "{\"metadataPrefix\":\"oai_dc\",\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\",\"identifierXpath\":\"/identifier\"}"));
@@ -218,8 +218,7 @@ public class FormatControllerIT extends JerseyTest {
     format.setSchemaNamespace("http://www.openarchives.org/OAI/2.0/oai_dc/");
     format.setIdentifierXpath("/identifier");
 
-    when(daoFormat.create(any())).thenReturn(format);
-    when(daoFormat.read(any())).thenReturn(format);
+    when(formatService.update(any())).thenReturn(format);
     
     
     Response response = target("format/oai_dc").request().put(Entity.json(
@@ -283,8 +282,7 @@ public class FormatControllerIT extends JerseyTest {
   
   @Test
   public void testUpdateFormatNotFound() throws Exception {
-  
-    when(daoFormat.read(any())).thenReturn(null);
+    doThrow(NotFoundException.class).when(formatService).update(any());
     
     Response response = target("format/oai_dc").request().put(Entity.json(
         "{\"metadataPrefix\":\"oai_dc\",\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\",\"identifierXpath\":\"/identifier\"}"));

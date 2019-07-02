@@ -26,10 +26,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.fiz.oai.backend.dao.DAOFormat;
-import de.fiz.oai.backend.dao.impl.CassandraDAOFormat;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Format;
+import de.fiz.oai.backend.service.FormatService;
+import de.fiz.oai.backend.service.impl.FormatServiceImpl;
 
 @Path("/format")
 public class FormatController extends AbstractController {
@@ -38,7 +38,7 @@ public class FormatController extends AbstractController {
   ServletContext servletContext;
 
   @Inject
-  DAOFormat daoFormat = new CassandraDAOFormat();
+  FormatService formatService = new FormatServiceImpl();
 
   private Logger LOGGER = LoggerFactory.getLogger(FormatController.class);
 
@@ -54,7 +54,7 @@ public class FormatController extends AbstractController {
 
     Format format;
     try {
-      format = daoFormat.read(metadataPrefix);
+      format = formatService.read(metadataPrefix);
     } catch (IOException e) {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
@@ -72,7 +72,7 @@ public class FormatController extends AbstractController {
 
     List<Format> formatList;
     try {
-      formatList = daoFormat.readAll();
+      formatList = formatService.readAll();
     } catch (IOException e) {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
@@ -90,7 +90,7 @@ public class FormatController extends AbstractController {
     }
 
     try {
-      daoFormat.delete(metadataPrefix);
+      formatService.delete(metadataPrefix);
     } catch (NotFoundException e) {
       throw new WebApplicationException(Status.NOT_FOUND);
     } catch (IOException ioe) {
@@ -129,7 +129,7 @@ public class FormatController extends AbstractController {
     Format newFormat = null;
 
     try {
-      newFormat = daoFormat.create(newFormat);
+      newFormat = formatService.create(newFormat);
     } catch (IOException e) {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
@@ -171,13 +171,10 @@ public class FormatController extends AbstractController {
     }
 
     try {
-      Format oldFormat = daoFormat.read(metadataPrefix);
+      formatService.update(format);
 
-      if (oldFormat == null) {
-        throw new WebApplicationException(Status.NOT_FOUND);
-      }
-      daoFormat.create(format);
-
+    } catch (NotFoundException nfe) {
+      throw new WebApplicationException(Status.NOT_FOUND);
     } catch (IOException e) {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
