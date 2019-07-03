@@ -1,6 +1,8 @@
 package de.fiz.oai.backend.models;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Item {
 
@@ -54,6 +56,17 @@ public class Item {
     this.ingestFormat = ingestFormat;
   }
 
+  
+  public Map<String,Object> toMap(){
+    final Map<String, Object> itemMap = new HashMap<String, Object>();
+    itemMap.put("identifier", identifier);
+    itemMap.put("datestamp", datestamp);
+    itemMap.put("deleteFlag", deleteFlag);
+    itemMap.put("ingestFormat", ingestFormat);
+    
+    return itemMap;
+  }
+  
   @Override
   public String toString() {
     return "Item [identifier=" + identifier + ", datestamp=" + datestamp + ", deleteFlag=" + deleteFlag + ", sets="

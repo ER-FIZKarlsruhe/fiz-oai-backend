@@ -6,15 +6,17 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
 
+import org.jvnet.hk2.annotations.Service;
+
 import de.fiz.oai.backend.dao.DAOSet;
-import de.fiz.oai.backend.dao.impl.CassandraDAOSet;
 import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.service.SetService;
 
+@Service
 public class SetServiceImpl implements SetService {
 
   @Inject
-  DAOSet daoSet = new CassandraDAOSet();
+  DAOSet daoSet;
 
   @Override
   public Set read(String name) throws IOException {

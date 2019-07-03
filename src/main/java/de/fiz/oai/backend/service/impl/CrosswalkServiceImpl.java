@@ -3,14 +3,19 @@ package de.fiz.oai.backend.service.impl;
 import java.io.IOException;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import org.jvnet.hk2.annotations.Service;
+
 import de.fiz.oai.backend.dao.DAOCrosswalk;
-import de.fiz.oai.backend.dao.impl.CassandraDAOCrosswalk;
 import de.fiz.oai.backend.models.Crosswalk;
 import de.fiz.oai.backend.service.CrosswalkService;
 
+@Service
 public class CrosswalkServiceImpl implements CrosswalkService {
 
-  DAOCrosswalk daoCrosswalk = new CassandraDAOCrosswalk(); 
+  @Inject
+  DAOCrosswalk daoCrosswalk; 
   
   @Override
   public Crosswalk read(String name) throws IOException {

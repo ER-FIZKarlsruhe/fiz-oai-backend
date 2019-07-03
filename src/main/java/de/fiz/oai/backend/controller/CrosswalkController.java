@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import javax.inject.Inject;
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
@@ -28,16 +27,12 @@ import org.slf4j.LoggerFactory;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Crosswalk;
 import de.fiz.oai.backend.service.CrosswalkService;
-import de.fiz.oai.backend.service.impl.CrosswalkServiceImpl;
 
 @Path("/crosswalk")
 public class CrosswalkController extends AbstractController {
 
-  @Context
-  ServletContext servletContext;
-
   @Inject
-  CrosswalkService crosswalkService = new CrosswalkServiceImpl();
+  CrosswalkService crosswalkService;
 
   private Logger LOGGER = LoggerFactory.getLogger(CrosswalkController.class);
 

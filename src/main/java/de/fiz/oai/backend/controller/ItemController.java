@@ -3,6 +3,7 @@ package de.fiz.oai.backend.controller;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.inject.Inject;
 import javax.servlet.ServletContext;
@@ -32,7 +33,6 @@ import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.service.ItemService;
-import de.fiz.oai.backend.service.impl.ItemServiceImpl;
 
 @Path("/item")
 public class ItemController extends AbstractController {
@@ -43,7 +43,7 @@ public class ItemController extends AbstractController {
   ServletContext servletContext;
 
   @Inject
-  ItemService itemService = new ItemServiceImpl();
+  ItemService itemService;
   
   private Logger LOGGER = LoggerFactory.getLogger(ItemController.class);
 
@@ -89,13 +89,16 @@ public class ItemController extends AbstractController {
     LOGGER.debug("until: " + until);
     LOGGER.debug("content: " + content);
     
+    Date fromDate = null;
+    Date untilDate = null;
+    
     if (StringUtils.isBlank(format)) {
       throw new BadRequestException("format QueryParam cannot be empty!");
     }
     
     try {
       if (!StringUtils.isBlank(from)) {
-        dateFormat.parse(from);
+        fromDate = dateFormat.parse(from);
       }
     } catch(ParseException e) {
       throw new BadRequestException("Invalid from QueryParam!");
@@ -103,13 +106,13 @@ public class ItemController extends AbstractController {
     
     try {
       if (!StringUtils.isBlank(until)) {
-        dateFormat.parse(until);
+        untilDate = dateFormat.parse(until);
       }
     } catch(ParseException e) {
       throw new BadRequestException("Invalid until QueryParam!");
     }
 
-    SearchResult<Item> result = itemService.search(offset, rows, set, format, from, until);
+    SearchResult<Item> result = itemService.search(offset, rows, set, format, fromDate, untilDate);
 
     return result;
   }

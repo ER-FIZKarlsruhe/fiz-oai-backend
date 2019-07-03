@@ -15,17 +15,17 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.fiz.oai.backend.controller.VersionController;
+import de.fiz.oai.backend.controller.InfoController;
 
 
-public class VersionIT extends JerseyTest {
+public class InfoControllerIT extends JerseyTest {
 
-  private Logger LOGGER = LoggerFactory.getLogger(VersionIT.class);
+  private Logger LOGGER = LoggerFactory.getLogger(InfoControllerIT.class);
 
   @Override
   protected Application configure() {
     enable(TestProperties.LOG_TRAFFIC);
-    ResourceConfig config = new ResourceConfig(VersionController.class);
+    ResourceConfig config = new ResourceConfig(InfoController.class);
     return config;
   }
   
@@ -33,7 +33,7 @@ public class VersionIT extends JerseyTest {
   @Test
   public void testVersion() throws Exception {
     LOGGER.info("testVersion");
-    Response response = target("/version").request().get();
+    Response response = target("/info/version").request().get();
     
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
     assertEquals("Http Content-Type should be: ", MediaType.TEXT_PLAIN, response.getHeaderString(HttpHeaders.CONTENT_TYPE));

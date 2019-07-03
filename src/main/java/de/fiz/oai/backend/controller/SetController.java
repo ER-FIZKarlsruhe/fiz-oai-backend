@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.service.SetService;
-import de.fiz.oai.backend.service.impl.SetServiceImpl;
 
 @Path("/set")
 public class SetController extends AbstractController {
@@ -38,7 +37,7 @@ public class SetController extends AbstractController {
   ServletContext servletContext;
 
   @Inject
-  SetService setService = new SetServiceImpl();
+  SetService setService;
 
   private Logger LOGGER = LoggerFactory.getLogger(SetController.class);
   

@@ -1,10 +1,14 @@
 package de.fiz.oai.backend.service;
 
 import java.io.IOException;
+import java.util.Date;
+
+import org.jvnet.hk2.annotations.Contract;
 
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 
+@Contract
 public interface ItemService {
 
   /**
@@ -41,7 +45,7 @@ public interface ItemService {
    * @param query  the query
    * @return the items
    */
-  SearchResult<Item> search(Integer offset, Integer rows, String set, String format,String from,String until) throws IOException;
+  SearchResult<Item> search(Integer offset, Integer rows, String set, String format, Date from, Date until) throws IOException;
 
   /**
    * Delete an Item.

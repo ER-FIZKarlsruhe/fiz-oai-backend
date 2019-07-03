@@ -14,6 +14,7 @@
     <jersey.version>2.29</jersey.version>
     <javax.javaee.version>7.0</javax.javaee.version>
     <junit.version>4.12</junit.version>
+    <elasticsearch.version>6.5.4</elasticsearch.version>
   </properties>
 
   <dependencies>
@@ -97,6 +98,27 @@
       <artifactId>jaxb-api</artifactId>
       <version>2.3.0</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.elasticsearch</groupId>
+      <artifactId>elasticsearch</artifactId>
+      <version>${elasticsearch.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.elasticsearch.client</groupId>
+      <artifactId>transport</artifactId>
+      <version>${elasticsearch.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.elasticsearch.client</groupId>
+      <artifactId>elasticsearch-rest-high-level-client</artifactId>
+      <version>${elasticsearch.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.elasticsearch.plugin</groupId>
+      <artifactId>transport-netty4-client</artifactId>
+      <version>${elasticsearch.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -144,7 +166,20 @@
           </argLine>
         </configuration>
       </plugin>
-
+      
+      <plugin>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-maven-plugin</artifactId>
+        <version>9.4.19.v20190610</version>
+        <configuration>
+          <httpConnector>
+            <port>8999</port>
+          </httpConnector>
+          <stopKey>quit</stopKey>
+          <stopPort>9000</stopPort>
+          <war>${project.basedir}/target/fiz-oai-backend.war</war>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 </project>

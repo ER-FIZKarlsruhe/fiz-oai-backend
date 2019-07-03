@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import javax.inject.Inject;
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
@@ -29,16 +28,12 @@ import org.slf4j.LoggerFactory;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.service.FormatService;
-import de.fiz.oai.backend.service.impl.FormatServiceImpl;
 
 @Path("/format")
 public class FormatController extends AbstractController {
 
-  @Context
-  ServletContext servletContext;
-
   @Inject
-  FormatService formatService = new FormatServiceImpl();
+  FormatService formatService;
 
   private Logger LOGGER = LoggerFactory.getLogger(FormatController.class);
 

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jvnet.hk2.annotations.Service;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
@@ -16,6 +17,7 @@ import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.utils.ClusterManager;
 
+@Service
 public class CassandraDAOItem implements DAOItem {
 
     public static final String ITEM_IDENTIFIER = "identifier";

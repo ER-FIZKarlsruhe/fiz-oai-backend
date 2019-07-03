@@ -3,14 +3,19 @@ package de.fiz.oai.backend.service.impl;
 import java.io.IOException;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import org.jvnet.hk2.annotations.Service;
+
 import de.fiz.oai.backend.dao.DAOContent;
-import de.fiz.oai.backend.dao.impl.CassandraDAOContent;
 import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.service.ContentService;
 
+@Service
 public class ContentServiceImpl implements ContentService {
 
-  DAOContent daoContent = new CassandraDAOContent();
+  @Inject
+  DAOContent daoContent;
   
   @Override
   public Content read(String identifier, String format) throws IOException {

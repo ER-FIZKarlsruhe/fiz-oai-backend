@@ -3,12 +3,12 @@ package de.fiz.oai.backend.service.impl;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
 
+import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +16,9 @@ import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.service.ItemService;
+import de.fiz.oai.backend.service.SearchService;
 
+@Service
 public class ItemServiceImpl implements ItemService {
 
   private Logger LOGGER = LoggerFactory.getLogger(ItemServiceImpl.class);
@@ -25,6 +27,9 @@ public class ItemServiceImpl implements ItemService {
   
   @Inject
   DAOItem daoItem;
+
+  @Inject
+  SearchService searchService;
   
   @Override
   public Item read(String identifier) throws IOException {
@@ -51,7 +56,7 @@ public class ItemServiceImpl implements ItemService {
     
     newItem = daoItem.create(item);
     
-  //TODO index item
+    searchService.createDocument(newItem);
     
     return newItem;
   }
@@ -83,21 +88,17 @@ public class ItemServiceImpl implements ItemService {
   }
 
   @Override
-  public SearchResult<Item> search(Integer offset, Integer rows, String set, String format, String from, String until) throws IOException {
+  public SearchResult<Item> search(Integer offset, Integer rows, String set, String format, Date from, Date until) throws IOException {
+    final SearchResult<String> idResult = searchService.search(offset, rows, set, format, from, until);
     
-    //TODO Use an SearchService instead of dao 
-    final List<Item> items = daoItem.search(offset, rows, set, format, from, until);
-    LOGGER.info("searchItems: " + items);
-    SearchResult<Item> result = new SearchResult<Item>();
+    //TODO As Cassandra for all items in itemIds
     
-    if (items != null) {
-      result.setData(items);
-      result.setSize(items.size());
-      result.setTotal(items.size());
-      return result;
-    }
+    SearchResult<Item> itemResult = new SearchResult<Item>();    
+    itemResult.setOffset(offset);
+    itemResult.setSize(idResult.getSize());
+    itemResult.setTotal(idResult.getTotal());
     
-    return null;
+    return itemResult;
   }
 
   

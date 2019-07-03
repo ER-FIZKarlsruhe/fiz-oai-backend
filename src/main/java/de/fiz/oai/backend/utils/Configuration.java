@@ -21,6 +21,10 @@ public class Configuration {
 
     private Properties properties = new Properties();
 
+    public Properties getProperties() {
+      return properties;
+    }
+
     private boolean applicationConfigured = false;
 
     private Configuration() {

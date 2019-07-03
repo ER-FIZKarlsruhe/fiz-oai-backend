@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import javax.inject.Inject;
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
@@ -26,16 +25,12 @@ import org.apache.commons.lang3.StringUtils;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.service.ContentService;
-import de.fiz.oai.backend.service.impl.ContentServiceImpl;
 
 @Path("/content")
 public class ContentController extends AbstractController {
 
-  @Context
-  ServletContext servletContext;
-
   @Inject
-  ContentService contentService = new ContentServiceImpl();
+  ContentService contentService;
 
   @GET
   @Path("/{identifier}/{format}")

@@ -1,19 +1,24 @@
 package de.fiz.oai.backend.dao.impl;
 
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.utils.UUIDs;
-import de.fiz.oai.backend.dao.DAOItem;
-import de.fiz.oai.backend.dao.DAOSet;
-import de.fiz.oai.backend.exceptions.NotFoundException;
-import de.fiz.oai.backend.models.Item;
-import de.fiz.oai.backend.models.Set;
-import de.fiz.oai.backend.utils.ClusterManager;
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+import org.jvnet.hk2.annotations.Service;
+
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
+
+import de.fiz.oai.backend.dao.DAOSet;
+import de.fiz.oai.backend.exceptions.NotFoundException;
+import de.fiz.oai.backend.models.Set;
+import de.fiz.oai.backend.utils.ClusterManager;
+
+@Service
 public class CassandraDAOSet implements DAOSet {
 
     public static final String SET_NAME = "name";

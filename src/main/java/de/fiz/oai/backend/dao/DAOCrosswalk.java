@@ -3,8 +3,11 @@ package de.fiz.oai.backend.dao;
 import java.io.IOException;
 import java.util.List;
 
+import org.jvnet.hk2.annotations.Contract;
+
 import de.fiz.oai.backend.models.Crosswalk;
 
+@Contract
 public interface DAOCrosswalk {
 
   /**

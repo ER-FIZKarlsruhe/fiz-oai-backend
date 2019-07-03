@@ -3,17 +3,21 @@ package de.fiz.oai.backend.service.impl;
 import java.io.IOException;
 import java.util.List;
 
+import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
 
+import org.jvnet.hk2.annotations.Service;
+
 import de.fiz.oai.backend.dao.DAOFormat;
-import de.fiz.oai.backend.dao.impl.CassandraDAOFormat;
 import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.service.FormatService;
 
+@Service
 public class FormatServiceImpl implements FormatService {
 
-  private DAOFormat daoFormat = new CassandraDAOFormat();
+  @Inject
+  private DAOFormat daoFormat;
   
   @Override
   public Format read(String metadataPrefix) throws IOException {

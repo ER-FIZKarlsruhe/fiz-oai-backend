@@ -42,6 +42,7 @@ public class FizOAIBackendApplication extends ResourceConfig {
         }
         
         register(MultiPartFeature.class);
+        register(new FizOAIBackendBinder());  
     }
 
     public static FizOAIBackendApplication getInstance() {
