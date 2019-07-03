@@ -61,14 +61,6 @@ public class CassandraUtils {
         createTableItemStmt.append("));");
         session.execute(createTableItemStmt.toString());
 
-        final StringBuilder createIndexItemStmt = new StringBuilder();
-        createIndexItemStmt.append("CREATE INDEX IF NOT EXISTS oai_item_identifier_idx ON ");
-        createIndexItemStmt.append(CassandraDAOItem.TABLENAME_ITEM);
-        createIndexItemStmt.append(" (");
-        createIndexItemStmt.append(CassandraDAOItem.ITEM_IDENTIFIER);
-        createIndexItemStmt.append(")");
-        session.execute(createIndexItemStmt.toString());
-
         final StringBuilder createTableSetStmt = new StringBuilder();
         createTableSetStmt.append("CREATE TABLE IF NOT EXISTS ");
         createTableSetStmt.append(CassandraDAOSet.TABLENAME_SET);
