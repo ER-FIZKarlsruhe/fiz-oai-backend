@@ -47,11 +47,8 @@ public class ItemServiceImpl implements ItemService {
     item.setDatestamp(dateFormat.format(new Date()));
     
     //Validate item
-    //TODO ingestFormat exists?
-    
-    //TODO given sets exists?
-    
     //TODO IngestFormat: Exists?
+
     //TODO Xsd Validate the content against the ingestFormat! 
     
     newItem = daoItem.create(item);
