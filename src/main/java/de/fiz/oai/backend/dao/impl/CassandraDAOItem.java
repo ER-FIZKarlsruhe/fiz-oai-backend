@@ -23,7 +23,6 @@ public class CassandraDAOItem implements DAOItem {
     public static final String ITEM_IDENTIFIER = "identifier";
     public static final String ITEM_DATESTAMP = "datestamp";
     public static final String ITEM_DELETEFLAG = "deleteflag";
-    public static final String ITEM_SETS = "sets";
     public static final String ITEM_INGESTFORMAT = "ingestFormat";
 
     public static final String TABLENAME_ITEM = "oai_item";
@@ -56,7 +55,6 @@ public class CassandraDAOItem implements DAOItem {
         item.setIdentifier(resultRow.getString(ITEM_IDENTIFIER));
         item.setDatestamp(resultRow.getString(ITEM_DATESTAMP));
         item.setDeleteFlag(resultRow.getBool(ITEM_DELETEFLAG));
-        item.setSets(resultRow.getList(ITEM_SETS, String.class));
         item.setIngestFormat(resultRow.getString(ITEM_INGESTFORMAT));
         
         
@@ -86,14 +84,12 @@ public class CassandraDAOItem implements DAOItem {
         insertStmt.append(", ");
         insertStmt.append(ITEM_DELETEFLAG);
         insertStmt.append(", ");
-        insertStmt.append(ITEM_SETS);
-        insertStmt.append(", ");
         insertStmt.append(ITEM_INGESTFORMAT);
         insertStmt.append(") VALUES (?, ?, ?, ?)");
 
         PreparedStatement prepared = session.prepare(insertStmt.toString());
 
-        BoundStatement bound = prepared.bind(item.getIdentifier(), item.getDatestamp(), item.isDeleteFlag(), item.getSets(), item.getIngestFormat());
+        BoundStatement bound = prepared.bind(item.getIdentifier(), item.getDatestamp(), item.isDeleteFlag(), item.getIngestFormat());
         ResultSet result = session.execute(bound);
 
         if(!result.wasApplied()) {

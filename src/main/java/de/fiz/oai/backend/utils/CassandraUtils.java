@@ -54,8 +54,6 @@ public class CassandraUtils {
         createTableItemStmt.append(" text, ");
         createTableItemStmt.append(CassandraDAOItem.ITEM_DELETEFLAG);
         createTableItemStmt.append(" boolean, ");
-        createTableItemStmt.append(CassandraDAOItem.ITEM_SETS);
-        createTableItemStmt.append(" list, ");
         createTableItemStmt.append(CassandraDAOItem.ITEM_INGESTFORMAT);
         createTableItemStmt.append(" text, PRIMARY KEY (");
         createTableItemStmt.append(CassandraDAOItem.ITEM_IDENTIFIER);
