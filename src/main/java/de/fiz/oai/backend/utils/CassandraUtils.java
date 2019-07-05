@@ -92,33 +92,33 @@ public class CassandraUtils {
         session.execute(createTableFormatStmt.toString());
         
         final StringBuilder createTableContentStmt = new StringBuilder();
-        createTableSetStmt.append("CREATE TABLE IF NOT EXISTS ");
-        createTableSetStmt.append(CassandraDAOContent.TABLENAME_CONTENT);
-        createTableSetStmt.append(" (");
-        createTableSetStmt.append(CassandraDAOContent.CONTENT_IDENTIFIER);
-        createTableSetStmt.append(" text, ");
-        createTableSetStmt.append(CassandraDAOContent.CONTENT_FORMAT);
-        createTableSetStmt.append(" text, ");
-        createTableSetStmt.append(CassandraDAOContent.CONTENT_CONTENT);
-        createTableSetStmt.append(" blob, PRIMARY KEY (");
-        createTableSetStmt.append(CassandraDAOContent.CONTENT_IDENTIFIER + ", " + CassandraDAOContent.CONTENT_FORMAT);
-        createTableSetStmt.append("));");
+        createTableContentStmt.append("CREATE TABLE IF NOT EXISTS ");
+        createTableContentStmt.append(CassandraDAOContent.TABLENAME_CONTENT);
+        createTableContentStmt.append(" (");
+        createTableContentStmt.append(CassandraDAOContent.CONTENT_IDENTIFIER);
+        createTableContentStmt.append(" text, ");
+        createTableContentStmt.append(CassandraDAOContent.CONTENT_FORMAT);
+        createTableContentStmt.append(" text, ");
+        createTableContentStmt.append(CassandraDAOContent.CONTENT_CONTENT);
+        createTableContentStmt.append(" blob, PRIMARY KEY (");
+        createTableContentStmt.append(CassandraDAOContent.CONTENT_IDENTIFIER + ", " + CassandraDAOContent.CONTENT_FORMAT);
+        createTableContentStmt.append("));");
         session.execute(createTableContentStmt.toString());
         
         final StringBuilder createTableCrosswalkStmt = new StringBuilder();
-        createTableSetStmt.append("CREATE TABLE IF NOT EXISTS ");
-        createTableSetStmt.append(CassandraDAOCrosswalk.TABLENAME_CROSSWALK);
-        createTableSetStmt.append(" (");
-        createTableSetStmt.append(CassandraDAOCrosswalk.CROSSWALK_NAME);
-        createTableSetStmt.append(" text, ");
-        createTableSetStmt.append(CassandraDAOCrosswalk.CROSSWALK_FORMAT_FROM);
-        createTableSetStmt.append(" text, ");
-        createTableSetStmt.append(CassandraDAOCrosswalk.CROSSWALK_FORMAT_TO);
-        createTableSetStmt.append(" text, ");
-        createTableSetStmt.append(CassandraDAOCrosswalk.CROSSWALK_XSLT_STYLESHEET);
-        createTableSetStmt.append(" blob, PRIMARY KEY (");
-        createTableSetStmt.append(CassandraDAOCrosswalk.CROSSWALK_NAME);
-        createTableSetStmt.append("));");
+        createTableCrosswalkStmt.append("CREATE TABLE IF NOT EXISTS ");
+        createTableCrosswalkStmt.append(CassandraDAOCrosswalk.TABLENAME_CROSSWALK);
+        createTableCrosswalkStmt.append(" (");
+        createTableCrosswalkStmt.append(CassandraDAOCrosswalk.CROSSWALK_NAME);
+        createTableCrosswalkStmt.append(" text, ");
+        createTableCrosswalkStmt.append(CassandraDAOCrosswalk.CROSSWALK_FORMAT_FROM);
+        createTableCrosswalkStmt.append(" text, ");
+        createTableCrosswalkStmt.append(CassandraDAOCrosswalk.CROSSWALK_FORMAT_TO);
+        createTableCrosswalkStmt.append(" text, ");
+        createTableCrosswalkStmt.append(CassandraDAOCrosswalk.CROSSWALK_XSLT_STYLESHEET);
+        createTableCrosswalkStmt.append(" blob, PRIMARY KEY (");
+        createTableCrosswalkStmt.append(CassandraDAOCrosswalk.CROSSWALK_NAME);
+        createTableCrosswalkStmt.append("));");
         session.execute(createTableCrosswalkStmt.toString());
     }
 
