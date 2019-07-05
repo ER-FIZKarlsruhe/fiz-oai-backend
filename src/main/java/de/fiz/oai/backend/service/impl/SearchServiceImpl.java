@@ -29,16 +29,16 @@ import org.jvnet.hk2.annotations.Service;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.service.SearchService;
+import de.fiz.oai.backend.utils.Configuration;
 
 @Service
 public class SearchServiceImpl implements SearchService {
 
   SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-DD'T'hh:mm:ss'Z'");
 
-  // TODO host and port
-  String elastisearchHost = "localhost";
+  String elastisearchHost = Configuration.getInstance().getProperty("elasticsearch.host");
 
-  int elastisearchPort = 8200;
+  int elastisearchPort = Integer.parseInt(Configuration.getInstance().getProperty("elasticsearch.port"));
 
   /**
    * 
@@ -100,36 +100,35 @@ public class SearchServiceImpl implements SearchService {
 
     RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
-
     final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
     searchSourceBuilder.from(offset);
     searchSourceBuilder.size(rows);
 
-    if (fromDate != null || untilDate != null) {
-      RangeQueryBuilder rangeQueryBuilder = QueryBuilders.rangeQuery("datestamp");
-      if (fromDate != null) {
-        rangeQueryBuilder.from(fromDate.getTime());
-      }
-
-      if (untilDate != null) {
-        rangeQueryBuilder.to(untilDate.getTime());
-      }
-
-      searchSourceBuilder.query(rangeQueryBuilder);
-    }
+//    if (fromDate != null || untilDate != null) {
+//      RangeQueryBuilder rangeQueryBuilder = QueryBuilders.rangeQuery("datestamp");
+//      if (fromDate != null) {
+//        rangeQueryBuilder.from(fromDate.getTime());
+//      }
+//
+//      if (untilDate != null) {
+//        rangeQueryBuilder.to(untilDate.getTime());
+//      }
+//
+//      searchSourceBuilder.query(rangeQueryBuilder);
+//    }
 
     if (set != null) {
       // TODO add solr query
     }
 
-    if (StringUtils.isNotEmpty(format)) {
-      TermQueryBuilder formatQuery = QueryBuilders.termQuery("formats", format);
-      searchSourceBuilder.query(formatQuery);
-    }
+//    if (StringUtils.isNotEmpty(format)) {
+//      TermQueryBuilder formatQuery = QueryBuilders.termQuery("formats", format);
+//      searchSourceBuilder.query(formatQuery);
+//    }
 
     // TODO sort
 
-    final SearchRequest searchRequest = new SearchRequest();
+    final SearchRequest searchRequest = new SearchRequest("items");
     searchRequest.source(searchSourceBuilder);
     final SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
 
@@ -140,6 +139,7 @@ public class SearchServiceImpl implements SearchService {
     while (iterator.hasNext()) {
       SearchHit searchHit = (SearchHit) iterator.next();
       itemIds.add(searchHit.getId());
+      System.out.println("id: " + searchHit.getId());
     }
 
     SearchResult<String> idResult = new SearchResult<String>();

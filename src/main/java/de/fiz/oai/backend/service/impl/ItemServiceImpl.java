@@ -2,7 +2,9 @@ package de.fiz.oai.backend.service.impl;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -86,13 +88,27 @@ public class ItemServiceImpl implements ItemService {
 
   @Override
   public SearchResult<Item> search(Integer offset, Integer rows, String set, String format, Date from, Date until) throws IOException {
+    if (offset == null) {
+      offset = 0;
+    }
+
+    if (rows == null) {
+      rows = 100;
+    }
+    
     final SearchResult<String> idResult = searchService.search(offset, rows, set, format, from, until);
     
-    //TODO As Cassandra for all items in itemIds
+    List<Item> itemList = new ArrayList<Item>();
+    //TODO use list of ids to retrive the Items
+    for(String s : idResult.getData()) {
+      Item item = read(s);
+      itemList.add(item);
+    }
     
     SearchResult<Item> itemResult = new SearchResult<Item>();    
+    itemResult.setData(itemList);
     itemResult.setOffset(offset);
-    itemResult.setSize(idResult.getSize());
+    itemResult.setSize(itemList.size());
     itemResult.setTotal(idResult.getTotal());
     
     return itemResult;

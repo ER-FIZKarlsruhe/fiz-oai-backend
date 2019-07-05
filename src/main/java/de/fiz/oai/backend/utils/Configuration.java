@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.Properties;
 
@@ -13,6 +14,8 @@ import org.slf4j.LoggerFactory;
 
 public class Configuration {
 
+    public static SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-DD'T'hh:mm:ss'Z'");
+  
     private Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
 
     private static final String CONFIG_FILENAME = "fiz-oai-backend.properties";

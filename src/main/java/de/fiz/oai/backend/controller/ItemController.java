@@ -2,7 +2,6 @@ package de.fiz.oai.backend.controller;
 
 import java.io.IOException;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.inject.Inject;
@@ -33,11 +32,12 @@ import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.service.ItemService;
+import de.fiz.oai.backend.utils.Configuration;
 
 @Path("/item")
 public class ItemController extends AbstractController {
 
-  SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-DD'T'hh:mm:ss'Z'");
+  
 
   @Context
   ServletContext servletContext;
@@ -98,7 +98,7 @@ public class ItemController extends AbstractController {
     
     try {
       if (!StringUtils.isBlank(from)) {
-        fromDate = dateFormat.parse(from);
+        fromDate = Configuration.dateFormat.parse(from);
       }
     } catch(ParseException e) {
       throw new BadRequestException("Invalid from QueryParam!");
@@ -106,7 +106,7 @@ public class ItemController extends AbstractController {
     
     try {
       if (!StringUtils.isBlank(until)) {
-        untilDate = dateFormat.parse(until);
+        untilDate = Configuration.dateFormat.parse(until);
       }
     } catch(ParseException e) {
       throw new BadRequestException("Invalid until QueryParam!");

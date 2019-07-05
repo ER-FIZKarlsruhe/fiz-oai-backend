@@ -16,6 +16,7 @@ import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.utils.ClusterManager;
+import de.fiz.oai.backend.utils.Configuration;
 
 @Service
 public class CassandraDAOItem implements DAOItem {
@@ -53,7 +54,7 @@ public class CassandraDAOItem implements DAOItem {
     private Item populateItem(Row resultRow) {
         final Item item = new Item();
         item.setIdentifier(resultRow.getString(ITEM_IDENTIFIER));
-        item.setDatestamp(resultRow.getString(ITEM_DATESTAMP));
+        item.setDatestamp(Configuration.dateFormat.format(resultRow.getTimestamp(ITEM_DATESTAMP)));
         item.setDeleteFlag(resultRow.getBool(ITEM_DELETEFLAG));
         item.setIngestFormat(resultRow.getString(ITEM_INGESTFORMAT));
         
