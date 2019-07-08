@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
@@ -18,9 +18,6 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.RangeQueryBuilder;
-import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -49,11 +46,18 @@ public class SearchServiceImpl implements SearchService {
     RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
 
+    String oaiDcJson = null;
+    //TODO get oai_dc xml for item and transform it into Json
+    //oaiDcJson = OaiDcHelper.xmlToJson(xml);
+    
+    Map<String,Object> itemMap = item.toMap();
+    itemMap.put("oai_dc", oaiDcJson);
+    
     IndexRequest indexRequest = new IndexRequest();
     indexRequest.index("item");
     indexRequest.type("_doc");
     indexRequest.id(item.getIdentifier());
-    indexRequest.source(item.toMap());
+    indexRequest.source(itemMap);
     
     client.index(indexRequest, RequestOptions.DEFAULT);
   }
@@ -67,11 +71,18 @@ public class SearchServiceImpl implements SearchService {
     RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
 
+    String oaiDcJson = null;
+    //TODO get oai_dc content
+    //TODO create JSON of oai_dc XML
+    
+    Map<String,Object> itemMap = item.toMap();
+    itemMap.put("oai_dc", oaiDcJson);
+    
     UpdateRequest updateRequest = new UpdateRequest();
     updateRequest.index("item");
     updateRequest.type("_doc");
     updateRequest.id(item.getIdentifier());
-    updateRequest.doc(item.toMap());
+    updateRequest.doc(itemMap);
     client.update(updateRequest, RequestOptions.DEFAULT);
   }
 

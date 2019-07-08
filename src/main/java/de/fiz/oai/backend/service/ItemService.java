@@ -17,7 +17,7 @@ public interface ItemService {
    * @param identifier the identifier
    * @return the item
    */
-  Item read(String identifier) throws IOException;
+  Item read(String identifier, String format, Boolean content) throws IOException;
 
   /**
    * Create a new Item.
@@ -45,7 +45,7 @@ public interface ItemService {
    * @param query  the query
    * @return the items
    */
-  SearchResult<Item> search(Integer offset, Integer rows, String set, String format, Date from, Date until) throws IOException;
+  SearchResult<Item> search(Integer offset, Integer rows, String set, String format, Date from, Date until, Boolean content) throws IOException;
 
   /**
    * Delete an Item.

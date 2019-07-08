@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.eq;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.controller.ItemController;
 import de.fiz.oai.backend.exceptions.NotFoundException;
+import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.service.ItemService;
@@ -81,7 +83,7 @@ public class ItemControllerIT extends JerseyTest {
 }
   
   @Test
-  public void testGetItem() throws Exception {
+  public void testGetItemNoContent() throws Exception {
     Item item = new Item();
     item.setIdentifier("65465456");
     item.setDatestamp("1972-05-20T20:33:18.772Z");
@@ -89,7 +91,7 @@ public class ItemControllerIT extends JerseyTest {
     item.setTags(List.of("foo", "bar", "baz"));
     item.setIngestFormat("radar");
     
-    when(itemService.read("65465456")).thenReturn(item);
+    when(itemService.read(any(), any(), eq(false))).thenReturn(item);
     
     Response response = target("/item/65465456").queryParam("format", "oai_dc").request().get();
     
@@ -97,7 +99,35 @@ public class ItemControllerIT extends JerseyTest {
     assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
  
     String content = response.readEntity(String.class);
-    assertEquals("Content of response is: ", "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}", content);
+    assertEquals("Content of response is: ", "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\",\"content\":null}", content);
+  }
+
+  
+  @Test
+  public void testGetItemWithContent() throws Exception {
+    Content content = new Content();
+    content.setFormat("oai_dc");
+    content.setIdentifier("65465456");
+    content.setContent("Das ist ein wenig content".getBytes());
+    
+    Item item = new Item();
+    item.setIdentifier("65465456");
+    item.setDatestamp("1972-05-20T20:33:18.772Z");
+    item.setDeleteFlag(false);
+    item.setTags(List.of("foo", "bar", "baz"));
+    item.setIngestFormat("radar");
+    item.setContent(content);
+    
+    when(itemService.read(any(), any(), eq(true))).thenReturn(item);
+    
+    Response response = target("/item/65465456").queryParam("format", "oai_dc").queryParam("content", "true").request().get();
+    
+    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+    assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+ 
+    String responseEntity = response.readEntity(String.class);
+    System.out.println("responseEntity: " + responseEntity);
+    assertEquals("Content of response is: ", "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\",\"content\":{\"identifier\":\"65465456\",\"format\":\"oai_dc\",\"content\":\"RGFzIGlzdCBlaW4gd2VuaWcgY29udGVudA==\"}}", responseEntity);
   }
   
   @Test
@@ -110,7 +140,7 @@ public class ItemControllerIT extends JerseyTest {
   
   @Test
   public void testGetItemNotFound() throws Exception {
-    when(itemService.read("123Fragerei")).thenReturn(null);
+    when(itemService.read(any(),any(),any())).thenReturn(null);
     
     Response response = target("/item/123Fragerei").queryParam("format", "oai_dc").request().get();
     
@@ -119,8 +149,8 @@ public class ItemControllerIT extends JerseyTest {
   
   
   @Test
-  public void testSearchItems() throws Exception {
-    when(itemService.search(any(), any(), any(), any(), any(), any())).thenReturn(getTestSearchResult());
+  public void testSearchItemsNoContent() throws Exception {
+    when(itemService.search(any(), any(), any(), any(), any(), any(), eq(false))).thenReturn(getTestSearchResult());
 
     Response response = target("/item").queryParam("offset", 0).queryParam("rows", 20).queryParam("set", "abc")
     .queryParam("format", "oai_dc").queryParam("from", "1970-01-01T00:00:01Z").queryParam("until", "2970-01-01T00:00:01Z").queryParam("content", "").request()

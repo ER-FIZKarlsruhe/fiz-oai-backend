@@ -15,6 +15,8 @@ public class Item {
   private List<String> tags;
   
   private String ingestFormat;
+  
+  private Content content;
 
   public String getIdentifier() {
     return identifier;
@@ -57,6 +59,14 @@ public class Item {
   }
 
   
+  public Content getContent() {
+    return content;
+  }
+
+  public void setContent(Content content) {
+    this.content = content;
+  }
+
   public Map<String,Object> toMap(){
     final Map<String, Object> itemMap = new HashMap<String, Object>();
     itemMap.put("identifier", identifier);

@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.exceptions.NotFoundException;
+import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.service.ItemService;
@@ -50,14 +51,18 @@ public class ItemController extends AbstractController {
   @GET
   @Path("/{identifier}")
   @Produces(MediaType.APPLICATION_JSON)
-  public Item getItem(@PathParam("identifier") String identifier, @QueryParam("format") String format ,  @Context HttpServletRequest request,
+  public Item getItem(@PathParam("identifier") String identifier, @QueryParam("format") String format , @QueryParam("content") Boolean content ,@Context HttpServletRequest request,
       @Context HttpServletResponse response) throws Exception {
 
     if (StringUtils.isBlank(format)) {
       throw new BadRequestException("format QueryParam cannot be empty!");
     }
     
-    final Item item = itemService.read(identifier);
+    if (content == null) {
+      content = false;
+    }
+    
+    final Item item = itemService.read(identifier, format, content);
     LOGGER.info("getItem: " + item);
     
     if (item == null) {
@@ -77,7 +82,7 @@ public class ItemController extends AbstractController {
       @QueryParam("format") String format, 
       @QueryParam("from") String from , 
       @QueryParam("until") String until , 
-      @QueryParam("content") String content , 
+      @QueryParam("content") Boolean content , 
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws Exception {
 
@@ -111,8 +116,12 @@ public class ItemController extends AbstractController {
     } catch(ParseException e) {
       throw new BadRequestException("Invalid until QueryParam!");
     }
+    
+    if (content == null) {
+      content = false;
+    }
 
-    SearchResult<Item> result = itemService.search(offset, rows, set, format, fromDate, untilDate);
+    SearchResult<Item> result = itemService.search(offset, rows, set, format, fromDate, untilDate, content);
 
     return result;
   }
@@ -145,6 +154,14 @@ public class ItemController extends AbstractController {
     if (!content.contains(item.getIdentifier())) {
       throw new WebApplicationException("Cannot find the identifier in the content!", Status.BAD_REQUEST);
     }
+    
+    Content itemContent = new Content();
+    itemContent.setContent(content.getBytes());
+    itemContent.setFormat(item.getIngestFormat());
+    itemContent.setIdentifier(item.getIdentifier());
+    
+    item.setContent(itemContent);
+    
     Item newItem = null;
     
     try {

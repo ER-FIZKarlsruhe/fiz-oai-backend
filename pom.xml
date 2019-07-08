@@ -98,11 +98,27 @@
       <artifactId>jaxb-api</artifactId>
       <version>2.3.0</version>
     </dependency>
-
+    <dependency>
+      <groupId>org.glassfish.jaxb</groupId>
+      <artifactId>jaxb-runtime</artifactId>
+      <version>2.3.2</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.activation</groupId>
+      <artifactId>jakarta.activation</artifactId>
+      <version>1.2.1</version>
+      <scope>runtime</scope>
+    </dependency>
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-high-level-client</artifactId>
       <version>${elasticsearch.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-xml</artifactId>
+      <version>2.9.9</version>
     </dependency>
   </dependencies>
 
@@ -151,7 +167,7 @@
           </argLine>
         </configuration>
       </plugin>
-      
+
       <plugin>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-maven-plugin</artifactId>
@@ -163,6 +179,43 @@
           <stopKey>quit</stopKey>
           <stopPort>9000</stopPort>
           <war>${project.basedir}/target/fiz-oai-backend.war</war>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.jvnet.jaxb2.maven2</groupId>
+        <artifactId>maven-jaxb2-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>generate-sources-trans</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+
+          <schemaDirectory>${project.basedir}/src/main/xsd/oai_dc/</schemaDirectory>
+          <schemaIncludes>
+            <include>oai_dc.xsd</include>
+          </schemaIncludes>
+          <bindingDirectory>${project.basedir}/src/main/xjb/</bindingDirectory>
+             <bindingIncludes>
+                      <bindingInclude>bindings.xjb</bindingInclude>
+                  </bindingIncludes>
+          <generatePackage>de.fiz.oai.backend.xsd.oai_dc</generatePackage>
+          <extension>true</extension>
+          <args>
+            <arg>-Xsimplify</arg>
+          </args>
+          <plugins>
+            <plugin>
+              <groupId>org.jvnet.jaxb2_commons</groupId>
+              <artifactId>jaxb2-basics</artifactId>
+              <version>1.11.1</version>
+            </plugin>
+          </plugins>
         </configuration>
       </plugin>
     </plugins>
