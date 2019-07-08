@@ -25,7 +25,8 @@ public class CassandraDAOItem implements DAOItem {
     public static final String ITEM_DATESTAMP = "datestamp";
     public static final String ITEM_DELETEFLAG = "deleteflag";
     public static final String ITEM_INGESTFORMAT = "ingestFormat";
-
+    public static final String ITEM_TAGS = "tags";
+    
     public static final String TABLENAME_ITEM = "oai_item";
 
     public Item read(String identifier) throws IOException {
@@ -85,8 +86,10 @@ public class CassandraDAOItem implements DAOItem {
         insertStmt.append(", ");
         insertStmt.append(ITEM_DELETEFLAG);
         insertStmt.append(", ");
+        insertStmt.append(ITEM_TAGS);
+        insertStmt.append(", ");
         insertStmt.append(ITEM_INGESTFORMAT);
-        insertStmt.append(") VALUES (?, ?, ?, ?)");
+        insertStmt.append(") VALUES (?, ?, ?, ?, ?)");
 
         PreparedStatement prepared = session.prepare(insertStmt.toString());
 

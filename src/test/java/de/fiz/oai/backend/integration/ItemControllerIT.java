@@ -86,7 +86,7 @@ public class ItemControllerIT extends JerseyTest {
     item.setIdentifier("65465456");
     item.setDatestamp("1972-05-20T20:33:18.772Z");
     item.setDeleteFlag(false);
-    item.setSets(List.of("foo", "bar", "baz"));
+    item.setTags(List.of("foo", "bar", "baz"));
     item.setIngestFormat("radar");
     
     when(itemService.read("65465456")).thenReturn(item);
@@ -97,7 +97,7 @@ public class ItemControllerIT extends JerseyTest {
     assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
  
     String content = response.readEntity(String.class);
-    assertEquals("Content of response is: ", "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}", content);
+    assertEquals("Content of response is: ", "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}", content);
   }
   
   @Test
@@ -197,9 +197,9 @@ public class ItemControllerIT extends JerseyTest {
     item.setIdentifier("65465456");
     item.setDatestamp("1972-05-20T20:33:18.772Z");
     item.setDeleteFlag(false);
-    item.setSets(List.of("foo", "bar", "baz"));
+    item.setTags(List.of("foo", "bar", "baz"));
     item.setIngestFormat("radar");
-    String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
+    String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
     
     String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n" + 
         "    <dc:title>testCreateItem</dc:title>\n" + 
@@ -226,7 +226,7 @@ public class ItemControllerIT extends JerseyTest {
   @Test
   public void testCreateItemBadIdentifier() throws Exception {
     //The json use an identifier that is not in the xml!
-    String json = "{\"identifier\":\"NotInXml\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
+    String json = "{\"identifier\":\"NotInXml\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
     
     String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n" + 
         "    <dc:title>testCreateItem</dc:title>\n" + 
@@ -255,9 +255,9 @@ public class ItemControllerIT extends JerseyTest {
     item.setIdentifier("65465456");
     item.setDatestamp("1972-05-20T20:33:18.772Z");
     item.setDeleteFlag(false);
-    item.setSets(List.of("foo", "bar", "baz"));
+    item.setTags(List.of("foo", "bar", "baz"));
     item.setIngestFormat("radar");
-    String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
+    String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
     
     String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n" + 
         "    <dc:title>testCreateItem</dc:title>\n" + 
@@ -283,7 +283,7 @@ public class ItemControllerIT extends JerseyTest {
   @Test
   public void testUpdateItemIdentifierNotFound() throws Exception {
     //The json use an identifier that is not in the xml!
-    String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
+    String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
     
     String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n" + 
         "    <dc:title>testCreateItem</dc:title>\n" + 
@@ -309,7 +309,7 @@ public class ItemControllerIT extends JerseyTest {
   @Test
   public void testUpdateItemBadIdentifierInJson() throws Exception {
     //The json use an identifier that is not in the xml!
-    String json = "{\"identifier\":\"NotInXml\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
+    String json = "{\"identifier\":\"NotInXml\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
     
     String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n" + 
         "    <dc:title>testCreateItem</dc:title>\n" + 
@@ -334,7 +334,7 @@ public class ItemControllerIT extends JerseyTest {
   @Test
   public void testUpdateItemBadIdentifierInXml() throws Exception {
     //The json use an identifier that is not in the xml!
-    String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
+    String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
     
     String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n" + 
         "    <dc:title>testCreateItem</dc:title>\n" + 
@@ -359,7 +359,7 @@ public class ItemControllerIT extends JerseyTest {
   @Test
   public void testUpdateItemBadIdentifierInPath() throws Exception {
     //The json use an identifier that is not in the xml!
-    String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
+    String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
     
     String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n" + 
         "    <dc:title>testCreateItem</dc:title>\n" + 

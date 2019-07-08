@@ -12,7 +12,7 @@ public class Item {
   
   private Boolean deleteFlag;
   
-  private List<String> sets;
+  private List<String> tags;
   
   private String ingestFormat;
 
@@ -40,12 +40,12 @@ public class Item {
     this.deleteFlag = deleteFlag;
   }
 
-  public List<String> getSets() {
-    return sets;
+  public List<String> getTags() {
+    return tags;
   }
 
-  public void setSets(List<String> sets) {
-    this.sets = sets;
+  public void setTags(List<String> tags) {
+    this.tags = tags;
   }
 
   public String getIngestFormat() {
@@ -69,8 +69,8 @@ public class Item {
   
   @Override
   public String toString() {
-    return "Item [identifier=" + identifier + ", datestamp=" + datestamp + ", deleteFlag=" + deleteFlag + ", sets="
-        + sets + ", ingestFormat=" + ingestFormat + "]";
+    return "Item [identifier=" + identifier + ", datestamp=" + datestamp + ", deleteFlag=" + deleteFlag + ", tags="
+        + tags + ", ingestFormat=" + ingestFormat + "]";
   }
   
 }
