@@ -8,6 +8,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
@@ -23,20 +26,28 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.jvnet.hk2.annotations.Service;
 
+import de.fiz.oai.backend.dao.DAOContent;
+import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
+import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.utils.Configuration;
+import de.fiz.oai.backend.utils.OaiDcHelper;
 
 @Service
 public class SearchServiceImpl implements SearchService {
-
-  SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-DD'T'hh:mm:ss'Z'");
 
   String elastisearchHost = Configuration.getInstance().getProperty("elasticsearch.host");
 
   int elastisearchPort = Integer.parseInt(Configuration.getInstance().getProperty("elasticsearch.port"));
 
+  @Inject
+  DAOItem daoItem;
+
+  @Inject
+  DAOContent daoContent;
+  
   /**
    * 
    * @param item @throws IOException @throws
@@ -46,9 +57,8 @@ public class SearchServiceImpl implements SearchService {
     RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
 
-    String oaiDcJson = null;
-    //TODO get oai_dc xml for item and transform it into Json
-    //oaiDcJson = OaiDcHelper.xmlToJson(xml);
+    byte[] xmlContentByte = daoContent.read(item.getIdentifier(), "oai_dc").getContent();
+    String oaiDcJson = OaiDcHelper.xmlToJson(new String(xmlContentByte, "UTF-8"));
     
     Map<String,Object> itemMap = item.toMap();
     itemMap.put("oai_dc", oaiDcJson);
@@ -71,9 +81,8 @@ public class SearchServiceImpl implements SearchService {
     RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
 
-    String oaiDcJson = null;
-    //TODO get oai_dc content
-    //TODO create JSON of oai_dc XML
+    byte[] xmlContentByte = daoContent.read(item.getIdentifier(), "oai_dc").getContent();
+    String oaiDcJson = OaiDcHelper.xmlToJson(new String(xmlContentByte, "UTF-8"));
     
     Map<String,Object> itemMap = item.toMap();
     itemMap.put("oai_dc", oaiDcJson);
@@ -104,8 +113,7 @@ public class SearchServiceImpl implements SearchService {
   }
 
   @Override
-  public SearchResult<String> search(Integer offset, Integer rows, String set, String format, Date fromDate,
-      Date untilDate) throws IOException {
+  public SearchResult<String> search(Integer offset, Integer rows, Set set, String format, Date fromDate, Date untilDate) throws IOException {
 
     List<String> itemIds = new ArrayList<String>();
 
@@ -129,7 +137,14 @@ public class SearchServiceImpl implements SearchService {
 //    }
 
     if (set != null) {
-      // TODO add solr query
+      if (StringUtils.isNotBlank(set.getSearchQuery())) {
+        //TODO query field oai_dc with searchQuery
+      } else if(StringUtils.isNotBlank(set.getSearchTerm())) {
+        //TODO query all fields or the searchTerm
+      }  
+      
+      
+      
     }
 
 //    if (StringUtils.isNotEmpty(format)) {

@@ -25,23 +25,28 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 import de.fiz.oai.backend.dao.DAOContent;
+import de.fiz.oai.backend.dao.DAOCrosswalk;
 import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.dao.DAOItem;
+import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.exceptions.FormatValidationException;
+import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.exceptions.UnknownFormatException;
 import de.fiz.oai.backend.models.Content;
+import de.fiz.oai.backend.models.Crosswalk;
 import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
+import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.service.ItemService;
 import de.fiz.oai.backend.service.SearchService;
+import de.fiz.oai.backend.utils.Configuration;
 
 @Service
 public class ItemServiceImpl implements ItemService {
 
   private Logger LOGGER = LoggerFactory.getLogger(ItemServiceImpl.class);
 
-  SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-DD'T'hh:mm:ss'Z'");
 
   @Inject
   DAOItem daoItem;
@@ -52,6 +57,13 @@ public class ItemServiceImpl implements ItemService {
   @Inject
   DAOFormat daoFormat;
 
+  @Inject
+  DAOCrosswalk daoCrosswalk;
+
+  @Inject
+  DAOSet daoSet;
+
+  
   @Inject
   SearchService searchService;
 
@@ -73,12 +85,12 @@ public class ItemServiceImpl implements ItemService {
     Item newItem = null;
 
     // Overwrite datestamp!
-    item.setDatestamp(dateFormat.format(new Date()));
+    item.setDatestamp(Configuration.dateFormat.format(new Date()));
 
     // IngestFormat exists?
     Format ingestFormat = daoFormat.read(item.getIngestFormat());
     if (ingestFormat == null) {
-      throw new UnknownFormatException("Cannot find a Fomat for the given ingestFormat: " + item.getIngestFormat());
+      throw new UnknownFormatException("Cannot find a Format for the given ingestFormat: " + item.getIngestFormat());
     }
 
     // Validate xml against xsd
@@ -90,12 +102,16 @@ public class ItemServiceImpl implements ItemService {
     //Create Content
     daoContent.create(item.getContent());
 
-    //Create Crosswalks
-    //TODO 
-    // 1) search all crosswalks with inputFormat == ingestFormat
-    // 2) Perform xsltTransformation
+    //Create Crosswalk content
+    List<Crosswalk> crosswalks = daoCrosswalk.readAll();
+    for (Crosswalk currentWalk: crosswalks) {
+      if (currentWalk.getFormatFrom().equals(item.getIngestFormat())) {
+        currentWalk.getXsltStylesheet();
+        //TODO do transformation and save it into content
+      }
+    }
     
-    
+    //TODO For indexing its important that oai_dc content exits! 
     searchService.createDocument(newItem);
 
     return newItem;
@@ -110,7 +126,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     // Overwrite datestamp!
-    item.setDatestamp(dateFormat.format(new Date()));
+    item.setDatestamp(Configuration.dateFormat.format(new Date()));
 
     // Format exists?
     Format ingestFormat = daoFormat.read(item.getIngestFormat());
@@ -139,7 +155,7 @@ public class ItemServiceImpl implements ItemService {
   }
 
   @Override
-  public SearchResult<Item> search(Integer offset, Integer rows, String set, String format, Date from, Date until,
+  public SearchResult<Item> search(Integer offset, Integer rows, String setName, String format, Date from, Date until,
       Boolean readContent) throws IOException {
     if (offset == null) {
       offset = 0;
@@ -150,6 +166,12 @@ public class ItemServiceImpl implements ItemService {
       rows = 100;
     }
 
+    Set set = daoSet.read(setName);
+    
+    if (set == null) {
+      throw new NotFoundException("Set " + setName + " not found in the database");
+    }
+    
     final SearchResult<String> idResult = searchService.search(offset, rows, set, format, from, until);
 
     List<Item> itemList = new ArrayList<Item>();
@@ -170,8 +192,10 @@ public class ItemServiceImpl implements ItemService {
 
   @Override
   public void delete(String identifier) throws IOException {
-    // TODO Auto-generated method stub
 
+    //TODO read item and set delete flag, save to cassandra
+
+    //TODO update index
   }
 
   /**

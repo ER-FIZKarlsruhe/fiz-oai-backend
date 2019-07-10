@@ -7,6 +7,7 @@ import org.jvnet.hk2.annotations.Contract;
 
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
+import de.fiz.oai.backend.models.Set;
 
 @Contract
 public interface SearchService {
@@ -55,6 +56,6 @@ public interface SearchService {
    * @return
    * @throws IOException
    */
-  SearchResult<String> search(Integer offset, Integer rows, String set, String format, Date fromDate, Date untilDate) throws IOException;
+  SearchResult<String> search(Integer offset, Integer rows, Set set, String format, Date fromDate, Date untilDate) throws IOException;
   
 }
