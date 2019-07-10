@@ -134,7 +134,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     // Validate xml against xsd
-    validate(ingestFormat.getSchemaLocation(), new String(item.getContent().getContent(), "UTF-8"));
+    //validate(ingestFormat.getSchemaLocation(), new String(item.getContent().getContent(), "UTF-8"));
 
     //TODO delete all old content with item identifer
     
