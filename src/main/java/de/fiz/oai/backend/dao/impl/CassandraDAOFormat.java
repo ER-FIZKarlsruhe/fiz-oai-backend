@@ -97,7 +97,7 @@ public class CassandraDAOFormat implements DAOFormat {
         insertStmt.append(FORMAT_SCHEMALOCATION);
         insertStmt.append(", ");
         insertStmt.append(FORMAT_SCHEMANAMESPACE);
-        insertStmt.append(") VALUES (?, ?, ?, ?, ?)");
+        insertStmt.append(") VALUES (?, ?, ?, ?)");
 
         PreparedStatement prepared = session.prepare(insertStmt.toString());
 
