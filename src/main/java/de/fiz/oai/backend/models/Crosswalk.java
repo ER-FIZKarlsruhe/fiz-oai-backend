@@ -5,7 +5,7 @@ public class Crosswalk {
     private String name;
     private String formatFrom;
     private String formatTo;
-    private byte[] xsltStylesheet;
+    private String xsltStylesheet;
     
     
     public String getName() {
@@ -32,11 +32,11 @@ public class Crosswalk {
       this.formatTo = formatTo;
     }
     
-    public byte[] getXsltStylesheet() {
+    public String getXsltStylesheet() {
       return xsltStylesheet;
     }
     
-    public void setXsltStylesheet(byte[] xsltStylesheet) {
+    public void setXsltStylesheet(String xsltStylesheet) {
       this.xsltStylesheet = xsltStylesheet;
     }
     

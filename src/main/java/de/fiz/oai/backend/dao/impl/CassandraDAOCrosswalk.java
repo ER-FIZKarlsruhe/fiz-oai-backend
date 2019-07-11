@@ -76,7 +76,7 @@ public class CassandraDAOCrosswalk implements DAOCrosswalk {
         crosswalk.setName(row.getString(CROSSWALK_NAME));
         crosswalk.setFormatFrom(row.getString(CROSSWALK_FORMAT_FROM));
         crosswalk.setFormatTo(row.getString(CROSSWALK_FORMAT_TO));
-        crosswalk.setXsltStylesheet(row.getBytes(CROSSWALK_XSLT_STYLESHEET).array());
+        crosswalk.setXsltStylesheet(new String(row.getBytes(CROSSWALK_XSLT_STYLESHEET).array()));
         return crosswalk;
     }
     
