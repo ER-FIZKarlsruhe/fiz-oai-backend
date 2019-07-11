@@ -55,7 +55,7 @@ public class CassandraDAOItem implements DAOItem {
     private Item populateItem(Row resultRow) {
         final Item item = new Item();
         item.setIdentifier(resultRow.getString(ITEM_IDENTIFIER));
-        item.setDatestamp(Configuration.dateFormat.format(resultRow.getTimestamp(ITEM_DATESTAMP)));
+        item.setDatestamp(resultRow.getString(ITEM_DATESTAMP));
         item.setDeleteFlag(resultRow.getBool(ITEM_DELETEFLAG));
         item.setIngestFormat(resultRow.getString(ITEM_INGESTFORMAT));
         
@@ -93,7 +93,7 @@ public class CassandraDAOItem implements DAOItem {
 
         PreparedStatement prepared = session.prepare(insertStmt.toString());
 
-        BoundStatement bound = prepared.bind(item.getIdentifier(), item.getDatestamp(), item.isDeleteFlag(), item.getIngestFormat());
+        BoundStatement bound = prepared.bind(item.getIdentifier(), item.getDatestamp(), item.isDeleteFlag(), item.getTags(), item.getIngestFormat());
         ResultSet result = session.execute(bound);
 
         if(!result.wasApplied()) {

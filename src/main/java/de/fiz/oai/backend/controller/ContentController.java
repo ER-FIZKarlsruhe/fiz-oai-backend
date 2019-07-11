@@ -122,7 +122,7 @@ public class ContentController extends AbstractController {
       throw new WebApplicationException("Content format cannot be empty!", Status.BAD_REQUEST);
     }
     
-    if (content.getContent().length == 0) {
+    if (StringUtils.isBlank(content.getContent())) {
       throw new WebApplicationException("Content content cannot be empty!", Status.BAD_REQUEST);
     }
     

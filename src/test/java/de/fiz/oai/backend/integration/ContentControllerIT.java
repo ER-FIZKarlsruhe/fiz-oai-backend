@@ -76,7 +76,7 @@ public class ContentControllerIT extends JerseyTest {
     Content content = new Content();
     content.setIdentifier("123456");
     content.setFormat("oai_dc");
-    content.setContent("Wann wirds endlich wieder Sommer".getBytes());
+    content.setContent("Wann wirds endlich wieder Sommer");
 
     when(contentService.read(any(), any())).thenReturn(content);
 
@@ -125,12 +125,12 @@ public class ContentControllerIT extends JerseyTest {
     Content content1 = new Content();
     content1.setIdentifier("123456");
     content1.setFormat("oai_dc");
-    content1.setContent("Wann wirds endlich wieder Sommer".getBytes());
+    content1.setContent("Wann wirds endlich wieder Sommer");
 
     Content content2 = new Content();
     content1.setIdentifier("123456");
     content1.setFormat("marc");
-    content1.setContent("Wann wirds endlich wieder Sommer".getBytes());
+    content1.setContent("Wann wirds endlich wieder Sommer");
 
     List<Content> contentList = Arrays.asList(new Content[]{content1, content2});
     
@@ -207,7 +207,7 @@ public class ContentControllerIT extends JerseyTest {
     Content content = new Content();
     content.setIdentifier("123456");
     content.setFormat("oai_dc");
-    content.setContent("Wann wirds endlich wieder Sommer".getBytes());
+    content.setContent("Wann wirds endlich wieder Sommer");
 
     when(contentService.create(any())).thenReturn(content);
 
