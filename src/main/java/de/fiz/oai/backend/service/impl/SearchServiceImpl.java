@@ -20,6 +20,7 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -138,42 +139,23 @@ public class SearchServiceImpl implements SearchService {
 
     RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
-    final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-    searchSourceBuilder.query(QueryBuilders.boolQuery().filter(QueryBuilders.rangeQuery("datestamp").from(fromDate).to(untilDate)).filter(QueryBuilders.termQuery("ingestFormat", format)));
-	searchSourceBuilder.sort("datestamp", SortOrder.ASC);
-    searchSourceBuilder.from(offset);
-    searchSourceBuilder.size(rows);
-
-//    if (fromDate != null || untilDate != null) {
-//      RangeQueryBuilder rangeQueryBuilder = QueryBuilders.rangeQuery("datestamp");
-//      if (fromDate != null) {
-//        rangeQueryBuilder.from(fromDate.getTime());
-//      }
-//
-//      if (untilDate != null) {
-//        rangeQueryBuilder.to(untilDate.getTime());
-//      }
-//
-//      searchSourceBuilder.query(rangeQueryBuilder);
-//    }
+    final BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
+    queryBuilder.filter(QueryBuilders.rangeQuery("datestamp").from(fromDate).to(untilDate));
+    queryBuilder.filter(QueryBuilders.termQuery("ingestFormat", format));
 
     if (set != null) {
       if (StringUtils.isNotBlank(set.getSearchQuery())) {
-        //TODO query field oai_dc with searchQuery
+    	  queryBuilder.filter(QueryBuilders.queryStringQuery(set.getSearchQuery()));
       } else if(StringUtils.isNotBlank(set.getSearchTerm())) {
-        //TODO query all fields or the searchTerm
+    	  queryBuilder.filter(QueryBuilders.termQuery("content", set.getSearchTerm()));
       }  
-      
-      
-      
     }
-
-//    if (StringUtils.isNotEmpty(format)) {
-//      TermQueryBuilder formatQuery = QueryBuilders.termQuery("formats", format);
-//      searchSourceBuilder.query(formatQuery);
-//    }
-
-    // TODO sort
+    
+    final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+    searchSourceBuilder.query(queryBuilder);
+    searchSourceBuilder.sort("datestamp", SortOrder.ASC);
+    searchSourceBuilder.from(offset);
+    searchSourceBuilder.size(rows);
 
     final SearchRequest searchRequest = new SearchRequest(ITEMS_INDEX_NAME);
     searchRequest.source(searchSourceBuilder);
@@ -195,6 +177,60 @@ public class SearchServiceImpl implements SearchService {
     idResult.setOffset(offset);
     idResult.setSize(itemIds.size());
     idResult.setTotal((int) hits.getTotalHits());// FIXME Bad
+    
+    ////////////// RETRIEVE EXACT PAGE - SAMPLE CODE TO CUSTOMIZE
+    
+    final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(1L));
+	SearchRequest searchRequest = new SearchRequest();
+	searchRequest.scroll(scroll);
+	searchRequest.source(searchSourceBuilder);
+
+	SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT); 
+	String scrollId = searchResponse.getScrollId();
+	SearchHit[] searchHits = searchResponse.getHits().getHits();
+
+	while (searchHits != null && searchHits.length > 0) { 
+	    
+	    SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId); 
+	    scrollRequest.scroll(scroll);
+	    final long beginSearch = System.currentTimeMillis();
+	    searchResponse = client.scroll(scrollRequest, RequestOptions.DEFAULT);
+	    final long endSearch = System.currentTimeMillis();
+	    scrollId = searchResponse.getScrollId();
+	    searchHits = searchResponse.getHits().getHits();
+	    
+	    SearchHits hits = searchResponse.getHits();
+    	
+    	System.out.println("From " + pageOffset + " to " + (pageOffset + paginationSize) + ". Hits: " + hits.totalHits + ". Found in " + (endSearch - beginSearch) + " ms.");
+    	
+    	List<String> values = new ArrayList<String>();
+    	Iterator<SearchHit> iterator = hits.iterator();
+    	int counterSelect = 0;
+    	long totalSelect = 0;
+    	while (iterator.hasNext()) {
+    		SearchHit searchHit = iterator.next();
+    		BoundStatement selectBound = preparedSelect.bind(searchHit.getId());
+        	final long beginSelect = System.currentTimeMillis();
+        	final ResultSet resultSelect = session.execute(selectBound);
+        	totalSelect+=(System.currentTimeMillis()-beginSelect);
+        	
+        	if (counterSelect == 0 || counterSelect == (int) (paginationSize / 2) || counterSelect == (paginationSize - 1)) {
+        		System.out.println("Row " + counterSelect + ": " + resultSelect.one());                	
+        	}
+        	
+        	counterSelect++;
+    	}
+    	System.out.println("From " + pageOffset + " to " + (pageOffset + paginationSize) + ". Retrieved from Cassandra in " + totalSelect + " ms.");                	
+    	pageOffset+=paginationSize;
+	}
+
+	ClearScrollRequest clearScrollRequest = new ClearScrollRequest(); 
+	clearScrollRequest.addScrollId(scrollId);
+	ClearScrollResponse clearScrollResponse = client.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
+	clearScrollResponse.isSucceeded();
+    
+    //////////////
+    
 
     return idResult;
   }
