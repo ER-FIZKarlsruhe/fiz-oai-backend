@@ -1,6 +1,7 @@
 package de.fiz.oai.backend.dao.impl;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -100,11 +101,13 @@ public class CassandraDAOCrosswalk implements DAOCrosswalk {
         insertStmt.append(CROSSWALK_FORMAT_TO);
         insertStmt.append(", ");
         insertStmt.append(CROSSWALK_XSLT_STYLESHEET);
-        insertStmt.append(") VALUES (?, ?, ?, ?, ?)");
+        insertStmt.append(") VALUES (?, ?, ?, ?)");
 
         PreparedStatement prepared = session.prepare(insertStmt.toString());
 
-        BoundStatement bound = prepared.bind(crosswalk.getName(), crosswalk.getFormatFrom(), crosswalk.getFormatTo(), crosswalk.getXsltStylesheet());
+        ByteBuffer buffer = ByteBuffer.wrap(crosswalk.getXsltStylesheet().getBytes());
+        
+        BoundStatement bound = prepared.bind(crosswalk.getName(), crosswalk.getFormatFrom(), crosswalk.getFormatTo(), buffer);
         session.execute(bound);
 
         return crosswalk;

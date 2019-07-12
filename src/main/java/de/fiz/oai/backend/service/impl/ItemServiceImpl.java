@@ -1,5 +1,6 @@
 package de.fiz.oai.backend.service.impl;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
@@ -41,6 +42,7 @@ import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.service.ItemService;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.utils.Configuration;
+import de.fiz.oai.backend.utils.XsltHelper;
 
 @Service
 public class ItemServiceImpl implements ItemService {
@@ -82,6 +84,7 @@ public class ItemServiceImpl implements ItemService {
   @Override
   public Item create(Item item) throws IOException {
     Item newItem = null;
+    List<String> itemFormats = new ArrayList<String>(); 
 
     // Overwrite datestamp!
     item.setDatestamp(Configuration.dateFormat.format(new Date()));
@@ -91,6 +94,7 @@ public class ItemServiceImpl implements ItemService {
     if (ingestFormat == null) {
       throw new UnknownFormatException("Cannot find a Format for the given ingestFormat: " + item.getIngestFormat());
     }
+    itemFormats.add(item.getIngestFormat());
 
     // Validate xml against xsd
     //validate(ingestFormat.getSchemaLocation(), new String(item.getContent().getContent(), "UTF-8"));
@@ -102,13 +106,8 @@ public class ItemServiceImpl implements ItemService {
     daoContent.create(item.getContent());
 
     //Create Crosswalk content
-    List<Crosswalk> crosswalks = daoCrosswalk.readAll();
-    for (Crosswalk currentWalk: crosswalks) {
-      if (currentWalk.getFormatFrom().equals(item.getIngestFormat())) {
-        currentWalk.getXsltStylesheet();
-        //TODO do transformation and save it into content
-      }
-    }
+    createCrosswalks(item, itemFormats);
+    newItem.setFormats(itemFormats);
     
     //TODO For indexing its important that oai_dc content exits! 
     searchService.createDocument(newItem);
@@ -119,7 +118,8 @@ public class ItemServiceImpl implements ItemService {
   @Override
   public Item update(Item item) throws IOException {
     Item oldItem = daoItem.read(item.getIdentifier());
-
+    List<String> itemFormats = new ArrayList<String>(); 
+    
     if (oldItem == null) {
       throw new WebApplicationException(Status.NOT_FOUND);
     }
@@ -132,24 +132,21 @@ public class ItemServiceImpl implements ItemService {
     if (ingestFormat == null) {
       throw new UnknownFormatException("Cannot find a Fomat for the given ingestFormat: " + item.getIngestFormat());
     }
-
+    itemFormats.add(item.getIngestFormat());
+    
     // Validate xml against xsd
     //validate(ingestFormat.getSchemaLocation(), new String(item.getContent().getContent(), "UTF-8"));
 
-    //TODO delete all old content with item identifer
+    //TODO delete all old content with item identifier
     
     Item updateItem = daoItem.create(item);
-
     daoContent.create(item.getContent());
 
+    createCrosswalks(item, itemFormats);
+    updateItem.setFormats(itemFormats);
+    
     searchService.updateDocument(updateItem);
 
-    //Create Crosswalks
-    //TODO 1) search all crosswalks with inputFormat == ingestFormat
-    //2) Perform xsltTransformation 
-    
-
-    
     return updateItem;
   }
 
@@ -217,6 +214,21 @@ public class ItemServiceImpl implements ItemService {
       validator.validate(xmlSource);
     } catch (SAXException e) {
       throw new FormatValidationException(e.getMessage());
+    }
+  }
+  
+  private void createCrosswalks(Item item, List<String> itemFormats) throws IOException {
+    List<Crosswalk> crosswalks = daoCrosswalk.readAll();
+    for (Crosswalk currentWalk: crosswalks) {
+      if (currentWalk.getFormatFrom().equals(item.getIngestFormat())) {
+        String newXml = XsltHelper.transform(new ByteArrayInputStream(item.getContent().getContent().getBytes()), new ByteArrayInputStream(currentWalk.getXsltStylesheet().getBytes()));
+        Content crosswalkConten = new Content();
+        crosswalkConten.setContent(newXml);
+        crosswalkConten.setIdentifier(item.getIdentifier());
+        crosswalkConten.setFormat(currentWalk.getFormatTo());
+        daoContent.create(crosswalkConten);
+        itemFormats.add(currentWalk.getFormatTo());
+        }
     }
   }
 

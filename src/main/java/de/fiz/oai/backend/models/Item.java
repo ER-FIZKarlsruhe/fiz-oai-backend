@@ -14,6 +14,10 @@ public class Item {
   
   private List<String> tags;
   
+  private List<String> sets;
+  
+  private List<String> formats;
+  
   private String ingestFormat;
   
   private Content content;
@@ -67,13 +71,29 @@ public class Item {
     this.content = content;
   }
 
+  public List<String> getFormats() {
+    return formats;
+  }
+
+  public void setFormats(List<String> formats) {
+    this.formats = formats;
+  }
+
+  public List<String> getSets() {
+    return sets;
+  }
+
+  public void setSets(List<String> sets) {
+    this.sets = sets;
+  }
+
   public Map<String,Object> toMap(){
     final Map<String, Object> itemMap = new HashMap<String, Object>();
     itemMap.put("identifier", identifier);
     itemMap.put("datestamp", datestamp);
     itemMap.put("deleteFlag", deleteFlag);
     itemMap.put("ingestFormat", ingestFormat);
-    
+    itemMap.put("formats", formats);
     return itemMap;
   }
   
