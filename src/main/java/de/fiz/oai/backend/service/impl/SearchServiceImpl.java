@@ -1,7 +1,6 @@
 package de.fiz.oai.backend.service.impl;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -21,9 +20,11 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.jvnet.hk2.annotations.Service;
 
 import de.fiz.oai.backend.dao.DAOContent;
@@ -120,6 +121,8 @@ public class SearchServiceImpl implements SearchService {
     RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
     final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+    searchSourceBuilder.query(QueryBuilders.boolQuery().filter(QueryBuilders.rangeQuery("datestamp").from(fromDate).to(untilDate)).filter(QueryBuilders.termQuery("ingestFormat", format)));
+	searchSourceBuilder.sort("datestamp", SortOrder.ASC);
     searchSourceBuilder.from(offset);
     searchSourceBuilder.size(rows);
 
