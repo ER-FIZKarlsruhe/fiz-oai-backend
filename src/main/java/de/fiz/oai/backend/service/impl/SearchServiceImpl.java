@@ -29,6 +29,8 @@ import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.fiz.oai.backend.dao.DAOContent;
 import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.models.Content;
@@ -72,8 +74,11 @@ public class SearchServiceImpl implements SearchService {
     if (content != null) {
       String xmlContentByte = content.getContent();
       String oaiDcJson = OaiDcHelper.xmlToJson(xmlContentByte);
-      itemMap.put("oai_dc", oaiDcJson);
+      ObjectMapper mapper = new ObjectMapper();
+      Map<String, String> map = mapper.readValue(oaiDcJson, Map.class);
+      itemMap.put("oai_dc", map);
     }
+    
     
     IndexRequest indexRequest = new IndexRequest();
 

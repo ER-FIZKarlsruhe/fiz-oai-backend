@@ -124,7 +124,7 @@ public class CrosswalkController extends AbstractController {
     Crosswalk newCrosswalk = null;
 
     try {
-      newCrosswalk = crosswalkService.create(newCrosswalk);
+      newCrosswalk = crosswalkService.create(crosswalk);
     } catch (IOException e) {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
