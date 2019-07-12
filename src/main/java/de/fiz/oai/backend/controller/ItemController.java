@@ -38,85 +38,77 @@ import de.fiz.oai.backend.utils.Configuration;
 @Path("/item")
 public class ItemController extends AbstractController {
 
-  
-
   @Context
   ServletContext servletContext;
 
   @Inject
   ItemService itemService;
-  
+
   private Logger LOGGER = LoggerFactory.getLogger(ItemController.class);
 
   @GET
   @Path("/{identifier}")
   @Produces(MediaType.APPLICATION_JSON)
-  public Item getItem(@PathParam("identifier") String identifier, @QueryParam("format") String format , @QueryParam("content") Boolean content ,@Context HttpServletRequest request,
+  public Item getItem(@PathParam("identifier") String identifier, @QueryParam("format") String format,
+      @QueryParam("content") Boolean content, @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws Exception {
 
     if (StringUtils.isBlank(format)) {
       throw new BadRequestException("format QueryParam cannot be empty!");
     }
-    
+
     if (content == null) {
       content = false;
     }
-    
+
     final Item item = itemService.read(identifier, format, content);
     LOGGER.info("getItem: " + item);
-    
+
     if (item == null) {
       throw new WebApplicationException(Status.NOT_FOUND);
     }
 
     return item;
   }
-  
-  
+
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public SearchResult<Item> searchItems(
-      @QueryParam("offset") Integer offset, 
-      @QueryParam("rows") Integer rows, 
-      @QueryParam("set") String set, 
-      @QueryParam("format") String format, 
-      @QueryParam("from") String from , 
-      @QueryParam("until") String until , 
-      @QueryParam("content") Boolean content , 
-      @Context HttpServletRequest request,
+  public SearchResult<Item> searchItems(@QueryParam("offset") Integer offset, @QueryParam("rows") Integer rows,
+      @QueryParam("set") String set, @QueryParam("format") String format, @QueryParam("from") String from,
+      @QueryParam("until") String until, @QueryParam("content") Boolean content, @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws Exception {
 
-    LOGGER.debug("offset: " + offset);
-    LOGGER.debug("rows: " + rows);
-    LOGGER.debug("set: " + set);
-    LOGGER.debug("format: " + format);
-    LOGGER.debug("from: " + from);
-    LOGGER.debug("until: " + until);
-    LOGGER.debug("content: " + content);
-    
+    LOGGER.info("offset: " + offset);
+    LOGGER.info("rows: " + rows);
+    LOGGER.info("set: " + set);
+    LOGGER.info("format: " + format);
+    LOGGER.info("from: " + from);
+    LOGGER.info("until: " + until);
+    LOGGER.info("content: " + content);
+
     Date fromDate = null;
     Date untilDate = null;
-    
+
     if (StringUtils.isBlank(format)) {
       throw new BadRequestException("format QueryParam cannot be empty!");
     }
-    
+
     try {
       if (!StringUtils.isBlank(from)) {
         fromDate = Configuration.dateFormat.parse(from);
       }
-    } catch(ParseException e) {
+    } catch (ParseException e) {
       throw new BadRequestException("Invalid from QueryParam!");
     }
-    
+
     try {
       if (!StringUtils.isBlank(until)) {
         untilDate = Configuration.dateFormat.parse(until);
       }
-    } catch(ParseException e) {
+    } catch (ParseException e) {
       throw new BadRequestException("Invalid until QueryParam!");
     }
-    
+
     if (content == null) {
       content = false;
     }
@@ -125,8 +117,6 @@ public class ItemController extends AbstractController {
 
     return result;
   }
-  
-  
 
   @DELETE
   @Path("/{identifier}")
@@ -154,16 +144,16 @@ public class ItemController extends AbstractController {
     if (!content.contains(item.getIdentifier())) {
       throw new WebApplicationException("Cannot find the identifier in the content!", Status.BAD_REQUEST);
     }
-    
+
     Content itemContent = new Content();
-    itemContent.setContent(content.getBytes());
+    itemContent.setContent(content);
     itemContent.setFormat(item.getIngestFormat());
     itemContent.setIdentifier(item.getIdentifier());
-    
+
     item.setContent(itemContent);
-    
+
     Item newItem = null;
-    
+
     try {
       newItem = itemService.create(item);
     } catch (NotFoundException e) {
@@ -172,38 +162,39 @@ public class ItemController extends AbstractController {
       LOGGER.error("An unexpected exception occured", e);
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
-    
+
     LOGGER.info("createItem content: " + content);
-    
+
     return newItem;
   }
-  
+
   @PUT
   @Path("/{identifier}")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
-  public Item updateItem(@PathParam("identifier") String identifier, @FormDataParam("content") String content, @FormDataParam("item") Item item,
-      @Context HttpServletRequest request, @Context HttpServletResponse response) {
+  public Item updateItem(@PathParam("identifier") String identifier, @FormDataParam("content") String content,
+      @FormDataParam("item") Item item, @Context HttpServletRequest request, @Context HttpServletResponse response) {
 
     if (!identifier.equals(item.getIdentifier())) {
-      throw new WebApplicationException("The identifier in the path and the item json does not match!", Status.BAD_REQUEST);
+      throw new WebApplicationException("The identifier in the path and the item json does not match!",
+          Status.BAD_REQUEST);
     }
-    
+
     if (!content.contains(identifier)) {
       throw new WebApplicationException("Cannot find the identifier in the content!", Status.BAD_REQUEST);
     }
-    
+
     Item updateItem = null;
     try {
       updateItem = itemService.update(item);
     } catch (NotFoundException e) {
-      throw new  WebApplicationException(Status.NOT_FOUND);
+      throw new WebApplicationException(Status.NOT_FOUND);
     } catch (IOException e) {
-      throw new  WebApplicationException(Status.INTERNAL_SERVER_ERROR);
-    } 
-    
+      throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+    }
+
     LOGGER.info("createItem content: " + content);
-    
+
     return updateItem;
   }
 

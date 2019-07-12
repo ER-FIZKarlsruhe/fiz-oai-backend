@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -19,6 +18,7 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +46,6 @@ import de.fiz.oai.backend.utils.Configuration;
 public class ItemServiceImpl implements ItemService {
 
   private Logger LOGGER = LoggerFactory.getLogger(ItemServiceImpl.class);
-
 
   @Inject
   DAOItem daoItem;
@@ -94,7 +93,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     // Validate xml against xsd
-    validate(ingestFormat.getSchemaLocation(), new String(item.getContent().getContent(), "UTF-8"));
+    //validate(ingestFormat.getSchemaLocation(), new String(item.getContent().getContent(), "UTF-8"));
 
     //Create Item
     newItem = daoItem.create(item);
@@ -135,7 +134,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     // Validate xml against xsd
-    validate(ingestFormat.getSchemaLocation(), new String(item.getContent().getContent(), "UTF-8"));
+    //validate(ingestFormat.getSchemaLocation(), new String(item.getContent().getContent(), "UTF-8"));
 
     //TODO delete all old content with item identifer
     
@@ -166,9 +165,10 @@ public class ItemServiceImpl implements ItemService {
       rows = 100;
     }
 
-    Set set = daoSet.read(setName);
+    Set set = null;
     
-    if (set == null) {
+    if (StringUtils.isNotBlank(setName)) {
+      set = daoSet.read(setName);    
       throw new NotFoundException("Set " + setName + " not found in the database");
     }
     

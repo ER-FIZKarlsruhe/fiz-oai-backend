@@ -26,9 +26,12 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.jvnet.hk2.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.dao.DAOContent;
 import de.fiz.oai.backend.dao.DAOItem;
+import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.models.Set;
@@ -39,10 +42,14 @@ import de.fiz.oai.backend.utils.OaiDcHelper;
 @Service
 public class SearchServiceImpl implements SearchService {
 
+  private Logger LOGGER = LoggerFactory.getLogger(SearchServiceImpl.class);
+  
   String elastisearchHost = Configuration.getInstance().getProperty("elasticsearch.host");
 
   int elastisearchPort = Integer.parseInt(Configuration.getInstance().getProperty("elasticsearch.port"));
 
+  public static String ITEMS_INDEX_NAME = "items";
+  
   @Inject
   DAOItem daoItem;
 
@@ -58,19 +65,25 @@ public class SearchServiceImpl implements SearchService {
     RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
 
-    byte[] xmlContentByte = daoContent.read(item.getIdentifier(), "oai_dc").getContent();
-    String oaiDcJson = OaiDcHelper.xmlToJson(new String(xmlContentByte, "UTF-8"));
-    
     Map<String,Object> itemMap = item.toMap();
-    itemMap.put("oai_dc", oaiDcJson);
+    
+    //Index oai_dc version of the item
+    Content content = daoContent.read(item.getIdentifier(), "oai_dc");
+    if (content != null) {
+      String xmlContentByte = content.getContent();
+      String oaiDcJson = OaiDcHelper.xmlToJson(xmlContentByte);
+      itemMap.put("oai_dc", oaiDcJson);
+    }
     
     IndexRequest indexRequest = new IndexRequest();
-    indexRequest.index("item");
+
+    indexRequest.index(ITEMS_INDEX_NAME);
     indexRequest.type("_doc");
     indexRequest.id(item.getIdentifier());
     indexRequest.source(itemMap);
     
     client.index(indexRequest, RequestOptions.DEFAULT);
+    LOGGER.info("Added item to search index");
   }
 
   /**
@@ -82,14 +95,14 @@ public class SearchServiceImpl implements SearchService {
     RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
 
-    byte[] xmlContentByte = daoContent.read(item.getIdentifier(), "oai_dc").getContent();
-    String oaiDcJson = OaiDcHelper.xmlToJson(new String(xmlContentByte, "UTF-8"));
+    String xmlContentByte = daoContent.read(item.getIdentifier(), "oai_dc").getContent();
+    String oaiDcJson = OaiDcHelper.xmlToJson(xmlContentByte);
     
     Map<String,Object> itemMap = item.toMap();
     itemMap.put("oai_dc", oaiDcJson);
     
     UpdateRequest updateRequest = new UpdateRequest();
-    updateRequest.index("item");
+    updateRequest.index(ITEMS_INDEX_NAME);
     updateRequest.type("_doc");
     updateRequest.id(item.getIdentifier());
     updateRequest.doc(itemMap);
@@ -106,7 +119,7 @@ public class SearchServiceImpl implements SearchService {
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
 
     DeleteRequest request = new DeleteRequest();
-    request.index("item");
+    request.index(ITEMS_INDEX_NAME);
     request.type("_doc");
     request.id(item.getIdentifier());
 
@@ -157,18 +170,19 @@ public class SearchServiceImpl implements SearchService {
 
     // TODO sort
 
-    final SearchRequest searchRequest = new SearchRequest("items");
+    final SearchRequest searchRequest = new SearchRequest(ITEMS_INDEX_NAME);
     searchRequest.source(searchSourceBuilder);
     final SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
 
     SearchHits hits = searchResponse.getHits();
-
+    LOGGER.info("totalHits: " + hits.totalHits);
+    
     Iterator<SearchHit> iterator = hits.iterator();
 
     while (iterator.hasNext()) {
       SearchHit searchHit = (SearchHit) iterator.next();
       itemIds.add(searchHit.getId());
-      System.out.println("id: " + searchHit.getId());
+      LOGGER.info("id: " + searchHit.getId());
     }
 
     SearchResult<String> idResult = new SearchResult<String>();

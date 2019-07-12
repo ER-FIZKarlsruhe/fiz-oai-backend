@@ -124,7 +124,7 @@ public class FormatController extends AbstractController {
     Format newFormat = null;
 
     try {
-      newFormat = formatService.create(newFormat);
+      newFormat = formatService.create(format);
     } catch (IOException e) {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }

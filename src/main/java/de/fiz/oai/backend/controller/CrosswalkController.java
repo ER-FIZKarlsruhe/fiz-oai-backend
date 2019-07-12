@@ -109,7 +109,7 @@ public class CrosswalkController extends AbstractController {
       throw new WebApplicationException("Crosswalk format cannot be empty!", Status.BAD_REQUEST);
     }
     
-    if (crosswalk.getXsltStylesheet() == null || crosswalk.getXsltStylesheet().length == 0) {
+    if (crosswalk.getXsltStylesheet() == null || crosswalk.getXsltStylesheet().isEmpty()) {
       throw new WebApplicationException("Crosswalk crosswalk cannot be empty!", Status.BAD_REQUEST);
     }
 

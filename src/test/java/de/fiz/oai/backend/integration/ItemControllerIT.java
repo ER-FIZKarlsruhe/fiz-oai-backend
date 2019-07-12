@@ -108,7 +108,7 @@ public class ItemControllerIT extends JerseyTest {
     Content content = new Content();
     content.setFormat("oai_dc");
     content.setIdentifier("65465456");
-    content.setContent("Das ist ein wenig content".getBytes());
+    content.setContent("Das ist ein wenig content");
     
     Item item = new Item();
     item.setIdentifier("65465456");
@@ -127,7 +127,7 @@ public class ItemControllerIT extends JerseyTest {
  
     String responseEntity = response.readEntity(String.class);
     System.out.println("responseEntity: " + responseEntity);
-    assertEquals("Content of response is: ", "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\",\"content\":{\"identifier\":\"65465456\",\"format\":\"oai_dc\",\"content\":\"RGFzIGlzdCBlaW4gd2VuaWcgY29udGVudA==\"}}", responseEntity);
+    assertEquals("Content of response is: ", "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\",\"content\":{\"identifier\":\"65465456\",\"format\":\"oai_dc\",\"content\":\"Das ist ein wenig content\"}}", responseEntity);
   }
   
   @Test

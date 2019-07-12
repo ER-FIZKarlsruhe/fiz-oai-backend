@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 public class Configuration {
 
-    public static SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-DD'T'hh:mm:ss'Z'");
+    public static SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-dd'T'hh:mm:ss'Z'");
   
     private Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
 
