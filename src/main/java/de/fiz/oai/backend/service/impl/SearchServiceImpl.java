@@ -180,9 +180,7 @@ public class SearchServiceImpl implements SearchService {
 	    
 	    SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId); 
 	    scrollRequest.scroll(scroll);
-	    final long beginSearch = System.currentTimeMillis();
 	    searchResponse = client.scroll(scrollRequest, RequestOptions.DEFAULT);
-	    final long endSearch = System.currentTimeMillis();
 	    scrollId = searchResponse.getScrollId();
 	    searchHits = searchResponse.getHits().getHits();
 	    
@@ -191,8 +189,6 @@ public class SearchServiceImpl implements SearchService {
 	    if (offsetCounter >= offset) {
 	    	
 	    	Iterator<SearchHit> iterator = hits.iterator();
-	    	int counterSelect = 0;
-	    	long totalSelect = 0;
 	    	while (iterator.hasNext()) {
 	    		SearchHit searchHit = iterator.next();
 	    		
@@ -219,7 +215,7 @@ public class SearchServiceImpl implements SearchService {
 	SearchResult<String> idResult = new SearchResult<String>();
 	idResult.setOffset(offset);
 	idResult.setSize(itemRetrieved.size());
-	idResult.setTotal((int) searchResponse.getHits().totalHits);
+	idResult.setTotal(searchResponse.getHits().totalHits);
 	idResult.setData(itemRetrieved);
 
     return idResult;
