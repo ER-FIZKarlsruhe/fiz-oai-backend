@@ -73,7 +73,11 @@ public class ItemServiceImpl implements ItemService {
     final Item item = daoItem.read(identifier);
     LOGGER.info("getItem: " + item);
 
-    if (readContent) {
+    if (format == null) {
+      format = item.getIngestFormat();
+    }
+    
+    if (item != null && readContent) {
       Content content = daoContent.read(identifier, format);
       item.setContent(content);
     }
