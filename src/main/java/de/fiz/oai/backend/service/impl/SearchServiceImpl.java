@@ -14,14 +14,19 @@ import org.apache.http.HttpHost;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.search.ClearScrollRequest;
+import org.elasticsearch.action.search.ClearScrollResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -30,6 +35,7 @@ import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.BoundStatement;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.fiz.oai.backend.dao.DAOContent;
@@ -135,8 +141,6 @@ public class SearchServiceImpl implements SearchService {
   @Override
   public SearchResult<String> search(Integer offset, Integer rows, Set set, String format, Date fromDate, Date untilDate) throws IOException {
 
-    List<String> itemIds = new ArrayList<String>();
-
     RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
     final BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
@@ -154,34 +158,10 @@ public class SearchServiceImpl implements SearchService {
     final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
     searchSourceBuilder.query(queryBuilder);
     searchSourceBuilder.sort("datestamp", SortOrder.ASC);
-    searchSourceBuilder.from(offset);
     searchSourceBuilder.size(rows);
 
-    final SearchRequest searchRequest = new SearchRequest(ITEMS_INDEX_NAME);
-    searchRequest.source(searchSourceBuilder);
-    final SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-
-    SearchHits hits = searchResponse.getHits();
-    LOGGER.info("totalHits: " + hits.totalHits);
-    
-    Iterator<SearchHit> iterator = hits.iterator();
-
-    while (iterator.hasNext()) {
-      SearchHit searchHit = (SearchHit) iterator.next();
-      itemIds.add(searchHit.getId());
-      LOGGER.info("id: " + searchHit.getId());
-    }
-
-    SearchResult<String> idResult = new SearchResult<String>();
-    idResult.setData(itemIds);
-    idResult.setOffset(offset);
-    idResult.setSize(itemIds.size());
-    idResult.setTotal((int) hits.getTotalHits());// FIXME Bad
-    
-    ////////////// RETRIEVE EXACT PAGE - SAMPLE CODE TO CUSTOMIZE
-    
     final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(1L));
-	SearchRequest searchRequest = new SearchRequest();
+	SearchRequest searchRequest = new SearchRequest(ITEMS_INDEX_NAME);
 	searchRequest.scroll(scroll);
 	searchRequest.source(searchSourceBuilder);
 
@@ -189,7 +169,14 @@ public class SearchServiceImpl implements SearchService {
 	String scrollId = searchResponse.getScrollId();
 	SearchHit[] searchHits = searchResponse.getHits().getHits();
 
-	while (searchHits != null && searchHits.length > 0) { 
+
+	Integer offsetCounter = 0;
+	
+	Boolean allRowsRetrieved = false;
+
+	List<String> itemRetrieved = new ArrayList<String>();
+	
+	while (searchHits != null && searchHits.length > 0 && !allRowsRetrieved) { 
 	    
 	    SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId); 
 	    scrollRequest.scroll(scroll);
@@ -201,36 +188,39 @@ public class SearchServiceImpl implements SearchService {
 	    
 	    SearchHits hits = searchResponse.getHits();
     	
-    	System.out.println("From " + pageOffset + " to " + (pageOffset + paginationSize) + ". Hits: " + hits.totalHits + ". Found in " + (endSearch - beginSearch) + " ms.");
+	    if (offsetCounter >= offset) {
+	    	
+	    	Iterator<SearchHit> iterator = hits.iterator();
+	    	int counterSelect = 0;
+	    	long totalSelect = 0;
+	    	while (iterator.hasNext()) {
+	    		SearchHit searchHit = iterator.next();
+	    		
+	    		itemRetrieved.add(searchHit.getId());
+	    			    		
+	    		if (itemRetrieved.size() == rows) {
+	    			allRowsRetrieved = true;
+	    		}
+	    	}
+	    	
+	    }
+	    
+    	offsetCounter+=rows;
     	
-    	List<String> values = new ArrayList<String>();
-    	Iterator<SearchHit> iterator = hits.iterator();
-    	int counterSelect = 0;
-    	long totalSelect = 0;
-    	while (iterator.hasNext()) {
-    		SearchHit searchHit = iterator.next();
-    		BoundStatement selectBound = preparedSelect.bind(searchHit.getId());
-        	final long beginSelect = System.currentTimeMillis();
-        	final ResultSet resultSelect = session.execute(selectBound);
-        	totalSelect+=(System.currentTimeMillis()-beginSelect);
-        	
-        	if (counterSelect == 0 || counterSelect == (int) (paginationSize / 2) || counterSelect == (paginationSize - 1)) {
-        		System.out.println("Row " + counterSelect + ": " + resultSelect.one());                	
-        	}
-        	
-        	counterSelect++;
+    	if (offsetCounter > searchHits.length) {
+    		allRowsRetrieved = true;
     	}
-    	System.out.println("From " + pageOffset + " to " + (pageOffset + paginationSize) + ". Retrieved from Cassandra in " + totalSelect + " ms.");                	
-    	pageOffset+=paginationSize;
 	}
 
 	ClearScrollRequest clearScrollRequest = new ClearScrollRequest(); 
 	clearScrollRequest.addScrollId(scrollId);
-	ClearScrollResponse clearScrollResponse = client.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
-	clearScrollResponse.isSucceeded();
+	client.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
     
-    //////////////
-    
+	SearchResult<String> idResult = new SearchResult<String>();
+	idResult.setOffset(offset);
+	idResult.setSize(itemRetrieved.size());
+	idResult.setTotal((int) searchResponse.getHits().totalHits);
+	idResult.setData(itemRetrieved);
 
     return idResult;
   }
