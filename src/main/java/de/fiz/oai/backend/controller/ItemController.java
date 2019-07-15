@@ -53,10 +53,6 @@ public class ItemController extends AbstractController {
       @QueryParam("content") Boolean content, @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws Exception {
 
-    if (StringUtils.isBlank(format)) {
-      throw new BadRequestException("format QueryParam cannot be empty!");
-    }
-
     if (content == null) {
       content = false;
     }

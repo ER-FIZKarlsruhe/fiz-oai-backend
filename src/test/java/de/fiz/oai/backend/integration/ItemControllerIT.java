@@ -130,14 +130,7 @@ public class ItemControllerIT extends JerseyTest {
     assertEquals("Content of response is: ", "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"sets\":null,\"formats\":null,\"ingestFormat\":\"radar\",\"content\":{\"identifier\":\"65465456\",\"format\":\"oai_dc\",\"content\":\"Das ist ein wenig content\"}}", responseEntity);
   }
   
-  @Test
-  public void testGetItemMissingFormat() throws Exception {
-    
-    Response response = target("/item/65465456").request().get();
-    
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-  }
-  
+
   @Test
   public void testGetItemNotFound() throws Exception {
     when(itemService.read(any(),any(),any())).thenReturn(null);
