@@ -59,4 +59,12 @@ public interface SearchService {
    */
   SearchResult<String> search(Integer offset, Integer rows, Set set, String format, Date fromDate, Date untilDate) throws IOException;
   
+  /**
+   * 
+   * @param scrollId
+   * @return
+   * @throws IOException
+   */
+  SearchResult<String> search(String scrollId) throws IOException;
+  
 }

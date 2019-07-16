@@ -3,10 +3,12 @@ package de.fiz.oai.backend.models;
 import java.util.List;
 
 public class SearchResult<E> {
-	long total;
-  int offset;
-  int size;
   
+  private long total;
+  private int offset;
+  private int size;
+  private String scrollId;
+
   List<E> data;
 
   public long getTotal() {
@@ -41,5 +43,12 @@ public class SearchResult<E> {
     this.data = data;
   }
 
-  
+  public String getScrollId() {
+    return scrollId;
+  }
+
+  public void setScrollId(String scrollId) {
+    this.scrollId = scrollId;
+  }
+
 }
