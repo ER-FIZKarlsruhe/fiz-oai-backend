@@ -136,36 +136,8 @@ public class SearchServiceImpl implements SearchService {
     }
   }
 
-//  @Override
-//  public SearchResult<String> search(String scrollId) throws IOException {
-//    RestHighLevelClient client = new RestHighLevelClient(
-//        RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
-//
-//    SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
-//    SearchResponse scrollResponse = client.scroll(scrollRequest, RequestOptions.DEFAULT);
-//    scrollId = scrollResponse.getScrollId();
-//    SearchHits scrollhits = scrollResponse.getHits();
-//    LOGGER.info("scrollhits " + scrollhits.totalHits);
-//
-//    Iterator<SearchHit> iterator = scrollhits.iterator();
-//    List<String> itemRetrieved = new ArrayList<String>();
-//
-//    while (iterator.hasNext()) {
-//      SearchHit searchHit = iterator.next();
-//      itemRetrieved.add(searchHit.getId());
-//    }
-//
-//    SearchResult<String> idResult = new SearchResult<String>();
-//    idResult.setSize(itemRetrieved.size());
-//    idResult.setTotal(scrollhits.totalHits);
-//    idResult.setData(itemRetrieved);
-//    idResult.setScrollId(scrollId);
-//
-//    return idResult;
-//  }
-
   @Override
-  public SearchResult<String> search(Integer rows, Set set, String format, Date fromDate, Date untilDate)
+  public SearchResult<String> search(Integer rows, Set set, String format, Date fromDate, Date untilDate, String lastItemId)
       throws IOException {
 
     try (RestHighLevelClient client = new RestHighLevelClient(
@@ -209,6 +181,7 @@ public class SearchServiceImpl implements SearchService {
       idResult.setSize(itemRetrieved.size());
       idResult.setTotal(searchResponse.getHits().totalHits);
       idResult.setData(itemRetrieved);
+      idResult.setLastItemId(itemRetrieved.get(itemRetrieved.size() - 1));
       return idResult;
 
     }

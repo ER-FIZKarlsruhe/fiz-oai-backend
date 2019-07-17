@@ -69,19 +69,19 @@ public class ItemController extends AbstractController {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public SearchResult<Item> searchItems(@QueryParam("offset") Integer offset, @QueryParam("rows") Integer rows,
+  public SearchResult<Item> searchItems(@QueryParam("rows") Integer rows,
       @QueryParam("set") String set, @QueryParam("format") String format, @QueryParam("from") String from,
-      @QueryParam("until") String until, @QueryParam("content") Boolean content, @Context HttpServletRequest request,
+      @QueryParam("until") String until, @QueryParam("content") Boolean content, @QueryParam("lastItemId") String lastItemId, @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws Exception {
 
-    LOGGER.info("offset: " + offset);
     LOGGER.info("rows: " + rows);
     LOGGER.info("set: " + set);
     LOGGER.info("format: " + format);
     LOGGER.info("from: " + from);
     LOGGER.info("until: " + until);
     LOGGER.info("content: " + content);
-
+    LOGGER.info("lastItemId: " + lastItemId);
+    
     Date fromDate = null;
     Date untilDate = null;
 
@@ -109,7 +109,7 @@ public class ItemController extends AbstractController {
       content = false;
     }
 
-    SearchResult<Item> result = itemService.search(offset, rows, set, format, fromDate, untilDate, content);
+    SearchResult<Item> result = itemService.search(rows, set, format, fromDate, untilDate, content, lastItemId);
 
     return result;
   }

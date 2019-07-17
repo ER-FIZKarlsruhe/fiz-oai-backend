@@ -143,9 +143,9 @@ public class ItemControllerIT extends JerseyTest {
   
   @Test
   public void testSearchItemsNoContent() throws Exception {
-    when(itemService.search(any(), any(), any(), any(), any(), any(), eq(false))).thenReturn(getTestSearchResult());
+    when(itemService.search( any(), any(), any(), any(), any(), eq(false),any())).thenReturn(getTestSearchResult());
 
-    Response response = target("/item").queryParam("offset", 0).queryParam("rows", 20).queryParam("set", "abc")
+    Response response = target("/item").queryParam("rows", 20).queryParam("set", "abc")
     .queryParam("format", "oai_dc").queryParam("from", "1970-01-01T00:00:01Z").queryParam("until", "2970-01-01T00:00:01Z").queryParam("content", "").request()
     .get();
     
@@ -419,7 +419,6 @@ public class ItemControllerIT extends JerseyTest {
     result.setData(items);
     result.setTotal(items.size());
     result.setSize(items.size());
-    result.setOffset(0);
     
     LOGGER.info("getTestItemList size: " + items.size());
     return result;

@@ -156,12 +156,8 @@ public class ItemServiceImpl implements ItemService {
   }
 
   @Override
-  public SearchResult<Item> search(Integer offset, Integer rows, String setName, String format, Date from, Date until,
-      Boolean readContent) throws IOException {
-    if (offset == null) {
-      offset = 0;
-    }
-
+  public SearchResult<Item> search(Integer rows, String setName, String format, Date from, Date until,
+      Boolean readContent, String lastItemId) throws IOException {
     // TODO make this default setting configurable!
     if (rows == null) {
       rows = 100;
@@ -174,7 +170,7 @@ public class ItemServiceImpl implements ItemService {
       throw new NotFoundException("Set " + setName + " not found in the database");
     }
 
-    final SearchResult<String> idResult = searchService.search(rows, set, format, from, until);
+    final SearchResult<String> idResult = searchService.search(rows, set, format, from, until, lastItemId);
 
     List<Item> itemList = new ArrayList<Item>();
 
@@ -185,10 +181,9 @@ public class ItemServiceImpl implements ItemService {
 
     SearchResult<Item> itemResult = new SearchResult<Item>();
     itemResult.setData(itemList);
-    itemResult.setOffset(offset);
     itemResult.setSize(itemList.size());
     itemResult.setTotal(idResult.getTotal());
-
+    itemResult.setLastItemId(itemList.get(itemList.size() - 1).getIdentifier());
     return itemResult;
   }
 

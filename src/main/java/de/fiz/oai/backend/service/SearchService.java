@@ -57,7 +57,7 @@ public interface SearchService {
    * @return
    * @throws IOException
    */
-  SearchResult<String> search(Integer rows, Set set, String format, Date fromDate, Date untilDate) throws IOException;
+  SearchResult<String> search(Integer rows, Set set, String format, Date fromDate, Date untilDate, String lastItemId) throws IOException;
   
 //  /**
 //   * 

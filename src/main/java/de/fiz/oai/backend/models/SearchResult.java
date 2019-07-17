@@ -5,9 +5,9 @@ import java.util.List;
 public class SearchResult<E> {
   
   private long total;
-  private int offset;
   private int size;
-
+  private String lastItemId;
+  
   List<E> data;
 
   public long getTotal() {
@@ -16,14 +16,6 @@ public class SearchResult<E> {
 
   public void setTotal(long total) {
     this.total = total;
-  }
-
-  public int getOffset() {
-    return offset;
-  }
-
-  public void setOffset(int offset) {
-    this.offset = offset;
   }
 
   public int getSize() {
@@ -40,6 +32,14 @@ public class SearchResult<E> {
 
   public void setData(List<E> data) {
     this.data = data;
+  }
+
+  public String getLastItemId() {
+    return lastItemId;
+  }
+
+  public void setLastItemId(String lastItemId) {
+    this.lastItemId = lastItemId;
   }
 
 }
