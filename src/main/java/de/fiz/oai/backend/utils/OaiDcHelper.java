@@ -40,6 +40,7 @@ public class OaiDcHelper {
     } catch (Exception e)
     {
         e.printStackTrace();
+        System.out.println("caused by: " + xml);
     }
 
     return json;

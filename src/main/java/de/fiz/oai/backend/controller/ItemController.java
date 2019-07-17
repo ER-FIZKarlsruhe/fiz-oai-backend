@@ -159,8 +159,6 @@ public class ItemController extends AbstractController {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
 
-    LOGGER.info("createItem content: " + content);
-
     return newItem;
   }
 
@@ -188,8 +186,6 @@ public class ItemController extends AbstractController {
     } catch (IOException e) {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
-
-    LOGGER.info("createItem content: " + content);
 
     return updateItem;
   }

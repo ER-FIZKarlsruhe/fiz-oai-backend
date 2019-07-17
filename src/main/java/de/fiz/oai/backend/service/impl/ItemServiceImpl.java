@@ -64,7 +64,6 @@ public class ItemServiceImpl implements ItemService {
   @Inject
   DAOSet daoSet;
 
-  
   @Inject
   SearchService searchService;
 
@@ -76,7 +75,7 @@ public class ItemServiceImpl implements ItemService {
     if (format == null) {
       format = item.getIngestFormat();
     }
-    
+
     if (item != null && readContent) {
       Content content = daoContent.read(identifier, format);
       item.setContent(content);
@@ -88,7 +87,7 @@ public class ItemServiceImpl implements ItemService {
   @Override
   public Item create(Item item) throws IOException {
     Item newItem = null;
-    List<String> itemFormats = new ArrayList<String>(); 
+    List<String> itemFormats = new ArrayList<String>();
 
     // Overwrite datestamp!
     item.setDatestamp(Configuration.dateFormat.format(new Date()));
@@ -101,19 +100,20 @@ public class ItemServiceImpl implements ItemService {
     itemFormats.add(item.getIngestFormat());
 
     // Validate xml against xsd
-    //validate(ingestFormat.getSchemaLocation(), new String(item.getContent().getContent(), "UTF-8"));
+    // validate(ingestFormat.getSchemaLocation(), new
+    // String(item.getContent().getContent(), "UTF-8"));
 
-    //Create Item
+    // Create Item
     newItem = daoItem.create(item);
 
-    //Create Content
+    // Create Content
     daoContent.create(item.getContent());
 
-    //Create Crosswalk content
+    // Create Crosswalk content
     createCrosswalks(item, itemFormats);
     newItem.setFormats(itemFormats);
-    
-    //TODO For indexing its important that oai_dc content exits! 
+
+    // TODO For indexing its important that oai_dc content exits!
     searchService.createDocument(newItem);
 
     return newItem;
@@ -122,8 +122,8 @@ public class ItemServiceImpl implements ItemService {
   @Override
   public Item update(Item item) throws IOException {
     Item oldItem = daoItem.read(item.getIdentifier());
-    List<String> itemFormats = new ArrayList<String>(); 
-    
+    List<String> itemFormats = new ArrayList<String>();
+
     if (oldItem == null) {
       throw new WebApplicationException(Status.NOT_FOUND);
     }
@@ -137,18 +137,19 @@ public class ItemServiceImpl implements ItemService {
       throw new UnknownFormatException("Cannot find a Fomat for the given ingestFormat: " + item.getIngestFormat());
     }
     itemFormats.add(item.getIngestFormat());
-    
-    // Validate xml against xsd
-    //validate(ingestFormat.getSchemaLocation(), new String(item.getContent().getContent(), "UTF-8"));
 
-    //TODO delete all old content with item identifier
-    
+    // Validate xml against xsd
+    // validate(ingestFormat.getSchemaLocation(), new
+    // String(item.getContent().getContent(), "UTF-8"));
+
+    // TODO delete all old content with item identifier
+
     Item updateItem = daoItem.create(item);
     daoContent.create(item.getContent());
 
     createCrosswalks(item, itemFormats);
     updateItem.setFormats(itemFormats);
-    
+
     searchService.updateDocument(updateItem);
 
     return updateItem;
@@ -161,18 +162,18 @@ public class ItemServiceImpl implements ItemService {
       offset = 0;
     }
 
-    //TODO make this default setting configurable!
+    // TODO make this default setting configurable!
     if (rows == null) {
       rows = 100;
     }
 
     Set set = null;
-    
+
     if (StringUtils.isNotBlank(setName)) {
-      set = daoSet.read(setName);    
+      set = daoSet.read(setName);
       throw new NotFoundException("Set " + setName + " not found in the database");
     }
-    
+
     final SearchResult<String> idResult = searchService.search(rows, set, format, from, until);
 
     List<Item> itemList = new ArrayList<Item>();
@@ -194,9 +195,9 @@ public class ItemServiceImpl implements ItemService {
   @Override
   public void delete(String identifier) throws IOException {
 
-    //TODO read item and set delete flag, save to cassandra
+    // TODO read item and set delete flag, save to cassandra
 
-    //TODO update index
+    // TODO update index
   }
 
   /**
@@ -220,19 +221,22 @@ public class ItemServiceImpl implements ItemService {
       throw new FormatValidationException(e.getMessage());
     }
   }
-  
+
   private void createCrosswalks(Item item, List<String> itemFormats) throws IOException {
     List<Crosswalk> crosswalks = daoCrosswalk.readAll();
-    for (Crosswalk currentWalk: crosswalks) {
+    for (Crosswalk currentWalk : crosswalks) {
       if (currentWalk.getFormatFrom().equals(item.getIngestFormat())) {
-        String newXml = XsltHelper.transform(new ByteArrayInputStream(item.getContent().getContent().getBytes()), new ByteArrayInputStream(currentWalk.getXsltStylesheet().getBytes()));
-        Content crosswalkConten = new Content();
-        crosswalkConten.setContent(newXml);
-        crosswalkConten.setIdentifier(item.getIdentifier());
-        crosswalkConten.setFormat(currentWalk.getFormatTo());
-        daoContent.create(crosswalkConten);
-        itemFormats.add(currentWalk.getFormatTo());
+        try (ByteArrayInputStream contentStream = new ByteArrayInputStream(item.getContent().getContent().getBytes());
+            ByteArrayInputStream xsltStream = new ByteArrayInputStream(currentWalk.getXsltStylesheet().getBytes())) {
+          String newXml = XsltHelper.transform(contentStream, xsltStream);
+          Content crosswalkConten = new Content();
+          crosswalkConten.setContent(newXml);
+          crosswalkConten.setIdentifier(item.getIdentifier());
+          crosswalkConten.setFormat(currentWalk.getFormatTo());
+          daoContent.create(crosswalkConten);
+          itemFormats.add(currentWalk.getFormatTo());
         }
+      }
     }
   }
 
