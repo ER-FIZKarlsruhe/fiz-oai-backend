@@ -173,7 +173,7 @@ public class ItemServiceImpl implements ItemService {
       throw new NotFoundException("Set " + setName + " not found in the database");
     }
     
-    final SearchResult<String> idResult = searchService.search(offset, rows, set, format, from, until);
+    final SearchResult<String> idResult = searchService.search(rows, set, format, from, until);
 
     List<Item> itemList = new ArrayList<Item>();
 

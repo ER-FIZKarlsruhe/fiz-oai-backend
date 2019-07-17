@@ -135,36 +135,36 @@ public class SearchServiceImpl implements SearchService {
     DeleteResponse deleteResponse = client.delete(request, RequestOptions.DEFAULT);
   }
 
+//  @Override
+//  public SearchResult<String> search(String scrollId) throws IOException {
+//    RestHighLevelClient client = new RestHighLevelClient(
+//        RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
+//
+//    SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
+//    SearchResponse scrollResponse = client.scroll(scrollRequest, RequestOptions.DEFAULT);
+//    scrollId = scrollResponse.getScrollId();
+//    SearchHits scrollhits = scrollResponse.getHits();
+//    LOGGER.info("scrollhits " + scrollhits.totalHits);
+//
+//    Iterator<SearchHit> iterator = scrollhits.iterator();
+//    List<String> itemRetrieved = new ArrayList<String>();
+//
+//    while (iterator.hasNext()) {
+//      SearchHit searchHit = iterator.next();
+//      itemRetrieved.add(searchHit.getId());
+//    }
+//
+//    SearchResult<String> idResult = new SearchResult<String>();
+//    idResult.setSize(itemRetrieved.size());
+//    idResult.setTotal(scrollhits.totalHits);
+//    idResult.setData(itemRetrieved);
+//    idResult.setScrollId(scrollId);
+//
+//    return idResult;
+//  }
+
   @Override
-  public SearchResult<String> search(String scrollId) throws IOException {
-    RestHighLevelClient client = new RestHighLevelClient(
-        RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
-
-    SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
-    SearchResponse scrollResponse = client.scroll(scrollRequest, RequestOptions.DEFAULT);
-    scrollId = scrollResponse.getScrollId();
-    SearchHits scrollhits = scrollResponse.getHits();
-    LOGGER.info("scrollhits " + scrollhits.totalHits);
-
-    Iterator<SearchHit> iterator = scrollhits.iterator();
-    List<String> itemRetrieved = new ArrayList<String>();
-
-    while (iterator.hasNext()) {
-      SearchHit searchHit = iterator.next();
-      itemRetrieved.add(searchHit.getId());
-    }
-
-    SearchResult<String> idResult = new SearchResult<String>();
-    idResult.setSize(itemRetrieved.size());
-    idResult.setTotal(scrollhits.totalHits);
-    idResult.setData(itemRetrieved);
-    idResult.setScrollId(scrollId);
-
-    return idResult;
-  }
-
-  @Override
-  public SearchResult<String> search(Integer offset, Integer rows, Set set, String format, Date fromDate,
+  public SearchResult<String> search(Integer rows, Set set, String format, Date fromDate,
       Date untilDate) throws IOException {
 
     RestHighLevelClient client = new RestHighLevelClient(
@@ -186,6 +186,7 @@ public class SearchServiceImpl implements SearchService {
     searchSourceBuilder.sort("datestamp", SortOrder.ASC);
     searchSourceBuilder.size(rows);
 
+    
     final Scroll scroll = new Scroll(TimeValue.timeValueHours(24));
     SearchRequest searchRequest = new SearchRequest(ITEMS_INDEX_NAME);
     searchRequest.scroll(scroll);
