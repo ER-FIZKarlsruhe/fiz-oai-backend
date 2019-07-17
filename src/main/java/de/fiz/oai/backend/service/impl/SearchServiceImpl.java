@@ -88,11 +88,12 @@ public class SearchServiceImpl implements SearchService {
 
     indexRequest.index(ITEMS_INDEX_NAME);
     indexRequest.type("_doc");
-    indexRequest.id(item.getIdentifier());
+    indexRequest.id(item.getIdentifier().replace("-", "\\-"));
     indexRequest.source(itemMap);
 
     client.index(indexRequest, RequestOptions.DEFAULT);
     LOGGER.info("Added item to search index");
+    client.close();
   }
 
   /**
@@ -116,6 +117,8 @@ public class SearchServiceImpl implements SearchService {
     updateRequest.id(item.getIdentifier());
     updateRequest.doc(itemMap);
     client.update(updateRequest, RequestOptions.DEFAULT);
+    
+    client.close();
   }
 
   /**
@@ -133,6 +136,8 @@ public class SearchServiceImpl implements SearchService {
     request.id(item.getIdentifier());
 
     DeleteResponse deleteResponse = client.delete(request, RequestOptions.DEFAULT);
+    
+    client.close();
   }
 
 //  @Override
@@ -208,7 +213,9 @@ public class SearchServiceImpl implements SearchService {
     idResult.setSize(itemRetrieved.size());
     idResult.setTotal(searchResponse.getHits().totalHits);
     idResult.setData(itemRetrieved);
-    idResult.setScrollId(scrollId);
+
+    client.close();
+
     return idResult;
   }
 
