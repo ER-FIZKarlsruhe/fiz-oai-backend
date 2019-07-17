@@ -171,7 +171,7 @@ public class SearchServiceImpl implements SearchService {
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
     final BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
     queryBuilder.filter(QueryBuilders.rangeQuery("datestamp").from(fromDate).to(untilDate));
-    queryBuilder.filter(QueryBuilders.termQuery("ingestFormat", format));
+    queryBuilder.filter(QueryBuilders.termQuery("formats", format));
 
     if (set != null) {
       if (StringUtils.isNotBlank(set.getSearchQuery())) {

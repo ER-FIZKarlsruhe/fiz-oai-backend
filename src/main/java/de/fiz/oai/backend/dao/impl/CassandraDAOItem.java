@@ -16,7 +16,6 @@ import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.utils.ClusterManager;
-import de.fiz.oai.backend.utils.Configuration;
 
 @Service
 public class CassandraDAOItem implements DAOItem {
