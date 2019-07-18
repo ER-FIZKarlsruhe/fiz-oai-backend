@@ -142,8 +142,6 @@ public class SearchServiceImpl implements SearchService {
 
     LOGGER.info("DEBUG: rows: " + rows);
     LOGGER.info("DEBUG: format: " + format);
-    LOGGER.info("DEBUG: fromDate: " + fromDate.toString());
-    LOGGER.info("DEBUG: untilDate: " + untilDate.toString());
     LOGGER.info("DEBUG: lastItemId: " + lastItemId);
     
     try (RestHighLevelClient client = new RestHighLevelClient(
