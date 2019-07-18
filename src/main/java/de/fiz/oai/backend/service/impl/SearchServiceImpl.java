@@ -161,7 +161,7 @@ public class SearchServiceImpl implements SearchService {
 
       final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
       searchSourceBuilder.query(queryBuilder);
-      searchSourceBuilder.sort("datestamp", SortOrder.ASC);
+      searchSourceBuilder.sort("identifier", SortOrder.ASC);
       searchSourceBuilder.size(rows);
       
       if (StringUtils.isNotBlank(lastItemId)) {        
