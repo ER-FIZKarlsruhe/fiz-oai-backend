@@ -159,14 +159,15 @@ public class SearchServiceImpl implements SearchService {
       searchSourceBuilder.query(queryBuilder);
       searchSourceBuilder.sort("datestamp", SortOrder.ASC);
       searchSourceBuilder.size(rows);
+      
+      if (StringUtils.isNotBlank(lastItemId)) {        
+        searchSourceBuilder.searchAfter(new Object[]{lastItemId});
+      }
 
-      final Scroll scroll = new Scroll(TimeValue.timeValueHours(24));
       SearchRequest searchRequest = new SearchRequest(ITEMS_INDEX_NAME);
-      searchRequest.scroll(scroll);
       searchRequest.source(searchSourceBuilder);
-
+      
       SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-      String scrollId = searchResponse.getScrollId();
 
       SearchHits searchHits = searchResponse.getHits();
       Iterator<SearchHit> iterator = searchHits.iterator();
