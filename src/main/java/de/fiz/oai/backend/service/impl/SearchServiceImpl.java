@@ -184,9 +184,8 @@ public class SearchServiceImpl implements SearchService {
       idResult.setTotal(searchResponse.getHits().totalHits);
       idResult.setData(itemRetrieved);
 
-      // TODO: Send the lastItemId if there are elements after it
+      // Send the lastItemId if there are elements after it
       final String currentLastItemId = itemRetrieved.get(itemRetrieved.size() - 1);
-      
       idResult.setLastItemId(currentLastItemId);
       searchSourceBuilder.searchAfter(new Object[]{currentLastItemId});
       searchRequest.source(searchSourceBuilder);
@@ -194,7 +193,6 @@ public class SearchServiceImpl implements SearchService {
       if (searchResponse.getHits().getHits().length == 0) {
         idResult.setLastItemId(null);
       }
-      
       
       return idResult;
 
