@@ -39,10 +39,9 @@ public class XsltHelper {
       final Document doc = db.parse(xml);
       final Source xsltSource = new StreamSource(xslt);
 
-      TransformerFactory factory = TransformerFactory
-          .newInstance("com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl", null);
-      factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-      factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+      TransformerFactory factory = TransformerFactory.newInstance("com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl", null);
+      factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "all");
+      factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "all");
 
       final Transformer transformer = factory.newTransformer(xsltSource);
       transformer.setOutputProperty(OutputKeys.METHOD, "xml");

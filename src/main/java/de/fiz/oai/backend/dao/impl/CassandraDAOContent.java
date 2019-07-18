@@ -3,7 +3,9 @@ package de.fiz.oai.backend.dao.impl;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
@@ -28,17 +30,22 @@ public class CassandraDAOContent implements DAOContent {
 
   public static final String TABLENAME_CONTENT = "oai_content";
 
+  private Map<String, PreparedStatement> preparedStatements = new HashMap<String, PreparedStatement>();
+
   public Content read(String identifier, String format) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
     Session session = manager.getCassandraSession();
 
-    final StringBuilder selectStmt = new StringBuilder();
-    selectStmt.append("SELECT * FROM ");
-    selectStmt.append(TABLENAME_CONTENT);
-    selectStmt.append(" WHERE identifier=? AND format=?");
+    PreparedStatement prepared = preparedStatements.get("read");
+    if (prepared == null) {
+      final StringBuilder selectStmt = new StringBuilder();
+      selectStmt.append("SELECT * FROM ");
+      selectStmt.append(TABLENAME_CONTENT);
+      selectStmt.append(" WHERE identifier=? AND format=?");
 
-    PreparedStatement prepared = session.prepare(selectStmt.toString());
-
+      prepared = session.prepare(selectStmt.toString());
+      preparedStatements.put("read", prepared);
+    }
     BoundStatement bound = prepared.bind(identifier, format);
 
     ResultSet rs = session.execute(bound);
@@ -56,13 +63,16 @@ public class CassandraDAOContent implements DAOContent {
     ClusterManager manager = ClusterManager.getInstance();
     Session session = manager.getCassandraSession();
 
-    final StringBuilder selectStmt = new StringBuilder();
-    selectStmt.append("SELECT * FROM ");
-    selectStmt.append(TABLENAME_CONTENT);
-    selectStmt.append(" WHERE identifier=?");
+    PreparedStatement prepared = preparedStatements.get("readFormats");
+    if (prepared == null) {
+      final StringBuilder selectStmt = new StringBuilder();
+      selectStmt.append("SELECT * FROM ");
+      selectStmt.append(TABLENAME_CONTENT);
+      selectStmt.append(" WHERE identifier=?");
 
-    PreparedStatement prepared = session.prepare(selectStmt.toString());
-
+      prepared = session.prepare(selectStmt.toString());
+      preparedStatements.put("readFormats", prepared);
+    }
     BoundStatement bound = prepared.bind(identifier);
 
     ResultSet rs = session.execute(bound);
@@ -104,19 +114,22 @@ public class CassandraDAOContent implements DAOContent {
       throw new IOException("Contents value cannot be empty!");
     }
 
-    StringBuilder insertStmt = new StringBuilder();
-    insertStmt.append("INSERT INTO ");
-    insertStmt.append(TABLENAME_CONTENT);
-    insertStmt.append(" (");
-    insertStmt.append(CONTENT_IDENTIFIER);
-    insertStmt.append(", ");
-    insertStmt.append(CONTENT_FORMAT);
-    insertStmt.append(", ");
-    insertStmt.append(CONTENT_CONTENT);
-    insertStmt.append(") VALUES (?, ?, ?)");
+    PreparedStatement prepared = preparedStatements.get("create");
+    if (prepared == null) {
+      StringBuilder insertStmt = new StringBuilder();
+      insertStmt.append("INSERT INTO ");
+      insertStmt.append(TABLENAME_CONTENT);
+      insertStmt.append(" (");
+      insertStmt.append(CONTENT_IDENTIFIER);
+      insertStmt.append(", ");
+      insertStmt.append(CONTENT_FORMAT);
+      insertStmt.append(", ");
+      insertStmt.append(CONTENT_CONTENT);
+      insertStmt.append(") VALUES (?, ?, ?)");
 
-    PreparedStatement prepared = session.prepare(insertStmt.toString());
-
+      prepared = session.prepare(insertStmt.toString());
+      preparedStatements.put("create", prepared);
+    }
     ByteBuffer buffer = ByteBuffer.wrap(content.getContent().getBytes());
 
     BoundStatement bound = prepared.bind(content.getIdentifier(), content.getFormat(), buffer);
@@ -138,17 +151,21 @@ public class CassandraDAOContent implements DAOContent {
     ClusterManager manager = ClusterManager.getInstance();
     Session session = manager.getCassandraSession();
 
-    StringBuilder deleteStmt = new StringBuilder();
-    deleteStmt.append("DELETE FROM ");
-    deleteStmt.append(TABLENAME_CONTENT);
-    deleteStmt.append(" WHERE ");
-    deleteStmt.append(CONTENT_IDENTIFIER);
-    deleteStmt.append("=?");
-    deleteStmt.append(" AND ");
-    deleteStmt.append(CONTENT_FORMAT);
-    deleteStmt.append("=?");
+    PreparedStatement prepared = preparedStatements.get("delete");
+    if (prepared == null) {
+      StringBuilder deleteStmt = new StringBuilder();
+      deleteStmt.append("DELETE FROM ");
+      deleteStmt.append(TABLENAME_CONTENT);
+      deleteStmt.append(" WHERE ");
+      deleteStmt.append(CONTENT_IDENTIFIER);
+      deleteStmt.append("=?");
+      deleteStmt.append(" AND ");
+      deleteStmt.append(CONTENT_FORMAT);
+      deleteStmt.append("=?");
 
-    PreparedStatement prepared = session.prepare(deleteStmt.toString());
+      prepared = session.prepare(deleteStmt.toString());
+      preparedStatements.put("delete", prepared);
+    }
 
     BoundStatement bound = prepared.bind(identifier, format);
     ResultSet result = session.execute(bound);
