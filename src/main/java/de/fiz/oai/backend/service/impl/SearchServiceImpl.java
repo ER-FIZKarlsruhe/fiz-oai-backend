@@ -178,11 +178,24 @@ public class SearchServiceImpl implements SearchService {
         itemRetrieved.add(searchHit.getId());
       }
 
+      
       SearchResult<String> idResult = new SearchResult<String>();
       idResult.setSize(itemRetrieved.size());
       idResult.setTotal(searchResponse.getHits().totalHits);
       idResult.setData(itemRetrieved);
-      idResult.setLastItemId(itemRetrieved.get(itemRetrieved.size() - 1));
+
+      // TODO: Send the lastItemId if there are elements after it
+      final String currentLastItemId = itemRetrieved.get(itemRetrieved.size() - 1);
+      
+      idResult.setLastItemId(currentLastItemId);
+      searchSourceBuilder.searchAfter(new Object[]{currentLastItemId});
+      searchRequest.source(searchSourceBuilder);
+      searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+      if (searchResponse.getHits().getHits().length == 0) {
+        idResult.setLastItemId(null);
+      }
+      
+      
       return idResult;
 
     }
