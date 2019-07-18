@@ -140,6 +140,12 @@ public class SearchServiceImpl implements SearchService {
   public SearchResult<String> search(Integer rows, Set set, String format, Date fromDate, Date untilDate, String lastItemId)
       throws IOException {
 
+    LOGGER.info("DEBUG: rows: " + rows);
+    LOGGER.info("DEBUG: format: " + format);
+    LOGGER.info("DEBUG: fromDate: " + fromDate.toString());
+    LOGGER.info("DEBUG: untilDate: " + untilDate.toString());
+    LOGGER.info("DEBUG: lastItemId: " + lastItemId);
+    
     try (RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
 
@@ -167,6 +173,8 @@ public class SearchServiceImpl implements SearchService {
       SearchRequest searchRequest = new SearchRequest(ITEMS_INDEX_NAME);
       searchRequest.source(searchSourceBuilder);
       
+      LOGGER.info("DEBUG: searchRequest: " + searchRequest.toString());
+      
       SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
 
       SearchHits searchHits = searchResponse.getHits();
@@ -189,6 +197,8 @@ public class SearchServiceImpl implements SearchService {
       idResult.setLastItemId(currentLastItemId);
       searchSourceBuilder.searchAfter(new Object[]{currentLastItemId});
       searchRequest.source(searchSourceBuilder);
+      LOGGER.info("DEBUG: currentLastItemId: " + currentLastItemId);
+      LOGGER.info("DEBUG: searchRequest next elements?: " + searchRequest.toString());
       searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
       if (searchResponse.getHits().getHits().length == 0) {
         idResult.setLastItemId(null);
