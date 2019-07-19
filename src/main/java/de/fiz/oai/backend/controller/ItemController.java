@@ -91,7 +91,7 @@ public class ItemController extends AbstractController {
 
     try {
       if (!StringUtils.isBlank(from)) {
-        fromDate = Configuration.dateFormat.parse(from);
+        fromDate = Configuration.getDateformat().parse(from);
       }
     } catch (ParseException e) {
       throw new BadRequestException("Invalid from QueryParam!");
@@ -99,7 +99,7 @@ public class ItemController extends AbstractController {
 
     try {
       if (!StringUtils.isBlank(until)) {
-        untilDate = Configuration.dateFormat.parse(until);
+        untilDate = Configuration.getDateformat().parse(until);
       }
     } catch (ParseException e) {
       throw new BadRequestException("Invalid until QueryParam!");

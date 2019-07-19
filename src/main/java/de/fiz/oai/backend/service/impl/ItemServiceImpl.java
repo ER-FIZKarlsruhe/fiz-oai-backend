@@ -70,7 +70,7 @@ public class ItemServiceImpl implements ItemService {
   @Override
   public Item read(String identifier, String format, Boolean readContent) throws IOException {
     final Item item = daoItem.read(identifier);
-    LOGGER.info("getItem: " + item);
+    LOGGER.debug("getItem: " + item);
 
     if (format == null) {
       format = item.getIngestFormat();
@@ -90,7 +90,7 @@ public class ItemServiceImpl implements ItemService {
     List<String> itemFormats = new ArrayList<String>();
 
     // Overwrite datestamp!
-    item.setDatestamp(Configuration.dateFormat.format(new Date()));
+    item.setDatestamp(Configuration.getDateformat().format(new Date()));
 
     // IngestFormat exists?
     Format ingestFormat = daoFormat.read(item.getIngestFormat());
@@ -129,7 +129,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     // Overwrite datestamp!
-    item.setDatestamp(Configuration.dateFormat.format(new Date()));
+    item.setDatestamp(Configuration.getDateformat().format(new Date()));
 
     // Format exists?
     Format ingestFormat = daoFormat.read(item.getIngestFormat());
@@ -170,7 +170,12 @@ public class ItemServiceImpl implements ItemService {
       throw new NotFoundException("Set " + setName + " not found in the database");
     }
 
-    final SearchResult<String> idResult = searchService.search(rows, set, format, from, until, lastItemId);
+    Item lastItem = null;
+    if (StringUtils.isNotBlank(lastItemId)) {
+      lastItem = daoItem.read(lastItemId);
+    }
+    
+    final SearchResult<String> idResult = searchService.search(rows, set, format, from, until, lastItem);
 
     List<Item> itemList = new ArrayList<Item>();
 

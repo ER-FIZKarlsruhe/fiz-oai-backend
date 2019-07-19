@@ -2,7 +2,6 @@ package de.fiz.oai.backend.service;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.List;
 
 import org.jvnet.hk2.annotations.Contract;
 
@@ -57,7 +56,7 @@ public interface SearchService {
    * @return
    * @throws IOException
    */
-  SearchResult<String> search(Integer rows, Set set, String format, Date fromDate, Date untilDate, String lastItemId) throws IOException;
+  SearchResult<String> search(Integer rows, Set set, String format, Date fromDate, Date untilDate, Item lastItem) throws IOException;
   
 //  /**
 //   * 

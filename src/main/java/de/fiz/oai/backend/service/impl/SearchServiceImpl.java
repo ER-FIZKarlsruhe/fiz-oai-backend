@@ -1,6 +1,7 @@
 package de.fiz.oai.backend.service.impl;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -20,14 +21,13 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.search.sort.FieldSortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,7 +85,6 @@ public class SearchServiceImpl implements SearchService {
 
       indexRequest.index(ITEMS_INDEX_NAME);
       indexRequest.type("_doc");
-      indexRequest.id(item.getIdentifier().replace("-", "\\-"));
       indexRequest.source(itemMap);
 
       client.index(indexRequest, RequestOptions.DEFAULT);
@@ -111,7 +110,6 @@ public class SearchServiceImpl implements SearchService {
       UpdateRequest updateRequest = new UpdateRequest();
       updateRequest.index(ITEMS_INDEX_NAME);
       updateRequest.type("_doc");
-      updateRequest.id(item.getIdentifier());
       updateRequest.doc(itemMap);
       client.update(updateRequest, RequestOptions.DEFAULT);
 
@@ -137,18 +135,18 @@ public class SearchServiceImpl implements SearchService {
   }
 
   @Override
-  public SearchResult<String> search(Integer rows, Set set, String format, Date fromDate, Date untilDate, String lastItemId)
+  public SearchResult<String> search(Integer rows, Set set, String format, Date fromDate, Date untilDate, Item lastItem)
       throws IOException {
 
     LOGGER.info("DEBUG: rows: " + rows);
     LOGGER.info("DEBUG: format: " + format);
-    LOGGER.info("DEBUG: lastItemId: " + lastItemId);
-    
+    LOGGER.info("DEBUG: lastItem: " + lastItem);
+
     try (RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
 
       final BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
-      queryBuilder.filter(QueryBuilders.rangeQuery("datestamp").from(fromDate).to(untilDate));
+      queryBuilder.filter(QueryBuilders.rangeQuery("datestamp").from(Configuration.getDateformat().format(fromDate)).to(Configuration.getDateformat().format(untilDate)));
       queryBuilder.filter(QueryBuilders.termQuery("formats", format));
 
       if (set != null) {
@@ -160,48 +158,75 @@ public class SearchServiceImpl implements SearchService {
       }
 
       final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-      searchSourceBuilder.query(queryBuilder);
-      searchSourceBuilder.sort("identifier", SortOrder.ASC);
-      searchSourceBuilder.size(rows);
       
-      if (StringUtils.isNotBlank(lastItemId)) {        
-        searchSourceBuilder.searchAfter(new Object[]{lastItemId});
+      FieldSortBuilder datestampBuilder = SortBuilders.fieldSort("datestamp");
+      FieldSortBuilder identifierBuilder = SortBuilders.fieldSort("identifier");
+      searchSourceBuilder.query(queryBuilder);
+      searchSourceBuilder.sort(datestampBuilder);
+      searchSourceBuilder.sort(identifierBuilder);
+      searchSourceBuilder.size(rows);
+
+      if (lastItem != null) {
+        Long timestamp = null;
+        try {
+          timestamp = Configuration.getDateformat().parse(lastItem.getDatestamp()).getTime();
+        } catch (ParseException e) {
+          e.printStackTrace();
+        }
+        searchSourceBuilder.searchAfter(new Object[] { timestamp, lastItem.getIdentifier() });
+        searchSourceBuilder.from(0);
       }
 
       SearchRequest searchRequest = new SearchRequest(ITEMS_INDEX_NAME);
       searchRequest.source(searchSourceBuilder);
-      
+
       LOGGER.info("DEBUG: searchRequest: " + searchRequest.toString());
-      
+
       SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
 
       SearchHits searchHits = searchResponse.getHits();
       Iterator<SearchHit> iterator = searchHits.iterator();
-      List<String> itemRetrieved = new ArrayList<String>();
+      List<String> idsRetrieved = new ArrayList<String>();
 
       while (iterator.hasNext()) {
         SearchHit searchHit = iterator.next();
-        itemRetrieved.add(searchHit.getId());
+        idsRetrieved.add(searchHit.getSourceAsMap().get("identifier").toString());
       }
 
-      
       SearchResult<String> idResult = new SearchResult<String>();
-      idResult.setSize(itemRetrieved.size());
+      idResult.setSize(idsRetrieved.size());
       idResult.setTotal(searchResponse.getHits().totalHits);
-      idResult.setData(itemRetrieved);
+      idResult.setData(idsRetrieved);
 
       // Send the lastItemId if there are elements after it
-      final String currentLastItemId = itemRetrieved.get(itemRetrieved.size() - 1);
-      idResult.setLastItemId(currentLastItemId);
-      searchSourceBuilder.searchAfter(new Object[]{currentLastItemId});
-      searchRequest.source(searchSourceBuilder);
-      LOGGER.info("DEBUG: currentLastItemId: " + currentLastItemId);
-      LOGGER.info("DEBUG: searchRequest next elements?: " + searchRequest.toString());
-      searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-      if (searchResponse.getHits().getHits().length == 0) {
-        idResult.setLastItemId(null);
+      final String newLastItemId = idsRetrieved.get(idsRetrieved.size() - 1);
+      idResult.setLastItemId(newLastItemId);
+
+      Item newLastItem = null;
+      if (StringUtils.isNotBlank(newLastItemId)) {
+
+        newLastItem = daoItem.read(newLastItemId);
+        LOGGER.info("searchSourceBuilder: " + searchSourceBuilder);
+        LOGGER.info("newLastItemId: " + newLastItemId);
+        LOGGER.info("newLastItem: " + newLastItem);
+
+        Long timestamp = null;
+        try {
+          timestamp = Configuration.getDateformat().parse(newLastItem.getDatestamp()).getTime();
+        } catch (ParseException e) {
+          e.printStackTrace();
+        }
+        searchSourceBuilder.searchAfter(new Object[] { timestamp, newLastItem.getIdentifier() });
+        searchRequest.source(searchSourceBuilder);
+
+        LOGGER.info("DEBUG: currentLastItemId: " + newLastItemId);
+        LOGGER.info("DEBUG: searchRequest next elements?: " + searchRequest.toString());
+        searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        if (searchResponse.getHits().getHits().length == 0) {
+          idResult.setLastItemId(null);
+        }
       }
-      
+
       return idResult;
 
     }

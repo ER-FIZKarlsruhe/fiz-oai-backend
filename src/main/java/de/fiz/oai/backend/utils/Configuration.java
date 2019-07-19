@@ -8,13 +8,14 @@ import java.io.Reader;
 import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TimeZone;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Configuration {
 
-    public static SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-dd'T'hh:mm:ss'Z'");
+   
   
     private Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
 
@@ -28,6 +29,13 @@ public class Configuration {
       return properties;
     }
 
+    public static SimpleDateFormat getDateformat() {
+      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+      dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+      
+      return dateFormat;
+    }
+    
     private boolean applicationConfigured = false;
 
     private Configuration() {
