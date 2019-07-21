@@ -163,6 +163,10 @@ public class ItemServiceImpl implements ItemService {
       rows = 100;
     }
 
+    if (rows > 1000) {
+      throw new IOException("rows parameter must NOT be greater than 1000!");
+    }
+
     Set set = null;
 
     if (StringUtils.isNotBlank(setName)) {
@@ -188,7 +192,8 @@ public class ItemServiceImpl implements ItemService {
     itemResult.setData(itemList);
     itemResult.setSize(itemList.size());
     itemResult.setTotal(idResult.getTotal());
-    itemResult.setLastItemId(itemList.get(itemList.size() - 1).getIdentifier());
+    itemResult.setLastItemId(idResult.getLastItemId());
+
     return itemResult;
   }
 

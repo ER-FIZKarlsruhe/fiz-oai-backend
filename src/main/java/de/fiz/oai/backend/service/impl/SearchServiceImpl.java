@@ -199,9 +199,11 @@ public class SearchServiceImpl implements SearchService {
       idResult.setData(idsRetrieved);
 
       // Send the lastItemId if there are elements after it
-      final String newLastItemId = idsRetrieved.get(idsRetrieved.size() - 1);
-      idResult.setLastItemId(newLastItemId);
-
+      String newLastItemId = null;
+      if (idsRetrieved.size() > 0) {
+        newLastItemId = idsRetrieved.get(idsRetrieved.size() - 1);
+        idResult.setLastItemId(newLastItemId);
+      }
       Item newLastItem = null;
       if (StringUtils.isNotBlank(newLastItemId)) {
 
