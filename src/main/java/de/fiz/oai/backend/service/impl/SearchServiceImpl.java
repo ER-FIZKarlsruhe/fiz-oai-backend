@@ -86,6 +86,7 @@ public class SearchServiceImpl implements SearchService {
       indexRequest.index(ITEMS_INDEX_NAME);
       indexRequest.type("_doc");
       indexRequest.source(itemMap);
+      indexRequest.id(item.getIdentifier());
 
       client.index(indexRequest, RequestOptions.DEFAULT);
       LOGGER.info("Added item to search index");
