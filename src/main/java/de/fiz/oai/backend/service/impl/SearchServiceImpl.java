@@ -147,7 +147,8 @@ public class SearchServiceImpl implements SearchService {
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
 
       final BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
-      queryBuilder.filter(QueryBuilders.rangeQuery("datestamp").from(Configuration.getDateformat().format(fromDate)).to(Configuration.getDateformat().format(untilDate)));
+      queryBuilder.filter(QueryBuilders.rangeQuery("datestamp").from(Configuration.getDateformat().format(fromDate))
+          .to(Configuration.getDateformat().format(untilDate)));
       queryBuilder.filter(QueryBuilders.termQuery("formats", format));
 
       if (set != null) {
@@ -159,13 +160,14 @@ public class SearchServiceImpl implements SearchService {
       }
 
       final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-      
+
       FieldSortBuilder datestampBuilder = SortBuilders.fieldSort("datestamp");
       FieldSortBuilder identifierBuilder = SortBuilders.fieldSort("identifier");
       searchSourceBuilder.query(queryBuilder);
       searchSourceBuilder.sort(datestampBuilder);
       searchSourceBuilder.sort(identifierBuilder);
       searchSourceBuilder.size(rows);
+      searchSourceBuilder.fetchSource(false);
 
       if (lastItem != null) {
         Long timestamp = null;
@@ -191,7 +193,7 @@ public class SearchServiceImpl implements SearchService {
 
       while (iterator.hasNext()) {
         SearchHit searchHit = iterator.next();
-        idsRetrieved.add(searchHit.getSourceAsMap().get("identifier").toString());
+        idsRetrieved.add(searchHit.getId());
       }
 
       SearchResult<String> idResult = new SearchResult<String>();

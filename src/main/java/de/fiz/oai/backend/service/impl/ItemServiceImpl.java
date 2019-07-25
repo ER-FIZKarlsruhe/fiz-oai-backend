@@ -178,7 +178,7 @@ public class ItemServiceImpl implements ItemService {
     if (StringUtils.isNotBlank(lastItemId)) {
       lastItem = daoItem.read(lastItemId);
     }
-    
+
     final SearchResult<String> idResult = searchService.search(rows, set, format, from, until, lastItem);
 
     List<Item> itemList = new ArrayList<Item>();
