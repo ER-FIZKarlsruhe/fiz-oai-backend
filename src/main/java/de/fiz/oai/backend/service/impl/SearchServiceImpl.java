@@ -12,6 +12,9 @@ import javax.inject.Inject;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
+import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -21,6 +24,7 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -239,21 +243,35 @@ public class SearchServiceImpl implements SearchService {
   }
 
   @Override
-  public void createIndex() {
-    // TODO Auto-generated method stub
-
+  public boolean createIndex(final String indexName, final String mapping) throws IOException {
+    if (StringUtils.isNotBlank(indexName) && StringUtils.isNotBlank(mapping)) {
+      try (RestHighLevelClient client = new RestHighLevelClient(
+          RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
+        CreateIndexRequest request = new CreateIndexRequest(indexName);
+        request.mapping("_doc", mapping, XContentType.JSON);
+        CreateIndexResponse createIndexResponse = client.indices().create(request, RequestOptions.DEFAULT);
+        if (createIndexResponse.isAcknowledged()) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
-  public void dropIndex() {
-    // TODO Auto-generated method stub
-
+  public void dropIndex(final String indexName) throws IOException {
+    if (StringUtils.isNotBlank(indexName)) {
+      try (RestHighLevelClient client = new RestHighLevelClient(
+          RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
+        DeleteIndexRequest request = new DeleteIndexRequest(indexName);
+        client.indices().delete(request, RequestOptions.DEFAULT);
+      }
+    }
   }
 
   @Override
   public void reindexAll() {
-    // TODO Auto-generated method stub
-
+    
   }
 
 }

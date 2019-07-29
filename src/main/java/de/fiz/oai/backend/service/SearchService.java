@@ -15,12 +15,12 @@ public interface SearchService {
   /**
    * Creates a new index if not existing 
    */
-  void createIndex() throws IOException;
+  boolean createIndex(final String indexName, final String mapping) throws IOException;
   
   /**
    * Drops the index
    */
-  void dropIndex() throws IOException;
+  void dropIndex(final String indexName) throws IOException;
   
  /**
   * Reindex all documents
