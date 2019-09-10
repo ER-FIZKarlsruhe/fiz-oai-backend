@@ -71,16 +71,6 @@ public class SearchServiceImpl implements SearchService {
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
       Map<String, Object> itemMap = item.toMap();
 
-      // Index oai_dc version of the item
-      Content content = daoContent.read(item.getIdentifier(), "oai_dc");
-      if (content != null) {
-        String xmlContentByte = content.getContent();
-        String oaiDcJson = OaiDcHelper.xmlToJson(xmlContentByte);
-        ObjectMapper mapper = new ObjectMapper();
-        Map<String, String> map = mapper.readValue(oaiDcJson, Map.class);
-        itemMap.put("oai_dc", map);
-      }
-
       IndexRequest indexRequest = new IndexRequest();
 
       indexRequest.index(ITEMS_INDEX_NAME);
@@ -102,11 +92,11 @@ public class SearchServiceImpl implements SearchService {
     try (RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
 
-      String xmlContentByte = daoContent.read(item.getIdentifier(), "oai_dc").getContent();
-      String oaiDcJson = OaiDcHelper.xmlToJson(xmlContentByte);
+      //String xmlContentByte = daoContent.read(item.getIdentifier(), "oai_dc").getContent();
+      //String oaiDcJson = OaiDcHelper.xmlToJson(xmlContentByte);
 
       Map<String, Object> itemMap = item.toMap();
-      itemMap.put("oai_dc", oaiDcJson);
+      //itemMap.put("oai_dc", oaiDcJson);
 
       UpdateRequest updateRequest = new UpdateRequest();
       updateRequest.index(ITEMS_INDEX_NAME);
