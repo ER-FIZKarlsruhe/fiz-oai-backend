@@ -32,17 +32,12 @@ import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.fiz.oai.backend.dao.DAOContent;
 import de.fiz.oai.backend.dao.DAOItem;
-import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
-import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.utils.Configuration;
-import de.fiz.oai.backend.utils.OaiDcHelper;
 
 @Service
 public class SearchServiceImpl implements SearchService {
@@ -126,7 +121,7 @@ public class SearchServiceImpl implements SearchService {
   }
 
   @Override
-  public SearchResult<String> search(Integer rows, Set set, String format, Date fromDate, Date untilDate, Item lastItem)
+  public SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate, Item lastItem)
       throws IOException {
 
     LOGGER.info("DEBUG: rows: " + rows);
@@ -141,13 +136,8 @@ public class SearchServiceImpl implements SearchService {
           .to(Configuration.getDateformat().format(untilDate)));
       queryBuilder.filter(QueryBuilders.termQuery("formats", format));
 
-      if (set != null) {
-        if (StringUtils.isNotBlank(set.getSearchQuery())) {
-          queryBuilder.filter(QueryBuilders.queryStringQuery(set.getSearchQuery()));
-        } else if (StringUtils.isNotBlank(set.getSearchTerm())) {
-          queryBuilder.filter(QueryBuilders.termQuery("content", set.getSearchTerm()));
-        }
-      }
+      queryBuilder.filter(QueryBuilders.termQuery("sets", set));
+
 
       final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 

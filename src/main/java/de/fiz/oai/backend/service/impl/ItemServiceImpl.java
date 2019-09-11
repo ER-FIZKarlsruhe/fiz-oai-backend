@@ -167,19 +167,12 @@ public class ItemServiceImpl implements ItemService {
       throw new IOException("rows parameter must NOT be greater than 1000!");
     }
 
-    Set set = null;
-
-    if (StringUtils.isNotBlank(setName)) {
-      set = daoSet.read(setName);
-      throw new NotFoundException("Set " + setName + " not found in the database");
-    }
-
     Item lastItem = null;
     if (StringUtils.isNotBlank(lastItemId)) {
       lastItem = daoItem.read(lastItemId);
     }
 
-    final SearchResult<String> idResult = searchService.search(rows, set, format, from, until, lastItem);
+    final SearchResult<String> idResult = searchService.search(rows, setName, format, from, until, lastItem);
 
     List<Item> itemList = new ArrayList<Item>();
 
