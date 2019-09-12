@@ -26,8 +26,9 @@ public class CassandraDAOSet implements DAOSet {
   public static final String SET_NAME = "name";
   public static final String SET_SPEC = "spec";
   public static final String SET_DESCRIPTION = "description";
-  public static final String SET_SEARCH_TERM = "searchTerm";
-  public static final String SET_SEARCH_QUERY = "searchQuery";
+  public static final String SET_INGESTFORMAT = "ingestformat";
+  public static final String SET_XPATH = "xpath";
+  public static final String SET_STATUS = "status";
 
   public static final String TABLENAME_SET = "oai_set";
 
@@ -64,8 +65,9 @@ public class CassandraDAOSet implements DAOSet {
     set.setSpec(resultRow.getString(SET_SPEC));
     set.setName(resultRow.getString(SET_NAME));
     set.setDescription(resultRow.getString(SET_DESCRIPTION));
-    set.setSearchTerm(resultRow.getString(SET_SEARCH_TERM));
-    set.setSearchQuery(resultRow.getString(SET_SEARCH_QUERY));
+    set.setIngestFormat(resultRow.getString(SET_INGESTFORMAT));
+    set.setxPath(resultRow.getString(SET_XPATH));
+    set.setStatus(resultRow.getString(SET_STATUS));
     return set;
   }
 
@@ -104,17 +106,19 @@ public class CassandraDAOSet implements DAOSet {
       insertStmt.append(", ");
       insertStmt.append(SET_SPEC);
       insertStmt.append(", ");
-      insertStmt.append(SET_SEARCH_TERM);
-      insertStmt.append(", ");
-      insertStmt.append(SET_SEARCH_QUERY);
-      insertStmt.append(", ");      
       insertStmt.append(SET_DESCRIPTION);
-      insertStmt.append(") VALUES (?, ?, ?, ?, ?)");
+      insertStmt.append(", ");
+      insertStmt.append(SET_INGESTFORMAT);
+      insertStmt.append(", ");
+      insertStmt.append(SET_XPATH);
+      insertStmt.append(", ");
+      insertStmt.append(SET_STATUS);
+      insertStmt.append(") VALUES (?, ?, ?, ?, ?, ?)");
 
       prepared = session.prepare(insertStmt.toString());
       preparedStatements.put("create", prepared);
     }
-    BoundStatement bound = prepared.bind(set.getName(), set.getSpec(), set.getSearchTerm(),set.getSearchQuery(), set.getDescription());
+    BoundStatement bound = prepared.bind(set.getName(), set.getSpec(), set.getDescription(), set.getIngestFormat(), set.getxPath(), set.getStatus());
     session.execute(bound);
 
     return set;

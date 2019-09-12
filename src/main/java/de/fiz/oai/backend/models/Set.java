@@ -8,9 +8,11 @@ public class Set {
     
     private String description;
     
-    private String searchTerm;
+    private String ingestFormat;
     
-    private String searchQuery;
+    private String xPath;
+
+    private String status;
 
     public String getName() {
         return name;
@@ -36,21 +38,28 @@ public class Set {
       this.description = description;
     }
 
-    public String getSearchTerm() {
-      return searchTerm;
+    public String getIngestFormat() {
+      return ingestFormat;
     }
 
-    public void setSearchTerm(String searchTerm) {
-      this.searchTerm = searchTerm;
+    public void setIngestFormat(String ingestFormat) {
+      this.ingestFormat = ingestFormat;
     }
 
-    public String getSearchQuery() {
-      return searchQuery;
+    public String getxPath() {
+      return xPath;
     }
 
-    public void setSearchQuery(String searchQuery) {
-      this.searchQuery = searchQuery;
+    public void setxPath(String xPath) {
+      this.xPath = xPath;
     }
 
+    public String getStatus() {
+      return status;
+    }
+
+    public void setStatus(String status) {
+      this.status = status;
+    }
 
 }

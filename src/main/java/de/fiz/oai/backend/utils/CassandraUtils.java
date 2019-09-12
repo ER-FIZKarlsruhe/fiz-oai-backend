@@ -71,11 +71,13 @@ public class CassandraUtils {
         createTableSetStmt.append(" text, ");
         createTableSetStmt.append(CassandraDAOSet.SET_SPEC);
         createTableSetStmt.append(" text, ");
-        createTableSetStmt.append(CassandraDAOSet.SET_SEARCH_TERM);
-        createTableSetStmt.append(" text, ");
-        createTableSetStmt.append(CassandraDAOSet.SET_SEARCH_QUERY);
-        createTableSetStmt.append(" text, ");
         createTableSetStmt.append(CassandraDAOSet.SET_DESCRIPTION);
+        createTableSetStmt.append(" text, ");
+        createTableSetStmt.append(CassandraDAOSet.SET_INGESTFORMAT);
+        createTableSetStmt.append(" text, ");
+        createTableSetStmt.append(CassandraDAOSet.SET_XPATH);
+        createTableSetStmt.append(" text, ");
+        createTableSetStmt.append(CassandraDAOSet.SET_STATUS);
         createTableSetStmt.append(" text, PRIMARY KEY (");
         createTableSetStmt.append(CassandraDAOSet.SET_NAME);
         createTableSetStmt.append("));");
