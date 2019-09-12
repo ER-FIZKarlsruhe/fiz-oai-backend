@@ -136,7 +136,9 @@ public class SearchServiceImpl implements SearchService {
           .to(Configuration.getDateformat().format(untilDate)));
       queryBuilder.filter(QueryBuilders.termQuery("formats", format));
 
-      queryBuilder.filter(QueryBuilders.termQuery("sets", set));
+      if (StringUtils.isNotEmpty(set)) {
+        queryBuilder.filter(QueryBuilders.termQuery("sets", set));
+      }
 
 
       final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
