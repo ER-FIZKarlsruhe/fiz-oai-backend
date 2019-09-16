@@ -73,10 +73,8 @@ public class CassandraUtils {
         createTableSetStmt.append(" text, ");
         createTableSetStmt.append(CassandraDAOSet.SET_DESCRIPTION);
         createTableSetStmt.append(" text, ");
-        createTableSetStmt.append(CassandraDAOSet.SET_INGESTFORMAT);
-        createTableSetStmt.append(" text, ");
-        createTableSetStmt.append(CassandraDAOSet.SET_XPATH);
-        createTableSetStmt.append(" text, ");
+        createTableSetStmt.append(CassandraDAOSet.SET_XPATHS);
+        createTableSetStmt.append(" map<text, text>, ");
         createTableSetStmt.append(CassandraDAOSet.SET_STATUS);
         createTableSetStmt.append(" text, PRIMARY KEY (");
         createTableSetStmt.append(CassandraDAOSet.SET_NAME);

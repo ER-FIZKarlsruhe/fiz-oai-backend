@@ -26,8 +26,7 @@ public class CassandraDAOSet implements DAOSet {
   public static final String SET_NAME = "name";
   public static final String SET_SPEC = "spec";
   public static final String SET_DESCRIPTION = "description";
-  public static final String SET_INGESTFORMAT = "ingestformat";
-  public static final String SET_XPATH = "xpath";
+  public static final String SET_XPATHS = "xpaths";
   public static final String SET_STATUS = "status";
 
   public static final String TABLENAME_SET = "oai_set";
@@ -65,8 +64,7 @@ public class CassandraDAOSet implements DAOSet {
     set.setSpec(resultRow.getString(SET_SPEC));
     set.setName(resultRow.getString(SET_NAME));
     set.setDescription(resultRow.getString(SET_DESCRIPTION));
-    set.setIngestFormat(resultRow.getString(SET_INGESTFORMAT));
-    set.setxPath(resultRow.getString(SET_XPATH));
+    set.setxPaths(resultRow.getMap(SET_XPATHS, String.class, String.class));
     set.setStatus(resultRow.getString(SET_STATUS));
     return set;
   }
@@ -108,9 +106,7 @@ public class CassandraDAOSet implements DAOSet {
       insertStmt.append(", ");
       insertStmt.append(SET_DESCRIPTION);
       insertStmt.append(", ");
-      insertStmt.append(SET_INGESTFORMAT);
-      insertStmt.append(", ");
-      insertStmt.append(SET_XPATH);
+      insertStmt.append(SET_XPATHS);
       insertStmt.append(", ");
       insertStmt.append(SET_STATUS);
       insertStmt.append(") VALUES (?, ?, ?, ?, ?, ?)");
@@ -118,7 +114,7 @@ public class CassandraDAOSet implements DAOSet {
       prepared = session.prepare(insertStmt.toString());
       preparedStatements.put("create", prepared);
     }
-    BoundStatement bound = prepared.bind(set.getName(), set.getSpec(), set.getDescription(), set.getIngestFormat(), set.getxPath(), set.getStatus());
+    BoundStatement bound = prepared.bind(set.getName(), set.getSpec(), set.getDescription(), set.getxPaths(), set.getStatus());
     session.execute(bound);
 
     return set;

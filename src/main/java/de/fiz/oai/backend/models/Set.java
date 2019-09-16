@@ -1,5 +1,7 @@
 package de.fiz.oai.backend.models;
 
+import java.util.Map;
+
 public class Set {
 
     private String name;
@@ -8,9 +10,7 @@ public class Set {
     
     private String description;
     
-    private String ingestFormat;
-    
-    private String xPath;
+    private Map<String, String> xPaths;
 
     private String status;
 
@@ -38,20 +38,12 @@ public class Set {
       this.description = description;
     }
 
-    public String getIngestFormat() {
-      return ingestFormat;
+    public Map<String, String> getxPaths() {
+      return xPaths;
     }
 
-    public void setIngestFormat(String ingestFormat) {
-      this.ingestFormat = ingestFormat;
-    }
-
-    public String getxPath() {
-      return xPath;
-    }
-
-    public void setxPath(String xPath) {
-      this.xPath = xPath;
+    public void setxPaths(Map<String, String> xPaths) {
+      this.xPaths = xPaths;
     }
 
     public String getStatus() {
