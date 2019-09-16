@@ -109,7 +109,7 @@ public class CassandraDAOSet implements DAOSet {
       insertStmt.append(SET_XPATHS);
       insertStmt.append(", ");
       insertStmt.append(SET_STATUS);
-      insertStmt.append(") VALUES (?, ?, ?, ?, ?, ?)");
+      insertStmt.append(") VALUES (?, ?, ?, ?, ?)");
 
       prepared = session.prepare(insertStmt.toString());
       preparedStatements.put("create", prepared);
