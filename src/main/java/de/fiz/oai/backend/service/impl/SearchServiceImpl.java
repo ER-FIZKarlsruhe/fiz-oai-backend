@@ -35,10 +35,12 @@ import org.slf4j.LoggerFactory;
 import de.fiz.oai.backend.dao.DAOContent;
 import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.dao.DAOItem;
+import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
+import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.utils.Configuration;
 
@@ -62,6 +64,9 @@ public class SearchServiceImpl implements SearchService {
   @Inject
   DAOFormat daoFormat;
 
+  @Inject
+  DAOSet daoSet;
+  
   /**
    * 
    * @param item @throws IOException @throws
@@ -81,7 +86,10 @@ public class SearchServiceImpl implements SearchService {
       itemMap.put("formats", itemFormats);
       
       // Add all the matching sets
-      
+      List<Set> allSets = daoSet.readAll();
+      for (final Set pickedSet : allSets) {
+        
+      }
       
       IndexRequest indexRequest = new IndexRequest();
 
