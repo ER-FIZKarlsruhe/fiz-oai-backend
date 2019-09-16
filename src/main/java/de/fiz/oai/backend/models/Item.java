@@ -14,7 +14,7 @@ public class Item {
   
   private List<String> tags;
   
-  private List<String> sets;
+  private Map<String, String> sets;
   
   private List<String> formats;
   
@@ -79,11 +79,11 @@ public class Item {
     this.formats = formats;
   }
 
-  public List<String> getSets() {
+  public Map<String, String> getSets() {
     return sets;
   }
 
-  public void setSets(List<String> sets) {
+  public void setSets(Map<String, String> sets) {
     this.sets = sets;
   }
 
@@ -94,13 +94,14 @@ public class Item {
     itemMap.put("deleteFlag", deleteFlag);
     itemMap.put("ingestFormat", ingestFormat);
     itemMap.put("formats", formats);
+    itemMap.put("sets", sets);
     return itemMap;
   }
   
   @Override
   public String toString() {
     return "Item [identifier=" + identifier + ", datestamp=" + datestamp + ", deleteFlag=" + deleteFlag + ", tags="
-        + tags + ", ingestFormat=" + ingestFormat + "]";
+        + tags + ", ingestFormat=" + ingestFormat + ", formats=" + formats + ", sets=" + sets + "]";
   }
   
 }

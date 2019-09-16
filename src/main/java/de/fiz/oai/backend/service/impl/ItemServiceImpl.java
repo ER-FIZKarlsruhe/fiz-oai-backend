@@ -7,7 +7,9 @@ import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -99,6 +101,9 @@ public class ItemServiceImpl implements ItemService {
     }
     itemFormats.add(item.getIngestFormat());
 
+    // Check Sets
+    Map<String, String> itemSets = new HashMap<String, String>();
+
     // Validate xml against xsd
     // validate(ingestFormat.getSchemaLocation(), new
     // String(item.getContent().getContent(), "UTF-8"));
@@ -112,6 +117,7 @@ public class ItemServiceImpl implements ItemService {
     // Create Crosswalk content
     createCrosswalks(item, itemFormats);
     newItem.setFormats(itemFormats);
+    newItem.setSets(itemSets);
 
     // TODO For indexing its important that oai_dc content exits!
     searchService.createDocument(newItem);
