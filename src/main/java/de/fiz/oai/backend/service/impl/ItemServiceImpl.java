@@ -100,10 +100,7 @@ public class ItemServiceImpl implements ItemService {
       throw new UnknownFormatException("Cannot find a Format for the given ingestFormat: " + item.getIngestFormat());
     }
     itemFormats.add(item.getIngestFormat());
-
-    // Check Sets
-    Map<String, String> itemSets = new HashMap<String, String>();
-
+    
     // Validate xml against xsd
     // validate(ingestFormat.getSchemaLocation(), new
     // String(item.getContent().getContent(), "UTF-8"));
@@ -116,8 +113,6 @@ public class ItemServiceImpl implements ItemService {
 
     // Create Crosswalk content
     createCrosswalks(item, itemFormats);
-    newItem.setFormats(itemFormats);
-    newItem.setSets(itemSets);
 
     // TODO For indexing its important that oai_dc content exits!
     searchService.createDocument(newItem);
@@ -154,7 +149,7 @@ public class ItemServiceImpl implements ItemService {
     daoContent.create(item.getContent());
 
     createCrosswalks(item, itemFormats);
-    updateItem.setFormats(itemFormats);
+//    updateItem.setFormats(itemFormats);
 
     searchService.updateDocument(updateItem);
 

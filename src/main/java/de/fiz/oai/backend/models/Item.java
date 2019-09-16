@@ -14,10 +14,6 @@ public class Item {
   
   private List<String> tags;
   
-  private Map<String, String> sets;
-  
-  private List<String> formats;
-  
   private String ingestFormat;
   
   private Content content;
@@ -71,37 +67,19 @@ public class Item {
     this.content = content;
   }
 
-  public List<String> getFormats() {
-    return formats;
-  }
-
-  public void setFormats(List<String> formats) {
-    this.formats = formats;
-  }
-
-  public Map<String, String> getSets() {
-    return sets;
-  }
-
-  public void setSets(Map<String, String> sets) {
-    this.sets = sets;
-  }
-
   public Map<String,Object> toMap(){
     final Map<String, Object> itemMap = new HashMap<String, Object>();
     itemMap.put("identifier", identifier);
     itemMap.put("datestamp", datestamp);
     itemMap.put("deleteFlag", deleteFlag);
     itemMap.put("ingestFormat", ingestFormat);
-    itemMap.put("formats", formats);
-    itemMap.put("sets", sets);
     return itemMap;
   }
   
   @Override
   public String toString() {
     return "Item [identifier=" + identifier + ", datestamp=" + datestamp + ", deleteFlag=" + deleteFlag + ", tags="
-        + tags + ", ingestFormat=" + ingestFormat + ", formats=" + formats + ", sets=" + sets + "]";
+        + tags + ", ingestFormat=" + ingestFormat + "]";
   }
   
 }

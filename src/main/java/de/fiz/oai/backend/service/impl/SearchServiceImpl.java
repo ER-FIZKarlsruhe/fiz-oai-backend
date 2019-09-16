@@ -33,7 +33,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.dao.DAOContent;
+import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.dao.DAOItem;
+import de.fiz.oai.backend.models.Content;
+import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.service.SearchService;
@@ -55,6 +58,9 @@ public class SearchServiceImpl implements SearchService {
 
   @Inject
   DAOContent daoContent;
+  
+  @Inject
+  DAOFormat daoFormat;
 
   /**
    * 
@@ -66,6 +72,17 @@ public class SearchServiceImpl implements SearchService {
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
       Map<String, Object> itemMap = item.toMap();
 
+      // Add all available formats
+      List<Content> allContents = daoContent.readFormats(item.getIdentifier());
+      List<String> itemFormats = new ArrayList<String>();
+      for (final Content pickedContent : allContents) {
+        itemFormats.add(pickedContent.getFormat());
+      }
+      itemMap.put("formats", itemFormats);
+      
+      // Add all the matching sets
+      
+      
       IndexRequest indexRequest = new IndexRequest();
 
       indexRequest.index(ITEMS_INDEX_NAME);
