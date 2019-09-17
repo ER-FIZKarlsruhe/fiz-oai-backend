@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<article xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://jats.nlm.nih.gov/publishing/1.1/xsd/JATS-journalpublishing1.xsd" xml:lang="en" article-type="scientific">
+<front>
+<journal-meta>
+<journal-id journal-id-type="doi">10.1055/s-00000167</journal-id>
+<journal-id journal-id-type="pmc">Int J Angiol</journal-id>
+<journal-title-group>
+<journal-title>International Journal of Angiology</journal-title>
+</journal-title-group>
+<issn pub-type="print">1061-1711</issn>
+<issn pub-type="e-issn">1615-5939</issn>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1007/BF01616320</article-id>
+<article-categories>
+<subj-group>
+<subject>Review Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title xml:lang="en">Diabetic foot disease</article-title>
+</title-group>
+<contrib-group>
+<contrib>
+<name>
+<surname>Knox</surname>
+<given-names>Robert C.</given-names>
+</name>
+<degrees>M.D.</degrees>
+</contrib>
+<contrib>
+<name>
+<surname>Dutch</surname>
+<given-names>William</given-names>
+</name>
+<degrees>D.P.M.</degrees>
+</contrib>
+<contrib>
+<name>
+<surname>Blume</surname>
+<given-names>Peter</given-names>
+</name>
+<degrees>D.P.M.</degrees>
+</contrib>
+<contrib>
+<name>
+<surname>Sumpio</surname>
+<given-names>Bauer E.</given-names>
+</name>
+<degrees>M.D., Ph.D., F.I.C.A.</degrees>
+</contrib>
+</contrib-group>
+<pub-date pub-type="print">
+<month>12</month>
+<year>2000</year>
+</pub-date>
+<pub-date pub-type="online">
+<day>24</day>
+<month>04</month>
+<year>2011</year>
+</pub-date>
+<volume>9</volume>
+<issue>01</issue>
+<issue-id pub-id-type="doi">10.1055/s-002-21904</issue-id>
+<fpage>1</fpage>
+<lpage>6</lpage>
+<permissions>
+<copyright-statement>© Georg Thieme Verlag KG Stuttgart · New York</copyright-statement>
+</permissions>
+<self-uri content-type="pdf"/>
+<abstract xml:lang="en">
+<title>Abstract</title>
+<p>The authors review the impact, areas of influence, and treatment protocols for diabetic foot disease.</p>
+</abstract>
+<custom-meta-group>
+<custom-meta specific-use="german-national-library-transfer-url">
+<meta-name>link</meta-name>
+<meta-value>http://www.thieme-connect.de/products/ejournals/pull/10.1007/BF01616320</meta-value>
+</custom-meta>
+<custom-meta>
+<meta-name>rights-object-archive-dnb</meta-name>
+<meta-value>closed-access</meta-value>
+</custom-meta>
+</custom-meta-group>
+</article-meta>
+</front>
+</article>

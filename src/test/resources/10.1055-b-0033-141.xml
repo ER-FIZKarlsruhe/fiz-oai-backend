@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<collection xsi:schemaLocation="http://www.loc.gov/MARC21/slim http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd" xmlns:xalan="http://xml.apache.org/xalan" xmlns:java="http://xml.apache.org/xslt/java" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.loc.gov/MARC21/slim">
+  <record>
+    <leader>01254naa a2200337n  4500</leader>
+    <controlfield tag="001">1495652713767</controlfield>
+    <controlfield tag="003">Georg Thieme Verlag ;</controlfield>
+    <controlfield tag="005">20170524210513.0</controlfield>
+    <controlfield tag="007">cr</controlfield>
+    <controlfield tag="008">040101s2004||||gw|a||||s|||||00||||ger||</controlfield>
+    <datafield tag="020" ind1=" " ind2=" ">
+      <subfield code="a">9783131874634</subfield>
+    </datafield>
+    <datafield tag="024" ind1="7" ind2=" ">
+      <subfield code="a">10.1055/b-0033-141</subfield>
+      <subfield code="2">doi</subfield>
+    </datafield>
+    <datafield tag="050" ind1=" " ind2="4">
+      <subfield code="a">RC46</subfield>
+    </datafield>
+    <datafield tag="050" ind1=" " ind2="4">
+      <subfield code="a">RM216</subfield>
+    </datafield>
+    <datafield tag="100" ind1="1" ind2=" ">
+      <subfield code="a">Biesalski, Hans-Konrad</subfield>
+    </datafield>
+    <datafield tag="245" ind1="1" ind2="0">
+      <subfield code="a">34 Nahrungsmittelallergien</subfield>
+      <subfield code="c">Hans-Konrad Biesalski, Peter Fürst, Heinrich Kasper, Reinhold Kluthe, Wolfgang Pölert, Christoph Puchstein, Hannes Stähelin</subfield>
+    </datafield>
+    <datafield tag="250" ind1=" " ind2=" ">
+      <subfield code="a">3., erweiterte Auflage</subfield>
+    </datafield>
+    <datafield tag="260" ind1=" " ind2=" ">
+      <subfield code="a">Stuttgart :</subfield>
+      <subfield code="b">Georg Thieme Verlag ;</subfield>
+      <subfield code="c">2004.</subfield>
+    </datafield>
+    <datafield tag="542" ind1="1" ind2=" ">
+      <subfield code="f">© 2004 Georg Thieme Verlag KG</subfield>
+    </datafield>
+    <datafield tag="650" ind1="1" ind2="4">
+      <subfield code="a">Innere Medizin</subfield>
+    </datafield>
+    <datafield tag="650" ind1="2" ind2="4">
+      <subfield code="a">Ernährungsmedizin, Diätetik</subfield>
+    </datafield>
+    <datafield tag="700" ind1="1" ind2=" ">
+      <subfield code="a">Fürst, Peter</subfield>
+    </datafield>
+    <datafield tag="700" ind1="1" ind2=" ">
+      <subfield code="a">Kasper, Heinrich</subfield>
+    </datafield>
+    <datafield tag="700" ind1="1" ind2=" ">
+      <subfield code="a">Kluthe, Reinhold</subfield>
+    </datafield>
+    <datafield tag="700" ind1="1" ind2=" ">
+      <subfield code="a">Pölert, Wolfgang</subfield>
+    </datafield>
+    <datafield tag="700" ind1="1" ind2=" ">
+      <subfield code="a">Puchstein, Christoph</subfield>
+    </datafield>
+    <datafield tag="700" ind1="1" ind2=" ">
+      <subfield code="a">Stähelin, Hannes</subfield>
+    </datafield>
+    <datafield tag="773" ind1="0" ind2=" ">
+      <subfield code="a">Hans-Konrad Biesalski, Peter Fürst, Heinrich Kasper, Reinhold Kluthe, Wolfgang Pölert, Christoph Puchstein, Hannes Stähelin</subfield>
+      <subfield code="t">Ernährungsmedizin</subfield>
+      <subfield code="d">Stuttgart: Georg Thieme Verlag, 2013</subfield>
+      <subfield code="o">10.1055/b-001-36</subfield>
+    </datafield>
+    <datafield tag="776" ind1="0" ind2="8">
+      <subfield code="i">Print</subfield>
+      <subfield code="z">9783131002938</subfield>
+    </datafield>
+    <datafield tag="856" ind1="4" ind2="0">
+      <subfield code="u">https://doi.org/10.1055/b-0033-141</subfield>
+      <subfield code="q">pdf</subfield>
+    </datafield>
+    <datafield tag="912" ind1=" " ind2=" ">
+      <subfield code="a">ZDB-34-THI</subfield>
+    </datafield>
+  </record>
+</collection>
