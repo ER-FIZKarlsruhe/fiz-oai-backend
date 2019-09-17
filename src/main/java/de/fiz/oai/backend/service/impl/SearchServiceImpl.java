@@ -88,7 +88,13 @@ public class SearchServiceImpl implements SearchService {
       // Add all the matching sets
       List<Set> allSets = daoSet.readAll();
       for (final Set pickedSet : allSets) {
-        
+        Map<String, String> xPaths = pickedSet.getxPaths();
+        for (final String pickedFormatName : itemFormats) {
+          if (xPaths.containsKey(pickedFormatName)) {
+            final String xPathToCheck = xPaths.get(pickedFormatName);
+            
+          }
+        }
       }
       
       IndexRequest indexRequest = new IndexRequest();
