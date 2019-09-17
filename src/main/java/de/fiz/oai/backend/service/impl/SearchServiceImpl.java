@@ -43,6 +43,7 @@ import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.utils.Configuration;
+import de.fiz.oai.backend.utils.XPathHelper;
 
 @Service
 public class SearchServiceImpl implements SearchService {
@@ -87,15 +88,19 @@ public class SearchServiceImpl implements SearchService {
       
       // Add all the matching sets
       List<Set> allSets = daoSet.readAll();
+      List<String> itemSets = new ArrayList<String>();
       for (final Set pickedSet : allSets) {
         Map<String, String> xPaths = pickedSet.getxPaths();
-        for (final String pickedFormatName : itemFormats) {
-          if (xPaths.containsKey(pickedFormatName)) {
-            final String xPathToCheck = xPaths.get(pickedFormatName);
-            
+        for (final Content pickedContent : allContents) {
+          if (xPaths.containsKey(pickedContent.getFormat())) {
+            final String xPathToCheck = xPaths.get(pickedContent.getFormat());
+            if (XPathHelper.itMatches(pickedContent.getContent(), xPathToCheck, pickedSet.getName())) {
+              itemSets.add(pickedSet.getName());
+            }
           }
         }
       }
+      itemMap.put("sets", itemSets);
       
       IndexRequest indexRequest = new IndexRequest();
 
