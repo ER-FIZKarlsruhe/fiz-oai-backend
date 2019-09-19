@@ -20,7 +20,9 @@ import org.xml.sax.SAXException;
 
 public class XPathHelper {
 
-  public static Boolean itMatches(final String contentStr, final String xPathStr, final String valueStr) {
+  private static String textValueXPath = "text()";
+  
+  public static Boolean isTextValueMatching(final String contentStr, final String xPathStr, final String valueStr) {
 
     if (!StringUtils.isBlank(contentStr) && !StringUtils.isBlank(xPathStr) && !StringUtils.isBlank(valueStr)) {
       try {
@@ -33,7 +35,16 @@ public class XPathHelper {
         XPathFactory xpathfactory = XPathFactory.newInstance();
         XPath xpath = xpathfactory.newXPath();
 
-        XPathExpression expr = xpath.compile(xPathStr);
+        StringBuilder finalXPathStr = new StringBuilder();
+        finalXPathStr.append(xPathStr);
+        if (!xPathStr.endsWith(textValueXPath)) {
+          if (!xPathStr.endsWith("/")) {
+            finalXPathStr.append("/");
+          }
+          finalXPathStr.append(textValueXPath);
+        }
+        
+        XPathExpression expr = xpath.compile(finalXPathStr.toString());
         Object result = expr.evaluate(doc, XPathConstants.NODESET);
         NodeList nodes = (NodeList) result;
         for (int i = 0; i < nodes.getLength(); i++) {
