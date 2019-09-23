@@ -99,7 +99,7 @@ public class ItemControllerIT extends JerseyTest {
     assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
  
     String content = response.readEntity(String.class);
-    assertEquals("Content of response is: ", "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"sets\":null,\"formats\":null,\"ingestFormat\":\"radar\",\"content\":null}", content);
+    assertEquals("Content of response is: ", "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\",\"content\":null}", content);
   }
 
   
@@ -127,7 +127,7 @@ public class ItemControllerIT extends JerseyTest {
  
     String responseEntity = response.readEntity(String.class);
     System.out.println("responseEntity: " + responseEntity);
-    assertEquals("Content of response is: ", "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"sets\":null,\"formats\":null,\"ingestFormat\":\"radar\",\"content\":{\"identifier\":\"65465456\",\"format\":\"oai_dc\",\"content\":\"Das ist ein wenig content\"}}", responseEntity);
+    assertEquals("Content of response is: ", "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\",\"content\":{\"identifier\":\"65465456\",\"format\":\"oai_dc\",\"content\":\"Das ist ein wenig content\"}}", responseEntity);
   }
   
 
