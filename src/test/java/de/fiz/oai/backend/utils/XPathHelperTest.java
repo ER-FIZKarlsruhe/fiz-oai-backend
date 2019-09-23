@@ -16,8 +16,12 @@ public class XPathHelperTest {
 
   @Before
   public void init() throws IOException {
-    content = Files.readString(
-        Paths.get(getClass().getClassLoader().getResource("10.1007-BF01616320.xml").getPath().substring(1)));
+    String fullFilePath = getClass().getClassLoader().getResource("10.1007-BF01616320.xml").getPath();
+    if (fullFilePath.startsWith("/C:")) {
+      fullFilePath = fullFilePath.substring(1);
+    }
+
+    content = Files.readString(Paths.get(fullFilePath));
   }
 
   @Test
