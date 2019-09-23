@@ -21,7 +21,7 @@ import org.xml.sax.SAXException;
 public class XPathHelper {
 
   private static String textValueXPath = "text()";
-  
+
   public static Boolean isTextValueMatching(final String contentStr, final String xPathStr, final String valueStr) {
 
     if (!StringUtils.isBlank(contentStr) && !StringUtils.isBlank(xPathStr) && !StringUtils.isBlank(valueStr)) {
@@ -43,7 +43,7 @@ public class XPathHelper {
           }
           finalXPathStr.append(textValueXPath);
         }
-        
+
         XPathExpression expr = xpath.compile(finalXPathStr.toString());
         Object result = expr.evaluate(doc, XPathConstants.NODESET);
         NodeList nodes = (NodeList) result;

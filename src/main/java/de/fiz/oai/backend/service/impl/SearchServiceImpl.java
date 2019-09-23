@@ -37,7 +37,6 @@ import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.models.Content;
-import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.models.Set;
@@ -61,13 +60,13 @@ public class SearchServiceImpl implements SearchService {
 
   @Inject
   DAOContent daoContent;
-  
+
   @Inject
   DAOFormat daoFormat;
 
   @Inject
   DAOSet daoSet;
-  
+
   /**
    * 
    * @param item @throws IOException @throws
@@ -85,7 +84,7 @@ public class SearchServiceImpl implements SearchService {
         itemFormats.add(pickedContent.getFormat());
       }
       itemMap.put("formats", itemFormats);
-      
+
       // Add all the matching sets
       List<Set> allSets = daoSet.readAll();
       List<String> itemSets = new ArrayList<String>();
@@ -101,7 +100,7 @@ public class SearchServiceImpl implements SearchService {
         }
       }
       itemMap.put("sets", itemSets);
-      
+
       IndexRequest indexRequest = new IndexRequest();
 
       indexRequest.index(ITEMS_INDEX_NAME);
@@ -123,11 +122,12 @@ public class SearchServiceImpl implements SearchService {
     try (RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
 
-      //String xmlContentByte = daoContent.read(item.getIdentifier(), "oai_dc").getContent();
-      //String oaiDcJson = OaiDcHelper.xmlToJson(xmlContentByte);
+      // String xmlContentByte = daoContent.read(item.getIdentifier(),
+      // "oai_dc").getContent();
+      // String oaiDcJson = OaiDcHelper.xmlToJson(xmlContentByte);
 
       Map<String, Object> itemMap = item.toMap();
-      //itemMap.put("oai_dc", oaiDcJson);
+      // itemMap.put("oai_dc", oaiDcJson);
 
       UpdateRequest updateRequest = new UpdateRequest();
       updateRequest.index(ITEMS_INDEX_NAME);
@@ -157,8 +157,8 @@ public class SearchServiceImpl implements SearchService {
   }
 
   @Override
-  public SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate, Item lastItem)
-      throws IOException {
+  public SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate,
+      Item lastItem) throws IOException {
 
     LOGGER.info("DEBUG: rows: " + rows);
     LOGGER.info("DEBUG: format: " + format);
@@ -175,7 +175,6 @@ public class SearchServiceImpl implements SearchService {
       if (StringUtils.isNotEmpty(set)) {
         queryBuilder.filter(QueryBuilders.termQuery("sets", set));
       }
-
 
       final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 

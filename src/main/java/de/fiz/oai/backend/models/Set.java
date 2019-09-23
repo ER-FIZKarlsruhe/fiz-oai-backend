@@ -4,54 +4,54 @@ import java.util.Map;
 
 public class Set {
 
-    private String name;
-    
-    private String spec;
-    
-    private String description;
-    
-    private Map<String, String> xPaths;
+  private String name;
 
-    private String status;
+  private String spec;
 
-    public String getName() {
-        return name;
-    }
+  private String description;
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  private Map<String, String> xPaths;
 
-    public String getSpec() {
-      return spec;
-    }
+  private String status;
 
-    public void setSpec(String spec) {
-      this.spec = spec;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public String getDescription() {
-      return description;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public void setDescription(String description) {
-      this.description = description;
-    }
+  public String getSpec() {
+    return spec;
+  }
 
-    public Map<String, String> getxPaths() {
-      return xPaths;
-    }
+  public void setSpec(String spec) {
+    this.spec = spec;
+  }
 
-    public void setxPaths(Map<String, String> xPaths) {
-      this.xPaths = xPaths;
-    }
+  public String getDescription() {
+    return description;
+  }
 
-    public String getStatus() {
-      return status;
-    }
+  public void setDescription(String description) {
+    this.description = description;
+  }
 
-    public void setStatus(String status) {
-      this.status = status;
-    }
+  public Map<String, String> getxPaths() {
+    return xPaths;
+  }
+
+  public void setxPaths(Map<String, String> xPaths) {
+    this.xPaths = xPaths;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
+  }
 
 }

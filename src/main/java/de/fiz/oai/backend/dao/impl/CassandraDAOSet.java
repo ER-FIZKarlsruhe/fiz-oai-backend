@@ -114,7 +114,8 @@ public class CassandraDAOSet implements DAOSet {
       prepared = session.prepare(insertStmt.toString());
       preparedStatements.put("create", prepared);
     }
-    BoundStatement bound = prepared.bind(set.getName(), set.getSpec(), set.getDescription(), set.getxPaths(), set.getStatus());
+    BoundStatement bound = prepared.bind(set.getName(), set.getSpec(), set.getDescription(), set.getxPaths(),
+        set.getStatus());
     session.execute(bound);
 
     return set;

@@ -9,13 +9,13 @@ public class Item {
   private String identifier;
 
   private String datestamp;
-  
+
   private Boolean deleteFlag;
-  
+
   private List<String> tags;
-  
+
   private String ingestFormat;
-  
+
   private Content content;
 
   public String getIdentifier() {
@@ -58,7 +58,6 @@ public class Item {
     this.ingestFormat = ingestFormat;
   }
 
-  
   public Content getContent() {
     return content;
   }
@@ -67,7 +66,7 @@ public class Item {
     this.content = content;
   }
 
-  public Map<String,Object> toMap(){
+  public Map<String, Object> toMap() {
     final Map<String, Object> itemMap = new HashMap<String, Object>();
     itemMap.put("identifier", identifier);
     itemMap.put("datestamp", datestamp);
@@ -75,11 +74,11 @@ public class Item {
     itemMap.put("ingestFormat", ingestFormat);
     return itemMap;
   }
-  
+
   @Override
   public String toString() {
     return "Item [identifier=" + identifier + ", datestamp=" + datestamp + ", deleteFlag=" + deleteFlag + ", tags="
         + tags + ", ingestFormat=" + ingestFormat + "]";
   }
-  
+
 }

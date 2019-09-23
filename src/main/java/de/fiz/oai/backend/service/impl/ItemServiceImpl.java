@@ -7,9 +7,7 @@ import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -33,14 +31,12 @@ import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.exceptions.FormatValidationException;
-import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.exceptions.UnknownFormatException;
 import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.models.Crosswalk;
 import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
-import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.service.ItemService;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.utils.Configuration;
@@ -100,7 +96,7 @@ public class ItemServiceImpl implements ItemService {
       throw new UnknownFormatException("Cannot find a Format for the given ingestFormat: " + item.getIngestFormat());
     }
     itemFormats.add(item.getIngestFormat());
-    
+
     // Validate xml against xsd
     // validate(ingestFormat.getSchemaLocation(), new
     // String(item.getContent().getContent(), "UTF-8"));
