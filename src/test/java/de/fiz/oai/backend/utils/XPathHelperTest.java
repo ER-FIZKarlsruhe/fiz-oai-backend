@@ -32,7 +32,8 @@ public class XPathHelperTest {
     assertFalse(XPathHelper.isTextValueMatching("", ""));
     assertFalse(XPathHelper.isTextValueMatching(null, "a"));
     assertFalse(XPathHelper.isTextValueMatching("a", null));
-    assertFalse(XPathHelper.isTextValueMatching("a", "a"));
+    assertFalse(XPathHelper.isTextValueMatching("", "a"));
+    assertFalse(XPathHelper.isTextValueMatching("a", ""));
   }
 
   @Test
