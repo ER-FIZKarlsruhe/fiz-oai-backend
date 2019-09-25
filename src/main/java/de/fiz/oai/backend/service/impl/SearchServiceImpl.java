@@ -93,7 +93,7 @@ public class SearchServiceImpl implements SearchService {
         for (final Content pickedContent : allContents) {
           if (xPaths.containsKey(pickedContent.getFormat())) {
             final String xPathToCheck = xPaths.get(pickedContent.getFormat());
-            if (XPathHelper.isTextValueMatching(pickedContent.getContent(), xPathToCheck, pickedSet.getName())) {
+            if (XPathHelper.isTextValueMatching(pickedContent.getContent(), xPathToCheck)) {
               itemSets.add(pickedSet.getName());
             }
           }

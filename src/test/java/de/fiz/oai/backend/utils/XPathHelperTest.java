@@ -26,44 +26,29 @@ public class XPathHelperTest {
 
   @Test
   public void testEmptyParams() {
-    assertFalse(XPathHelper.isTextValueMatching(null, null, null));
-    assertFalse(XPathHelper.isTextValueMatching(null, null, ""));
-    assertFalse(XPathHelper.isTextValueMatching(null, "", null));
-    assertFalse(XPathHelper.isTextValueMatching(null, "", ""));
-    assertFalse(XPathHelper.isTextValueMatching("", null, null));
-    assertFalse(XPathHelper.isTextValueMatching("", null, ""));
-    assertFalse(XPathHelper.isTextValueMatching("", "", null));
-    assertFalse(XPathHelper.isTextValueMatching("", "", ""));
-    assertFalse(XPathHelper.isTextValueMatching(null, null, "a"));
-    assertFalse(XPathHelper.isTextValueMatching(null, "a", null));
-    assertFalse(XPathHelper.isTextValueMatching(null, "a", "a"));
-    assertFalse(XPathHelper.isTextValueMatching("a", null, null));
-    assertFalse(XPathHelper.isTextValueMatching("a", null, "a"));
-    assertFalse(XPathHelper.isTextValueMatching("a", "a", null));
+    assertFalse(XPathHelper.isTextValueMatching(null, null));
+    assertFalse(XPathHelper.isTextValueMatching(null, ""));
+    assertFalse(XPathHelper.isTextValueMatching("", null));
+    assertFalse(XPathHelper.isTextValueMatching("", ""));
+    assertFalse(XPathHelper.isTextValueMatching(null, "a"));
+    assertFalse(XPathHelper.isTextValueMatching("a", null));
+    assertFalse(XPathHelper.isTextValueMatching("a", "a"));
   }
 
   @Test
-  public void testWrongXPath() throws IOException {
+  public void testWrong() {
     assertFalse(XPathHelper.isTextValueMatching(content,
-        "/article/front/article-meta/contrib-group/contrib/name/surname/nonexistentnode", "Blume"));
-    assertFalse(XPathHelper.isTextValueMatching(content,
-        "/article/front/article-meta/contrib-group/contrib/name/surname/nonexistentnode/", "Blume"));
-  }
-
-  @Test
-  public void testWrongValue() {
-    assertFalse(XPathHelper.isTextValueMatching(content,
-        "/article/front/article-meta/contrib-group/contrib/name/surname", "Giulio"));
-    assertFalse(XPathHelper.isTextValueMatching(content,
-        "/article/front/article-meta/contrib-group/contrib/name/surname/", "Giulio"));
+        "/article/front/article-meta/contrib-group/contrib/name[surname='Giulio']"));
+    assertFalse(
+        XPathHelper.isTextValueMatching(content, "/article/front/article-meta/contrib-group/contrib/name/nickname"));
   }
 
   @Test
   public void testOK() {
     assertTrue(XPathHelper.isTextValueMatching(content,
-        "/article/front/article-meta/contrib-group/contrib/name/surname", "Blume"));
-    assertTrue(XPathHelper.isTextValueMatching(content,
-        "/article/front/article-meta/contrib-group/contrib/name/surname/", "Blume"));
+        "/article/front/article-meta/contrib-group/contrib/name[surname='Blume']"));
+    assertTrue(
+        XPathHelper.isTextValueMatching(content, "/article/front/article-meta/contrib-group/contrib/name/surname"));
   }
 
 }
