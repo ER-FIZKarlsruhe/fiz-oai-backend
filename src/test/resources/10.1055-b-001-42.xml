@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<collection xsi:schemaLocation="http://www.loc.gov/MARC21/slim http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd" xmlns:xalan="http://xml.apache.org/xalan" xmlns:java="http://xml.apache.org/xslt/java" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.loc.gov/MARC21/slim">
+  <record>
+    <leader>00806nam a2200265n  4500</leader>
+    <controlfield tag="001">1495659432803</controlfield>
+    <controlfield tag="003">Georg Thieme Verlag ;</controlfield>
+    <controlfield tag="005">20170524225712.0</controlfield>
+    <controlfield tag="007">cr</controlfield>
+    <controlfield tag="008">110101s2011||||gw|a||||s|||||00||||ger||</controlfield>
+    <datafield tag="020" ind1=" " ind2=" ">
+      <subfield code="a">9783131928740</subfield>
+    </datafield>
+    <datafield tag="024" ind1="7" ind2=" ">
+      <subfield code="a">10.1055/b-001-42</subfield>
+      <subfield code="2">doi</subfield>
+    </datafield>
+    <datafield tag="050" ind1=" " ind2="4">
+      <subfield code="a">RE1</subfield>
+    </datafield>
+    <datafield tag="100" ind1="1" ind2=" ">
+      <subfield code="a">Burk, Annelie</subfield>
+    </datafield>
+    <datafield tag="245" ind1="1" ind2="0">
+      <subfield code="a">Checkliste Augenheilkunde</subfield>
+      <subfield code="c">Annelie Burk, Reinhard Burk</subfield>
+    </datafield>
+    <datafield tag="250" ind1=" " ind2=" ">
+      <subfield code="a">4. Auflage</subfield>
+    </datafield>
+    <datafield tag="260" ind1=" " ind2=" ">
+      <subfield code="a">Stuttgart :</subfield>
+      <subfield code="b">Georg Thieme Verlag ;</subfield>
+      <subfield code="c">2011.</subfield>
+    </datafield>
+    <datafield tag="490" ind1="0" ind2="1">
+      <subfield code="a">Checklisten der aktuellen Medizin</subfield>
+      <subfield code="x">2198-9427</subfield>
+    </datafield>
+    <datafield tag="542" ind1="1" ind2=" ">
+      <subfield code="f">© 2011 Georg Thieme Verlag KG</subfield>
+    </datafield>
+    <datafield tag="650" ind1="1" ind2="4">
+      <subfield code="a">Augenheilkunde, Optometrie</subfield>
+    </datafield>
+    <datafield tag="700" ind1="1" ind2=" ">
+      <subfield code="a">Burk, Reinhard</subfield>
+    </datafield>
+    <datafield tag="776" ind1="0" ind2="8">
+      <subfield code="i">Print</subfield>
+      <subfield code="z">9783131005748</subfield>
+    </datafield>
+    <datafield tag="830" ind1=" " ind2=" ">
+      <subfield code="a">Checklisten der aktuellen Medizin</subfield>
+    </datafield>
+    <datafield tag="856" ind1="4" ind2="0">
+      <subfield code="u">https://doi.org/10.1055/b-001-42</subfield>
+      <subfield code="q">pdf</subfield>
+    </datafield>
+    <datafield tag="912" ind1=" " ind2=" ">
+      <subfield code="a">ZDB-34-THI</subfield>
+    </datafield>
+  </record>
+</collection>

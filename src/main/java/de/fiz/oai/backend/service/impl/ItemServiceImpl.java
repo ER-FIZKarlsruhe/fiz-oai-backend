@@ -31,14 +31,12 @@ import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.exceptions.FormatValidationException;
-import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.exceptions.UnknownFormatException;
 import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.models.Crosswalk;
 import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
-import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.service.ItemService;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.utils.Configuration;
@@ -72,7 +70,7 @@ public class ItemServiceImpl implements ItemService {
     final Item item = daoItem.read(identifier);
     LOGGER.debug("getItem: " + item);
 
-    if (format == null) {
+    if (item != null && format == null) {
       format = item.getIngestFormat();
     }
 
@@ -111,7 +109,6 @@ public class ItemServiceImpl implements ItemService {
 
     // Create Crosswalk content
     createCrosswalks(item, itemFormats);
-    newItem.setFormats(itemFormats);
 
     // TODO For indexing its important that oai_dc content exits!
     searchService.createDocument(newItem);
@@ -148,7 +145,7 @@ public class ItemServiceImpl implements ItemService {
     daoContent.create(item.getContent());
 
     createCrosswalks(item, itemFormats);
-    updateItem.setFormats(itemFormats);
+//    updateItem.setFormats(itemFormats);
 
     searchService.updateDocument(updateItem);
 
@@ -167,19 +164,12 @@ public class ItemServiceImpl implements ItemService {
       throw new IOException("rows parameter must NOT be greater than 1000!");
     }
 
-    Set set = null;
-
-    if (StringUtils.isNotBlank(setName)) {
-      set = daoSet.read(setName);
-      throw new NotFoundException("Set " + setName + " not found in the database");
-    }
-
     Item lastItem = null;
     if (StringUtils.isNotBlank(lastItemId)) {
       lastItem = daoItem.read(lastItemId);
     }
 
-    final SearchResult<String> idResult = searchService.search(rows, set, format, from, until, lastItem);
+    final SearchResult<String> idResult = searchService.search(rows, setName, format, from, until, lastItem);
 
     List<Item> itemList = new ArrayList<Item>();
 

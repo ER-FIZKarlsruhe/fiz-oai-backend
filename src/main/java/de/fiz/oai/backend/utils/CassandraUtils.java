@@ -72,6 +72,10 @@ public class CassandraUtils {
         createTableSetStmt.append(CassandraDAOSet.SET_SPEC);
         createTableSetStmt.append(" text, ");
         createTableSetStmt.append(CassandraDAOSet.SET_DESCRIPTION);
+        createTableSetStmt.append(" text, ");
+        createTableSetStmt.append(CassandraDAOSet.SET_XPATHS);
+        createTableSetStmt.append(" map<text, text>, ");
+        createTableSetStmt.append(CassandraDAOSet.SET_STATUS);
         createTableSetStmt.append(" text, PRIMARY KEY (");
         createTableSetStmt.append(CassandraDAOSet.SET_NAME);
         createTableSetStmt.append("));");
@@ -88,6 +92,8 @@ public class CassandraUtils {
         createTableFormatStmt.append(CassandraDAOFormat.FORMAT_SCHEMANAMESPACE);
         createTableFormatStmt.append(" text, ");
         createTableFormatStmt.append(CassandraDAOFormat.FORMAT_IDENTIFIERXPATH);
+        createTableFormatStmt.append(" text, ");
+        createTableFormatStmt.append(CassandraDAOFormat.FORMAT_STATUS);
         createTableFormatStmt.append(" text, PRIMARY KEY (");
         createTableFormatStmt.append(CassandraDAOFormat.FORMAT_METADATAPREFIX);
         createTableFormatStmt.append("));");

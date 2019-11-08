@@ -42,46 +42,43 @@ import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.service.ItemService;
 
-
 public class ItemControllerIT extends JerseyTest {
 
   private Logger LOGGER = LoggerFactory.getLogger(ItemControllerIT.class);
 
-
   @Mock
   private ItemService itemService;
 
-  
   @Mock
   HttpServletRequest request;
-  
+
   @Mock
   HttpServletResponse response;
-  
+
   @Override
   protected Application configure() {
     MockitoAnnotations.initMocks(this);
     enable(TestProperties.LOG_TRAFFIC);
     ResourceConfig config = new ResourceConfig(ItemController.class);
     config.register(new AbstractBinder() {
-      
+
       @Override
       protected void configure() {
-          bind(itemService).to(ItemService.class);
-          bind(request).to(HttpServletRequest.class);
-          bind(response).to(HttpServletResponse.class);
+        bind(itemService).to(ItemService.class);
+        bind(request).to(HttpServletRequest.class);
+        bind(response).to(HttpServletResponse.class);
       }
     });
     config.register(MultiPartFeature.class);
-        
+
     return config;
   }
-  
+
   @Override
   protected void configureClient(ClientConfig clientConfig) {
-      clientConfig.register(MultiPartFeature.class);
-}
-  
+    clientConfig.register(MultiPartFeature.class);
+  }
+
   @Test
   public void testGetItemNoContent() throws Exception {
     Item item = new Item();
@@ -90,26 +87,28 @@ public class ItemControllerIT extends JerseyTest {
     item.setDeleteFlag(false);
     item.setTags(List.of("foo", "bar", "baz"));
     item.setIngestFormat("radar");
-    
+
     when(itemService.read(any(), any(), eq(false))).thenReturn(item);
-    
+
     Response response = target("/item/65465456").queryParam("format", "oai_dc").request().get();
-    
+
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
-    assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
- 
+    assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON,
+        response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+
     String content = response.readEntity(String.class);
-    assertEquals("Content of response is: ", "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"sets\":null,\"formats\":null,\"ingestFormat\":\"radar\",\"content\":null}", content);
+    assertEquals("Content of response is: ",
+        "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\",\"content\":null}",
+        content);
   }
 
-  
   @Test
   public void testGetItemWithContent() throws Exception {
     Content content = new Content();
     content.setFormat("oai_dc");
     content.setIdentifier("65465456");
     content.setContent("Das ist ein wenig content");
-    
+
     Item item = new Item();
     item.setIdentifier("65465456");
     item.setDatestamp("1972-05-20T20:33:18.772Z");
@@ -117,103 +116,103 @@ public class ItemControllerIT extends JerseyTest {
     item.setTags(List.of("foo", "bar", "baz"));
     item.setIngestFormat("radar");
     item.setContent(content);
-    
+
     when(itemService.read(any(), any(), eq(true))).thenReturn(item);
-    
-    Response response = target("/item/65465456").queryParam("format", "oai_dc").queryParam("content", "true").request().get();
-    
+
+    Response response = target("/item/65465456").queryParam("format", "oai_dc").queryParam("content", "true").request()
+        .get();
+
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
-    assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
- 
+    assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON,
+        response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+
     String responseEntity = response.readEntity(String.class);
     System.out.println("responseEntity: " + responseEntity);
-    assertEquals("Content of response is: ", "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"sets\":null,\"formats\":null,\"ingestFormat\":\"radar\",\"content\":{\"identifier\":\"65465456\",\"format\":\"oai_dc\",\"content\":\"Das ist ein wenig content\"}}", responseEntity);
+    assertEquals("Content of response is: ",
+        "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\",\"content\":{\"identifier\":\"65465456\",\"format\":\"oai_dc\",\"content\":\"Das ist ein wenig content\"}}",
+        responseEntity);
   }
-  
 
   @Test
   public void testGetItemNotFound() throws Exception {
-    when(itemService.read(any(),any(),any())).thenReturn(null);
-    
+    when(itemService.read(any(), any(), any())).thenReturn(null);
+
     Response response = target("/item/123Fragerei").queryParam("format", "oai_dc").request().get();
-    
+
     assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
-  
-  
+
   @Test
   public void testSearchItemsNoContent() throws Exception {
-    when(itemService.search( any(), any(), any(), any(), any(), eq(false),any())).thenReturn(getTestSearchResult());
+    when(itemService.search(any(), any(), any(), any(), any(), eq(false), any())).thenReturn(getTestSearchResult());
 
-    Response response = target("/item").queryParam("rows", 20).queryParam("set", "abc")
-    .queryParam("format", "oai_dc").queryParam("from", "1970-01-01T00:00:01Z").queryParam("until", "2970-01-01T00:00:01Z").queryParam("content", "").request()
-    .get();
-    
+    Response response = target("/item").queryParam("rows", 20).queryParam("set", "abc").queryParam("format", "oai_dc")
+        .queryParam("from", "1970-01-01T00:00:01Z").queryParam("until", "2970-01-01T00:00:01Z")
+        .queryParam("content", "").request().get();
+
     SearchResult searchResult = response.readEntity(SearchResult.class);
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
-    assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+    assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON,
+        response.getHeaderString(HttpHeaders.CONTENT_TYPE));
     assertEquals("Total results must be 100", 100, searchResult.getTotal());
     assertEquals("Result size must be 100", 100, searchResult.getSize());
     assertNotNull("result list must not be null", searchResult.getData());
   }
-  
+
   @Test
   public void testSearchItemsMissingFormatParameter() throws Exception {
     Response response = target("/item").queryParam("offset", 0).queryParam("rows", 20).queryParam("set", "abc")
-    .queryParam("format", "").queryParam("from", "1970-01-01T00:00:01Z").queryParam("until", "2970-01-01T00:00:01Z").queryParam("content", "").request()
-    .get();
-    
+        .queryParam("format", "").queryParam("from", "1970-01-01T00:00:01Z").queryParam("until", "2970-01-01T00:00:01Z")
+        .queryParam("content", "").request().get();
+
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
-  
+
   @Test
   public void testSearchItemsInvalidFromParameter() throws Exception {
     Response response = target("/item").queryParam("offset", 0).queryParam("rows", 20).queryParam("set", "abc")
-    .queryParam("format", "oai_dc").queryParam("from", "ABGS").queryParam("until", "2970-01-01T00:00:01Z").queryParam("content", "").request()
-    .get();
-    
+        .queryParam("format", "oai_dc").queryParam("from", "ABGS").queryParam("until", "2970-01-01T00:00:01Z")
+        .queryParam("content", "").request().get();
+
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
-  
+
   @Test
   public void testSearchItemsInvalidUntilParameter() throws Exception {
     Response response = target("/item").queryParam("offset", 0).queryParam("rows", 20).queryParam("set", "abc")
-    .queryParam("format", "oai_dc").queryParam("from", "1970-01-01T00:00:01Z").queryParam("until", "1970-01T00:00:01Z").queryParam("content", "").request()
-    .get();
-    
+        .queryParam("format", "oai_dc").queryParam("from", "1970-01-01T00:00:01Z")
+        .queryParam("until", "1970-01T00:00:01Z").queryParam("content", "").request().get();
+
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
-  
-  
+
   @Test
   public void testDeleteItem() throws Exception {
     doNothing().when(itemService).delete("65465456");
-    
+
     Response response = target("/item/65465456").request().delete();
-    
+
     assertEquals("Http Response should be 204: ", Status.NO_CONTENT.getStatusCode(), response.getStatus());
   }
-  
-  
+
   @Test
   public void testDeleteItemEmptyIdentifier() throws Exception {
     doThrow(IOException.class).when(itemService).delete(" ");
-    
+
     Response response = target("/item/%20").request().delete();
-    
+
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
-  
+
   @Test
   public void testDeleteItemNotFound() throws Exception {
     doThrow(NotFoundException.class).when(itemService).delete("123Fragerei");
-    
+
     Response response = target("/item/123Fragerei").request().delete();
-    
+
     assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
-  
-  
+
   @Test
   public void testCreateItem() throws Exception {
     Item item = new Item();
@@ -223,55 +222,46 @@ public class ItemControllerIT extends JerseyTest {
     item.setTags(List.of("foo", "bar", "baz"));
     item.setIngestFormat("radar");
     String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
-    
-    String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n" + 
-        "    <dc:title>testCreateItem</dc:title>\n" + 
-        "    <dc:date>2019-01-01T08:00:00Z</dc:date>\n" + 
-        "    <dc:type>text</dc:type>\n" + 
-        "    <dc:format>application/pdf</dc:format>\n" + 
-        "    <dc:identifier>65465456</dc:identifier>\n" + 
-        "    <dc:source>Some exmaple source</dc:source>\n" + 
-        "    <dc:publisher>FIZ Karlsruhe</dc:publisher>\n" + 
-        "  </oai_dc:dc>";
-    
+
+    String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n"
+        + "    <dc:title>testCreateItem</dc:title>\n" + "    <dc:date>2019-01-01T08:00:00Z</dc:date>\n"
+        + "    <dc:type>text</dc:type>\n" + "    <dc:format>application/pdf</dc:format>\n"
+        + "    <dc:identifier>65465456</dc:identifier>\n" + "    <dc:source>Some exmaple source</dc:source>\n"
+        + "    <dc:publisher>FIZ Karlsruhe</dc:publisher>\n" + "  </oai_dc:dc>";
+
     FormDataMultiPart form = new FormDataMultiPart();
     form.field("item", json, MediaType.APPLICATION_JSON_TYPE);
     FormDataBodyPart fdp = new FormDataBodyPart("content", xml, MediaType.TEXT_XML_TYPE);
     form.bodyPart(fdp);
 
     when(itemService.create(any(Item.class))).thenReturn(item);
-    
+
     Response response = target("/item").request().post(Entity.entity(form, form.getMediaType()));
-    
+
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
   }
-  
+
   @Test
   public void testCreateItemBadIdentifier() throws Exception {
-    //The json use an identifier that is not in the xml!
+    // The json use an identifier that is not in the xml!
     String json = "{\"identifier\":\"NotInXml\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
-    
-    String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n" + 
-        "    <dc:title>testCreateItem</dc:title>\n" + 
-        "    <dc:date>2019-01-01T08:00:00Z</dc:date>\n" + 
-        "    <dc:type>text</dc:type>\n" + 
-        "    <dc:format>application/pdf</dc:format>\n" + 
-        "    <dc:identifier>65465456</dc:identifier>\n" + 
-        "    <dc:source>Some exmaple source</dc:source>\n" + 
-        "    <dc:publisher>FIZ Karlsruhe</dc:publisher>\n" + 
-        "  </oai_dc:dc>";
-    
+
+    String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n"
+        + "    <dc:title>testCreateItem</dc:title>\n" + "    <dc:date>2019-01-01T08:00:00Z</dc:date>\n"
+        + "    <dc:type>text</dc:type>\n" + "    <dc:format>application/pdf</dc:format>\n"
+        + "    <dc:identifier>65465456</dc:identifier>\n" + "    <dc:source>Some exmaple source</dc:source>\n"
+        + "    <dc:publisher>FIZ Karlsruhe</dc:publisher>\n" + "  </oai_dc:dc>";
+
     FormDataMultiPart form = new FormDataMultiPart();
     form.field("item", json, MediaType.APPLICATION_JSON_TYPE);
     FormDataBodyPart fdp = new FormDataBodyPart("content", xml, MediaType.TEXT_XML_TYPE);
     form.bodyPart(fdp);
 
     Response response = target("/item").request().post(Entity.entity(form, form.getMediaType()));
-    
+
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
-  
-  
+
   @Test
   public void testUpdateItem() throws Exception {
     Item item = new Item();
@@ -281,147 +271,126 @@ public class ItemControllerIT extends JerseyTest {
     item.setTags(List.of("foo", "bar", "baz"));
     item.setIngestFormat("radar");
     String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
-    
-    String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n" + 
-        "    <dc:title>testCreateItem</dc:title>\n" + 
-        "    <dc:date>2019-01-01T08:00:00Z</dc:date>\n" + 
-        "    <dc:type>text</dc:type>\n" + 
-        "    <dc:format>application/pdf</dc:format>\n" + 
-        "    <dc:identifier>65465456</dc:identifier>\n" + 
-        "    <dc:source>Some exmaple source</dc:source>\n" + 
-        "    <dc:publisher>FIZ Karlsruhe</dc:publisher>\n" + 
-        "  </oai_dc:dc>";
-    
+
+    String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n"
+        + "    <dc:title>testCreateItem</dc:title>\n" + "    <dc:date>2019-01-01T08:00:00Z</dc:date>\n"
+        + "    <dc:type>text</dc:type>\n" + "    <dc:format>application/pdf</dc:format>\n"
+        + "    <dc:identifier>65465456</dc:identifier>\n" + "    <dc:source>Some exmaple source</dc:source>\n"
+        + "    <dc:publisher>FIZ Karlsruhe</dc:publisher>\n" + "  </oai_dc:dc>";
+
     FormDataMultiPart form = new FormDataMultiPart();
     form.field("item", json, MediaType.APPLICATION_JSON_TYPE);
     FormDataBodyPart fdp = new FormDataBodyPart("content", xml, MediaType.TEXT_XML_TYPE);
     form.bodyPart(fdp);
-    
+
     when(itemService.update(any(Item.class))).thenReturn(item);
-    
+
     Response response = target("/item/65465456").request().put(Entity.entity(form, form.getMediaType()));
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
   }
-  
+
   @Test
   public void testUpdateItemIdentifierNotFound() throws Exception {
-    //The json use an identifier that is not in the xml!
+    // The json use an identifier that is not in the xml!
     String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
-    
-    String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n" + 
-        "    <dc:title>testCreateItem</dc:title>\n" + 
-        "    <dc:date>2019-01-01T08:00:00Z</dc:date>\n" + 
-        "    <dc:type>text</dc:type>\n" + 
-        "    <dc:format>application/pdf</dc:format>\n" + 
-        "    <dc:identifier>65465456</dc:identifier>\n" + 
-        "    <dc:source>Some exmaple source</dc:source>\n" + 
-        "    <dc:publisher>FIZ Karlsruhe</dc:publisher>\n" + 
-        "  </oai_dc:dc>";
-    
+
+    String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n"
+        + "    <dc:title>testCreateItem</dc:title>\n" + "    <dc:date>2019-01-01T08:00:00Z</dc:date>\n"
+        + "    <dc:type>text</dc:type>\n" + "    <dc:format>application/pdf</dc:format>\n"
+        + "    <dc:identifier>65465456</dc:identifier>\n" + "    <dc:source>Some exmaple source</dc:source>\n"
+        + "    <dc:publisher>FIZ Karlsruhe</dc:publisher>\n" + "  </oai_dc:dc>";
+
     FormDataMultiPart form = new FormDataMultiPart();
     form.field("item", json, MediaType.APPLICATION_JSON_TYPE);
     FormDataBodyPart fdp = new FormDataBodyPart("content", xml, MediaType.TEXT_XML_TYPE);
     form.bodyPart(fdp);
 
     doThrow(NotFoundException.class).when(itemService).update(any());
-    
+
     Response response = target("/item/65465456").request().put(Entity.entity(form, form.getMediaType()));
     assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
-  
+
   @Test
   public void testUpdateItemBadIdentifierInJson() throws Exception {
-    //The json use an identifier that is not in the xml!
+    // The json use an identifier that is not in the xml!
     String json = "{\"identifier\":\"NotInXml\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
-    
-    String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n" + 
-        "    <dc:title>testCreateItem</dc:title>\n" + 
-        "    <dc:date>2019-01-01T08:00:00Z</dc:date>\n" + 
-        "    <dc:type>text</dc:type>\n" + 
-        "    <dc:format>application/pdf</dc:format>\n" + 
-        "    <dc:identifier>65465456</dc:identifier>\n" + 
-        "    <dc:source>Some exmaple source</dc:source>\n" + 
-        "    <dc:publisher>FIZ Karlsruhe</dc:publisher>\n" + 
-        "  </oai_dc:dc>";
-    
+
+    String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n"
+        + "    <dc:title>testCreateItem</dc:title>\n" + "    <dc:date>2019-01-01T08:00:00Z</dc:date>\n"
+        + "    <dc:type>text</dc:type>\n" + "    <dc:format>application/pdf</dc:format>\n"
+        + "    <dc:identifier>65465456</dc:identifier>\n" + "    <dc:source>Some exmaple source</dc:source>\n"
+        + "    <dc:publisher>FIZ Karlsruhe</dc:publisher>\n" + "  </oai_dc:dc>";
+
     FormDataMultiPart form = new FormDataMultiPart();
     form.field("item", json, MediaType.APPLICATION_JSON_TYPE);
     FormDataBodyPart fdp = new FormDataBodyPart("content", xml, MediaType.TEXT_XML_TYPE);
     form.bodyPart(fdp);
 
     Response response = target("/item/65465456").request().put(Entity.entity(form, form.getMediaType()));
-    
+
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
-  
+
   @Test
   public void testUpdateItemBadIdentifierInXml() throws Exception {
-    //The json use an identifier that is not in the xml!
+    // The json use an identifier that is not in the xml!
     String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
-    
-    String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n" + 
-        "    <dc:title>testCreateItem</dc:title>\n" + 
-        "    <dc:date>2019-01-01T08:00:00Z</dc:date>\n" + 
-        "    <dc:type>text</dc:type>\n" + 
-        "    <dc:format>application/pdf</dc:format>\n" + 
-        "    <dc:identifier>BadIdentifier</dc:identifier>\n" + 
-        "    <dc:source>Some exmaple source</dc:source>\n" + 
-        "    <dc:publisher>FIZ Karlsruhe</dc:publisher>\n" + 
-        "  </oai_dc:dc>";
-    
+
+    String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n"
+        + "    <dc:title>testCreateItem</dc:title>\n" + "    <dc:date>2019-01-01T08:00:00Z</dc:date>\n"
+        + "    <dc:type>text</dc:type>\n" + "    <dc:format>application/pdf</dc:format>\n"
+        + "    <dc:identifier>BadIdentifier</dc:identifier>\n" + "    <dc:source>Some exmaple source</dc:source>\n"
+        + "    <dc:publisher>FIZ Karlsruhe</dc:publisher>\n" + "  </oai_dc:dc>";
+
     FormDataMultiPart form = new FormDataMultiPart();
     form.field("item", json, MediaType.APPLICATION_JSON_TYPE);
     FormDataBodyPart fdp = new FormDataBodyPart("content", xml, MediaType.TEXT_XML_TYPE);
     form.bodyPart(fdp);
 
     Response response = target("/item/65465456").request().put(Entity.entity(form, form.getMediaType()));
-    
+
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
-  
+
   @Test
   public void testUpdateItemBadIdentifierInPath() throws Exception {
-    //The json use an identifier that is not in the xml!
+    // The json use an identifier that is not in the xml!
     String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
-    
-    String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n" + 
-        "    <dc:title>testCreateItem</dc:title>\n" + 
-        "    <dc:date>2019-01-01T08:00:00Z</dc:date>\n" + 
-        "    <dc:type>text</dc:type>\n" + 
-        "    <dc:format>application/pdf</dc:format>\n" + 
-        "    <dc:identifier>65465456</dc:identifier>\n" + 
-        "    <dc:source>Some exmaple source</dc:source>\n" + 
-        "    <dc:publisher>FIZ Karlsruhe</dc:publisher>\n" + 
-        "  </oai_dc:dc>";
-    
+
+    String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n"
+        + "    <dc:title>testCreateItem</dc:title>\n" + "    <dc:date>2019-01-01T08:00:00Z</dc:date>\n"
+        + "    <dc:type>text</dc:type>\n" + "    <dc:format>application/pdf</dc:format>\n"
+        + "    <dc:identifier>65465456</dc:identifier>\n" + "    <dc:source>Some exmaple source</dc:source>\n"
+        + "    <dc:publisher>FIZ Karlsruhe</dc:publisher>\n" + "  </oai_dc:dc>";
+
     FormDataMultiPart form = new FormDataMultiPart();
     form.field("item", json, MediaType.APPLICATION_JSON_TYPE);
     FormDataBodyPart fdp = new FormDataBodyPart("content", xml, MediaType.TEXT_XML_TYPE);
     form.bodyPart(fdp);
 
     Response response = target("/item/badidentifier").request().put(Entity.entity(form, form.getMediaType()));
-    
+
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
-  
-  
+
   private SearchResult<Item> getTestSearchResult() {
     List<Item> items = new ArrayList<Item>();
-    
+
     for (int i = 0; i < 100; i++) {
       Item item = new Item();
       item.setIdentifier(String.valueOf(i));
-      
+
       items.add(item);
     }
-    
+
     SearchResult<Item> result = new SearchResult<Item>();
     result.setData(items);
     result.setTotal(items.size());
     result.setSize(items.size());
-    
+
     LOGGER.info("getTestItemList size: " + items.size());
     return result;
   }
-  
+
 }

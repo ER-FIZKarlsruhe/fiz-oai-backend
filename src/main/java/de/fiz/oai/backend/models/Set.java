@@ -1,56 +1,57 @@
 package de.fiz.oai.backend.models;
 
+import java.util.Map;
+
 public class Set {
 
-    private String name;
-    
-    private String spec;
-    
-    private String description;
-    
-    private String searchTerm;
-    
-    private String searchQuery;
+  private String name;
 
-    public String getName() {
-        return name;
-    }
+  private String spec;
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  private String description;
 
-    public String getSpec() {
-      return spec;
-    }
+  private Map<String, String> xPaths;
 
-    public void setSpec(String spec) {
-      this.spec = spec;
-    }
+  private String status;
 
-    public String getDescription() {
-      return description;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public void setDescription(String description) {
-      this.description = description;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public String getSearchTerm() {
-      return searchTerm;
-    }
+  public String getSpec() {
+    return spec;
+  }
 
-    public void setSearchTerm(String searchTerm) {
-      this.searchTerm = searchTerm;
-    }
+  public void setSpec(String spec) {
+    this.spec = spec;
+  }
 
-    public String getSearchQuery() {
-      return searchQuery;
-    }
+  public String getDescription() {
+    return description;
+  }
 
-    public void setSearchQuery(String searchQuery) {
-      this.searchQuery = searchQuery;
-    }
+  public void setDescription(String description) {
+    this.description = description;
+  }
 
+  public Map<String, String> getxPaths() {
+    return xPaths;
+  }
+
+  public void setxPaths(Map<String, String> xPaths) {
+    this.xPaths = xPaths;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
+  }
 
 }
