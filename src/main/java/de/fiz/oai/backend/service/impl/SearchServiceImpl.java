@@ -12,6 +12,7 @@ import javax.inject.Inject;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
+import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -21,6 +22,7 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.client.GetAliasesResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -36,6 +38,8 @@ import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.exceptions.AlreadyExistsException;
+
 import de.fiz.oai.backend.dao.DAOContent;
 import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.dao.DAOItem;
@@ -44,6 +48,7 @@ import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.models.Set;
+import de.fiz.oai.backend.models.reindex.ReindexStatus;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.utils.Configuration;
 import de.fiz.oai.backend.utils.XPathHelper;
@@ -57,7 +62,7 @@ public class SearchServiceImpl implements SearchService {
 
   int elastisearchPort = Integer.parseInt(Configuration.getInstance().getProperty("elasticsearch.port"));
 
-  public static String ITEMS_INDEX_NAME = "items";
+  public static String ITEMS_ALIAS_INDEX_NAME = "items";
 
   @Inject
   DAOItem daoItem;
@@ -71,6 +76,8 @@ public class SearchServiceImpl implements SearchService {
   @Inject
   DAOSet daoSet;
 
+  private ReindexStatus reindexStatus = null;
+  
   /**
    * 
    * @param item @throws IOException @throws
@@ -107,7 +114,7 @@ public class SearchServiceImpl implements SearchService {
 
       IndexRequest indexRequest = new IndexRequest();
 
-      indexRequest.index(ITEMS_INDEX_NAME);
+      indexRequest.index(ITEMS_ALIAS_INDEX_NAME);
       indexRequest.type("_doc");
       indexRequest.source(itemMap);
       indexRequest.id(item.getIdentifier());
@@ -134,7 +141,7 @@ public class SearchServiceImpl implements SearchService {
       // itemMap.put("oai_dc", oaiDcJson);
 
       UpdateRequest updateRequest = new UpdateRequest();
-      updateRequest.index(ITEMS_INDEX_NAME);
+      updateRequest.index(ITEMS_ALIAS_INDEX_NAME);
       updateRequest.type("_doc");
       updateRequest.doc(itemMap);
       client.update(updateRequest, RequestOptions.DEFAULT);
@@ -152,7 +159,7 @@ public class SearchServiceImpl implements SearchService {
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
 
       DeleteRequest request = new DeleteRequest();
-      request.index(ITEMS_INDEX_NAME);
+      request.index(ITEMS_ALIAS_INDEX_NAME);
       request.type("_doc");
       request.id(item.getIdentifier());
 
@@ -201,7 +208,7 @@ public class SearchServiceImpl implements SearchService {
         searchSourceBuilder.from(0);
       }
 
-      SearchRequest searchRequest = new SearchRequest(ITEMS_INDEX_NAME);
+      SearchRequest searchRequest = new SearchRequest(ITEMS_ALIAS_INDEX_NAME);
       searchRequest.source(searchSourceBuilder);
 
       LOGGER.info("DEBUG: searchRequest: " + searchRequest.toString());
@@ -287,7 +294,29 @@ public class SearchServiceImpl implements SearchService {
   }
 
   @Override
-  public void reindexAll() {
+  public void reindexAll() throws IOException {
+    if (reindexStatus != null && reindexStatus.getEndTime() == null) {
+      LOGGER.warn("Reindex process already started since " + reindexStatus.getStartTime());
+      return;
+    }
+
+    reindexStatus = new ReindexStatus();
+    
+    try (RestHighLevelClient client = new RestHighLevelClient(
+        RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {      
+      GetAliasesRequest requestIndexWithAlias = new GetAliasesRequest(ITEMS_ALIAS_INDEX_NAME);
+      GetAliasesResponse responseIndexWithAlias = client.indices().getAlias(requestIndexWithAlias, RequestOptions.DEFAULT);
+      
+      if (responseIndexWithAlias.getAliases().size() > 1) {
+        Iterator indexIterator = responseIndexWithAlias.getAliases().keySet().iterator();
+        while(indexIterator.hasNext()) {
+          reindexStatus.setOriginalIndexName(indexIterator.next().toString());
+          break;
+        }
+      }
+      
+    }
+    
     
   }
 
