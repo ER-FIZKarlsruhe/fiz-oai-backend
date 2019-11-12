@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import javax.inject.Inject;
 
@@ -17,7 +18,6 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -38,8 +38,6 @@ import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.exceptions.AlreadyExistsException;
-
 import de.fiz.oai.backend.dao.DAOContent;
 import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.dao.DAOItem;
@@ -51,6 +49,7 @@ import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.models.reindex.ReindexStatus;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.utils.Configuration;
+import de.fiz.oai.backend.utils.ResourcesUtils;
 import de.fiz.oai.backend.utils.XPathHelper;
 
 @Service
@@ -63,6 +62,8 @@ public class SearchServiceImpl implements SearchService {
   int elastisearchPort = Integer.parseInt(Configuration.getInstance().getProperty("elasticsearch.port"));
 
   public static String ITEMS_ALIAS_INDEX_NAME = "items";
+
+  public static String ITEMS_MAPPING_FILENAME = "item_mapping_es_v7";
 
   @Inject
   DAOItem daoItem;
@@ -77,7 +78,9 @@ public class SearchServiceImpl implements SearchService {
   DAOSet daoSet;
 
   private ReindexStatus reindexStatus = null;
-  
+
+  private CompletableFuture<Boolean> reindexAllFuture;
+
   /**
    * 
    * @param item @throws IOException @throws
@@ -163,7 +166,7 @@ public class SearchServiceImpl implements SearchService {
       request.type("_doc");
       request.id(item.getIdentifier());
 
-      DeleteResponse deleteResponse = client.delete(request, RequestOptions.DEFAULT);
+      client.delete(request, RequestOptions.DEFAULT);
     }
   }
 
@@ -295,29 +298,73 @@ public class SearchServiceImpl implements SearchService {
 
   @Override
   public void reindexAll() throws IOException {
-    if (reindexStatus != null && reindexStatus.getEndTime() == null) {
-      LOGGER.warn("Reindex process already started since " + reindexStatus.getStartTime());
-      return;
+    if (reindexStatus != null && StringUtils.isBlank(reindexStatus.getEndTime())) {
+      LOGGER.warn("Reindex process already started since " + reindexStatus.getStartTime()
+          + ". It will be blocked and restarted!");
+
+      // Stop future process
+      if (reindexAllFuture != null) {
+        while (!reindexAllFuture.isCancelled()) {
+          reindexAllFuture.cancel(true);
+        }
+      }
+
+      dropIndex(reindexStatus.getNewIndexName());
     }
 
     reindexStatus = new ReindexStatus();
-    
-    try (RestHighLevelClient client = new RestHighLevelClient(
-        RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {      
-      GetAliasesRequest requestIndexWithAlias = new GetAliasesRequest(ITEMS_ALIAS_INDEX_NAME);
-      GetAliasesResponse responseIndexWithAlias = client.indices().getAlias(requestIndexWithAlias, RequestOptions.DEFAULT);
-      
-      if (responseIndexWithAlias.getAliases().size() > 1) {
-        Iterator indexIterator = responseIndexWithAlias.getAliases().keySet().iterator();
-        while(indexIterator.hasNext()) {
-          reindexStatus.setOriginalIndexName(indexIterator.next().toString());
-          break;
+
+    reindexAllFuture = CompletableFuture.supplyAsync(() -> {
+
+      try (RestHighLevelClient client = new RestHighLevelClient(
+          RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
+        GetAliasesRequest requestIndexWithAlias = new GetAliasesRequest(ITEMS_ALIAS_INDEX_NAME);
+        GetAliasesResponse responseIndexWithAlias = client.indices().getAlias(requestIndexWithAlias,
+            RequestOptions.DEFAULT);
+
+        if (responseIndexWithAlias.getAliases().size() > 1) {
+          Iterator<String> indexIterator = responseIndexWithAlias.getAliases().keySet().iterator();
+          while (indexIterator.hasNext()) {
+            reindexStatus.setOriginalIndexName(indexIterator.next().toString());
+            break;
+          }
         }
+
+        if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())) {
+          LOGGER.warn("No existing indexes. Creating it from scratch.");
+          reindexStatus.setNewIndexName(ITEMS_ALIAS_INDEX_NAME + "1");
+        } else {
+          final String currentIndexVersionStr = reindexStatus.getOriginalIndexName()
+              .substring(ITEMS_ALIAS_INDEX_NAME.length());
+          final long currentIndexVersion = Long.parseLong(currentIndexVersionStr);
+          final long newIndexVersion = currentIndexVersion + 1;
+          final StringBuilder newIndexName = new StringBuilder();
+          newIndexName.append(ITEMS_ALIAS_INDEX_NAME);
+          newIndexName.append(String.valueOf(newIndexVersion));
+
+          reindexStatus.setNewIndexName(newIndexName.toString());
+        }
+
+        if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())
+            || StringUtils.isBlank(reindexStatus.getNewIndexName())) {
+          LOGGER.error("Something went wrong while generating index names.");
+          return false;
+        }
+
+        final String mapping = ResourcesUtils.getResourceFileAsString(ITEMS_MAPPING_FILENAME);
+
+        if (!createIndex(reindexStatus.getNewIndexName(), mapping)) {
+          LOGGER.error("Something went wrong while creating the new index " + reindexStatus.getNewIndexName());
+          return false;
+        }
+      } catch (IOException e) {
+        LOGGER.error("Something went wrong while processing the new index" + reindexStatus.getNewIndexName(), e);
+        return false;
       }
-      
-    }
-    
-    
+      return true;
+
+    });
+
   }
 
 }

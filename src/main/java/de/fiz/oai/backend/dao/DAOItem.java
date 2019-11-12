@@ -44,4 +44,9 @@ public interface DAOItem {
    * @param identifier the identifier
    */
   void delete(String identifier) throws IOException;
+
+  /**
+   * Get count.
+   */
+  long getCount() throws IOException;
 }
