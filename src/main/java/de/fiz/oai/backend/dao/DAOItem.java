@@ -26,18 +26,6 @@ public interface DAOItem {
    */
   Item create(Item item) throws IOException;
 
-
-  /**
-   * Search for Items.
-   *
-   * @param sort   ASC/DESC
-   * @param offset the offset
-   * @param rows   the rows
-   * @param query  the query
-   * @return the items
-   */
-  List<Item> search(Integer offset, Integer rows, String set, String format,String from,String until) throws IOException;
-
   /**
    * Delete an Item.
    *

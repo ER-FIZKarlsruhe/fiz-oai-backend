@@ -2,6 +2,8 @@ package de.fiz.oai.backend.service.impl;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -309,11 +311,14 @@ public class SearchServiceImpl implements SearchService {
         }
       }
 
+      // Delete index in creation
       dropIndex(reindexStatus.getNewIndexName());
     }
 
     reindexStatus = new ReindexStatus();
 
+    reindexStatus.setAliasName(ITEMS_ALIAS_INDEX_NAME);
+    
     reindexAllFuture = CompletableFuture.supplyAsync(() -> {
 
       try (RestHighLevelClient client = new RestHighLevelClient(
@@ -357,6 +362,21 @@ public class SearchServiceImpl implements SearchService {
           LOGGER.error("Something went wrong while creating the new index " + reindexStatus.getNewIndexName());
           return false;
         }
+
+        reindexStatus.setTotalCount(daoItem.getCount());
+
+        if (reindexStatus.getTotalCount() < 1) {
+          LOGGER.warn("No items to reindex " + reindexStatus.getNewIndexName());
+          return false;
+        }
+
+        reindexStatus.setIndexedCount(0);
+        
+        reindexStatus.setStartTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
+        
+//        daoItem.search(offset, rows, set, format, from, until)
+//        createDocument(daoItem.read(identifier));
+
       } catch (IOException e) {
         LOGGER.error("Something went wrong while processing the new index" + reindexStatus.getNewIndexName(), e);
         return false;
