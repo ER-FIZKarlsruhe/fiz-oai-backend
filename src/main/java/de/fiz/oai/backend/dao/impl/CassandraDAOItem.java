@@ -144,25 +144,30 @@ public class CassandraDAOItem implements DAOItem {
       throw new NotFoundException("The deletion was not applied for the given identifier and format.");
     }
   }
-  
+
   public long getCount() throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
     Session session = manager.getCassandraSession();
-    
+
     StringBuilder selectStmt = new StringBuilder();
     selectStmt.append("SELECT ");
     selectStmt.append(ITEM_IDENTIFIER);
     selectStmt.append(" FROM ");
     selectStmt.append(TABLENAME_ITEM);
-    
+
     ResultSet prepareResult = session.execute(selectStmt.toString());
     long i = 0;
+
     if (!prepareResult.isExhausted()) {
-        for (Row row : prepareResult) {
-            i++;
+      for (@SuppressWarnings("unused")
+      Row row : prepareResult) {
+        if ((prepareResult.getAvailableWithoutFetching() < 10) && !prepareResult.isFullyFetched()) {
+          prepareResult.fetchMoreResults();
         }
+        i++;
+      }
     }
     return i;
-}
-  
+  }
+
 }
