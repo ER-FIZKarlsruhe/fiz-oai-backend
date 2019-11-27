@@ -2,6 +2,7 @@ package de.fiz.oai.backend.service.impl;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -375,21 +376,39 @@ public class SearchServiceImpl implements SearchService {
 
         reindexStatus.setStartTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
 
+        Item mostRecentItem = null;
+
         do {
           List<Item> bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
 
           for (final Item pickedItem : bufferListItems) {
             reindexDocument(pickedItem, reindexStatus.getNewIndexName(), client);
             reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
+
+            // Keep the most recent Item identifier
+            if (mostRecentItem == null) {
+              mostRecentItem = pickedItem;
+            } else {
+              SimpleDateFormat pickedDate = new SimpleDateFormat("yyyy-MM-ddThh:mmZ");
+              try {
+                if (pickedDate.parse(mostRecentItem.getDatestamp()).before(pickedDate.parse(pickedItem.getDatestamp()))) {
+                  mostRecentItem = pickedItem;
+                }
+              } catch (ParseException e) {
+                // leave mostRecentDateItem as it is
+              }
+            }
+
           }
 
         } while (reindexStatus.getIndexedCount() < reindexStatus.getTotalCount());
 
-        // In the meanwhile some new object has been inserted, reindex also the new Items
+        // If in the meanwhile some new object has been inserted, reindex also the new
+        // Items
         if (daoItem.getCount() < reindexStatus.getIndexedCount()) {
-          
+          search(100, null, null, null, null, mostRecentItem);
         }
-        
+
       } catch (IOException e) {
         LOGGER.error("Something went wrong while processing the new index" + reindexStatus.getNewIndexName(), e);
         return false;

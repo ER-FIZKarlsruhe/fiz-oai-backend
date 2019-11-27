@@ -19,6 +19,8 @@ public class ReindexStatus {
   private String startTime;
   
   private String endTime;
+  
+  private String mostRecentItemId;
 
   /**
    * @return the aliasName
@@ -130,6 +132,20 @@ public class ReindexStatus {
    */
   public void setItemResultSet(ResultSet itemResultSet) {
     this.itemResultSet = itemResultSet;
+  }
+
+  /**
+   * @return the mostRecentItemId
+   */
+  public String getMostRecentItemId() {
+    return mostRecentItemId;
+  }
+
+  /**
+   * @param mostRecentItemId the mostRecentItemId to set
+   */
+  public void setMostRecentItemId(String mostRecentItemId) {
+    this.mostRecentItemId = mostRecentItemId;
   }
 
   
