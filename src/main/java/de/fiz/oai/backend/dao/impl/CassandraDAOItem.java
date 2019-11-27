@@ -1,6 +1,7 @@
 package de.fiz.oai.backend.dao.impl;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -168,6 +169,38 @@ public class CassandraDAOItem implements DAOItem {
       }
     }
     return i;
+  }
+
+  public ResultSet getAllItemsResultSet() throws IOException {
+    ClusterManager manager = ClusterManager.getInstance();
+    Session session = manager.getCassandraSession();
+
+    StringBuilder selectStmt = new StringBuilder();
+    selectStmt.append("SELECT ");
+    selectStmt.append("*");
+    selectStmt.append(" FROM ");
+    selectStmt.append(TABLENAME_ITEM);
+
+    return session.execute(selectStmt.toString());
+  }
+
+  public List<Item> getItemsFromResultSet(ResultSet resultSet, int itemsToRetrieve) throws IOException {
+
+    List<Item> itemsRetrieved = new ArrayList<Item>();
+    int i = 0;
+    if (!resultSet.isExhausted()) {
+      for (final Row row : resultSet) {
+        if ((resultSet.getAvailableWithoutFetching() < itemsToRetrieve) && !resultSet.isFullyFetched()) {
+          resultSet.fetchMoreResults();
+        }
+        itemsRetrieved.add(populateItem(row));
+        i++;
+        if (itemsToRetrieve < i) {
+          break;
+        }
+      }
+    }
+    return itemsRetrieved;
   }
 
 }

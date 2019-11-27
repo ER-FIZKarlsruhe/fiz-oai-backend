@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.jvnet.hk2.annotations.Contract;
 
+import com.datastax.driver.core.ResultSet;
+
 import de.fiz.oai.backend.models.Item;
 
 @Contract
@@ -37,4 +39,14 @@ public interface DAOItem {
    * Get count.
    */
   long getCount() throws IOException;
+
+  /**
+   * Get all items as ResultSet.
+   */
+  ResultSet getAllItemsResultSet() throws IOException;
+
+  /**
+   * Get list of Items given an already prepared ResultSet.
+   */
+  List<Item> getItemsFromResultSet(ResultSet resultSet, int itemsToRetrieve) throws IOException;
 }

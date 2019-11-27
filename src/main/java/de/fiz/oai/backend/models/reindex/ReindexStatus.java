@@ -1,7 +1,11 @@
 package de.fiz.oai.backend.models.reindex;
 
+import com.datastax.driver.core.ResultSet;
+
 public class ReindexStatus {
 
+  private ResultSet itemResultSet = null;
+  
   private String aliasName = null;
   
   private String originalIndexName = null;
@@ -112,6 +116,20 @@ public class ReindexStatus {
    */
   public void setEndTime(String endTime) {
     this.endTime = endTime;
+  }
+
+  /**
+   * @return the itemResultSet
+   */
+  public ResultSet getItemResultSet() {
+    return itemResultSet;
+  }
+
+  /**
+   * @param itemResultSet the itemResultSet to set
+   */
+  public void setItemResultSet(ResultSet itemResultSet) {
+    this.itemResultSet = itemResultSet;
   }
 
   

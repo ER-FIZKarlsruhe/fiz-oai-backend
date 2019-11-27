@@ -318,7 +318,7 @@ public class SearchServiceImpl implements SearchService {
     reindexStatus = new ReindexStatus();
 
     reindexStatus.setAliasName(ITEMS_ALIAS_INDEX_NAME);
-    
+
     reindexAllFuture = CompletableFuture.supplyAsync(() -> {
 
       try (RestHighLevelClient client = new RestHighLevelClient(
@@ -364,6 +364,7 @@ public class SearchServiceImpl implements SearchService {
         }
 
         reindexStatus.setTotalCount(daoItem.getCount());
+        reindexStatus.setItemResultSet(daoItem.getAllItemsResultSet());
 
         if (reindexStatus.getTotalCount() < 1) {
           LOGGER.warn("No items to reindex " + reindexStatus.getNewIndexName());
@@ -371,12 +372,24 @@ public class SearchServiceImpl implements SearchService {
         }
 
         reindexStatus.setIndexedCount(0);
-        
-        reindexStatus.setStartTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
-        
-//        daoItem.search(offset, rows, set, format, from, until)
-//        createDocument(daoItem.read(identifier));
 
+        reindexStatus.setStartTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
+
+        do {
+          List<Item> bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
+
+          for (final Item pickedItem : bufferListItems) {
+            reindexDocument(pickedItem, reindexStatus.getNewIndexName(), client);
+            reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
+          }
+
+        } while (reindexStatus.getIndexedCount() < reindexStatus.getTotalCount());
+
+        // In the meanwhile some new object has been inserted, reindex also the new Items
+        if (daoItem.getCount() < reindexStatus.getIndexedCount()) {
+          
+        }
+        
       } catch (IOException e) {
         LOGGER.error("Something went wrong while processing the new index" + reindexStatus.getNewIndexName(), e);
         return false;
@@ -385,6 +398,45 @@ public class SearchServiceImpl implements SearchService {
 
     });
 
+  }
+
+  private void reindexDocument(Item item, String indexName, RestHighLevelClient client) throws IOException {
+
+    Map<String, Object> itemMap = item.toMap();
+
+    // Add all available formats
+    List<Content> allContents = daoContent.readFormats(item.getIdentifier());
+    List<String> itemFormats = new ArrayList<String>();
+    for (final Content pickedContent : allContents) {
+      itemFormats.add(pickedContent.getFormat());
+    }
+    itemMap.put("formats", itemFormats);
+
+    // Add all the matching sets
+    List<Set> allSets = daoSet.readAll();
+    List<String> itemSets = new ArrayList<String>();
+    for (final Set pickedSet : allSets) {
+      Map<String, String> xPaths = pickedSet.getxPaths();
+      for (final Content pickedContent : allContents) {
+        if (xPaths.containsKey(pickedContent.getFormat())) {
+          final String xPathToCheck = xPaths.get(pickedContent.getFormat());
+          if (XPathHelper.isTextValueMatching(pickedContent.getContent(), xPathToCheck)) {
+            itemSets.add(pickedSet.getName());
+          }
+        }
+      }
+    }
+    itemMap.put("sets", itemSets);
+
+    IndexRequest indexRequest = new IndexRequest();
+
+    indexRequest.index(indexName);
+    indexRequest.type("_doc");
+    indexRequest.source(itemMap);
+    indexRequest.id(item.getIdentifier());
+
+    client.index(indexRequest, RequestOptions.DEFAULT);
+    LOGGER.info("Added item to search index");
   }
 
 }
