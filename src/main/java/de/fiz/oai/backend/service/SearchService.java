@@ -10,28 +10,28 @@ import de.fiz.oai.backend.models.SearchResult;
 
 @Contract
 public interface SearchService {
-  
+
   /**
-   * Creates a new index if not existing 
+   * Creates a new index if not existing
    */
   boolean createIndex(final String indexName, final String mapping) throws IOException;
-  
+
   /**
    * Drops the index
    */
   void dropIndex(final String indexName) throws IOException;
-  
- /**
-  * Reindex all documents
-  */
+
+  /**
+   * Reindex all documents
+   */
   void reindexAll() throws IOException;
-  
+
   /**
    * 
    * @param item
    */
   void createDocument(Item item) throws IOException;
-  
+
   /**
    * 
    * @param item
@@ -43,7 +43,7 @@ public interface SearchService {
    * @param item
    */
   void deleteDocument(Item item) throws IOException;
-  
+
   /**
    * 
    * @param offset
@@ -55,14 +55,7 @@ public interface SearchService {
    * @return
    * @throws IOException
    */
-  SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate, Item lastItem) throws IOException;
-  
-//  /**
-//   * 
-//   * @param scrollId
-//   * @return
-//   * @throws IOException
-//   */
-//  SearchResult<String> search(String scrollId) throws IOException;
-  
+  SearchResult<String> search(Integer rows, Object set, Object format, Date fromDate, Date untilDate, Item lastItem)
+      throws IOException;
+
 }

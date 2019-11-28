@@ -46,6 +46,7 @@ import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.models.Content;
+import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.models.Set;
@@ -174,7 +175,7 @@ public class SearchServiceImpl implements SearchService {
   }
 
   @Override
-  public SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate,
+  public SearchResult<String> search(Integer rows, Object set, Object format, Date fromDate, Date untilDate,
       Item lastItem) throws IOException {
 
     LOGGER.info("DEBUG: rows: " + rows);
@@ -189,7 +190,7 @@ public class SearchServiceImpl implements SearchService {
           .to(Configuration.getDateformat().format(untilDate)));
       queryBuilder.filter(QueryBuilders.termQuery("formats", format));
 
-      if (StringUtils.isNotEmpty(set)) {
+      if (set != null && !set.toString().isBlank()) {
         queryBuilder.filter(QueryBuilders.termQuery("sets", set));
       }
 
@@ -389,9 +390,9 @@ public class SearchServiceImpl implements SearchService {
             if (mostRecentItem == null) {
               mostRecentItem = pickedItem;
             } else {
-              SimpleDateFormat pickedDate = new SimpleDateFormat("yyyy-MM-ddThh:mmZ");
               try {
-                if (pickedDate.parse(mostRecentItem.getDatestamp()).before(pickedDate.parse(pickedItem.getDatestamp()))) {
+                if (Configuration.getDateformat().parse(mostRecentItem.getDatestamp())
+                    .before(Configuration.getDateformat().parse(pickedItem.getDatestamp()))) {
                   mostRecentItem = pickedItem;
                 }
               } catch (ParseException e) {
@@ -406,7 +407,52 @@ public class SearchServiceImpl implements SearchService {
         // If in the meanwhile some new object has been inserted, reindex also the new
         // Items
         if (daoItem.getCount() < reindexStatus.getIndexedCount()) {
-          search(100, null, null, null, null, mostRecentItem);
+
+          Date mostRecentItemDate = null;
+          try {
+            mostRecentItemDate = Configuration.getDateformat().parse(mostRecentItem.getDatestamp());
+          } catch (ParseException e) {
+            // Cannot establish a date from the most recent Item, do nothing
+          }
+          
+          if (mostRecentItemDate != null) {
+            List<Format> allFormats = daoFormat.readAll();
+            List<Set> allSets = daoSet.readAll();
+
+            List<String> allFormatsStr = new ArrayList<String>();
+            List<String> allSetsStr = new ArrayList<String>();
+
+            for (final Format pickedFormat : allFormats) {
+              allFormatsStr.add(pickedFormat.getMetadataPrefix());
+            }
+            for (final Set pickedSet : allSets) {
+              allSetsStr.add(pickedSet.getName());
+            }
+
+            String nextLastItemIdentifier = mostRecentItem.getIdentifier();
+            do {
+              final Item lastItemToStart = daoItem.read(nextLastItemIdentifier);
+
+              nextLastItemIdentifier = null;
+              if (lastItemToStart != null) {
+
+                SearchResult<String> resultNewerItems = search(100, allFormatsStr, allSetsStr, mostRecentItemDate,
+                    new Date(), lastItemToStart);
+
+                for (String pickedItemIdentifier : resultNewerItems.getData()) {
+                  final Item newerItemRetrieved = daoItem.read(pickedItemIdentifier);
+                  if (newerItemRetrieved != null) {
+                    reindexDocument(newerItemRetrieved, reindexStatus.getNewIndexName(), client);
+                    reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
+                  }
+                }
+
+                if (!StringUtils.isBlank(resultNewerItems.getLastItemId())) {
+                  nextLastItemIdentifier = resultNewerItems.getLastItemId();
+                }
+              }
+            } while (!StringUtils.isBlank(nextLastItemIdentifier));
+          }
         }
 
       } catch (IOException e) {
