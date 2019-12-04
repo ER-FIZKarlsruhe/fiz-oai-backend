@@ -16,6 +16,8 @@ import javax.inject.Inject;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
+import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest;
+import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest.AliasActions;
 import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
@@ -306,15 +308,14 @@ public class SearchServiceImpl implements SearchService {
       LOGGER.warn("Reindex process already started since " + reindexStatus.getStartTime()
           + ". It will be blocked and restarted!");
 
-      // Stop future process
+      // Stop future process if already running
       if (reindexAllFuture != null) {
         while (!reindexAllFuture.isCancelled()) {
           reindexAllFuture.cancel(true);
         }
+        // Delete index in creation
+        dropIndex(reindexStatus.getNewIndexName());
       }
-
-      // Delete index in creation
-      dropIndex(reindexStatus.getNewIndexName());
     }
 
     reindexStatus = new ReindexStatus();
@@ -399,13 +400,11 @@ public class SearchServiceImpl implements SearchService {
                 // leave mostRecentDateItem as it is
               }
             }
-
           }
 
         } while (reindexStatus.getIndexedCount() < reindexStatus.getTotalCount());
 
-        // If in the meanwhile some new object has been inserted, reindex also the new
-        // Items
+        // If in the meanwhile some new object has been inserted, reindex the new Items
         if (daoItem.getCount() < reindexStatus.getIndexedCount()) {
 
           Date mostRecentItemDate = null;
@@ -414,7 +413,7 @@ public class SearchServiceImpl implements SearchService {
           } catch (ParseException e) {
             // Cannot establish a date from the most recent Item, do nothing
           }
-          
+
           if (mostRecentItemDate != null) {
             List<Format> allFormats = daoFormat.readAll();
             List<Set> allSets = daoSet.readAll();
@@ -454,9 +453,27 @@ public class SearchServiceImpl implements SearchService {
             } while (!StringUtils.isBlank(nextLastItemIdentifier));
           }
         }
+        
+        // Switch alias from old index o new one
+        IndicesAliasesRequest actionRequest = new IndicesAliasesRequest();
+        
+        AliasActions addNewIndexToAliasAction = new AliasActions(AliasActions.Type.ADD)
+            .index(reindexStatus.getNewIndexName()).alias(ITEMS_ALIAS_INDEX_NAME);
+        actionRequest.addAliasAction(addNewIndexToAliasAction);
+        
+        AliasActions removeOldIndexToAliasAction = new AliasActions(AliasActions.Type.REMOVE)
+            .index(reindexStatus.getOriginalIndexName()).alias(ITEMS_ALIAS_INDEX_NAME);
+        actionRequest.addAliasAction(removeOldIndexToAliasAction);
+        
+        // Delete old index
+        AliasActions dropOldIndexAction = new AliasActions(AliasActions.Type.REMOVE_INDEX)
+            .index(reindexStatus.getOriginalIndexName());
+        actionRequest.addAliasAction(dropOldIndexAction);
+        
+        client.indices().updateAliases(actionRequest, RequestOptions.DEFAULT);
 
       } catch (IOException e) {
-        LOGGER.error("Something went wrong while processing the new index" + reindexStatus.getNewIndexName(), e);
+        LOGGER.error("Something went wrong while processing the new index " + reindexStatus.getNewIndexName(), e);
         return false;
       }
       return true;
