@@ -355,7 +355,7 @@ public class SearchServiceImpl implements SearchService {
 
         if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())
             || StringUtils.isBlank(reindexStatus.getNewIndexName())) {
-          LOGGER.error("Something went wrong while generating index names.");
+          LOGGER.error("Not able to determine index names: original (" + reindexStatus.getOriginalIndexName() + ") or new (" + reindexStatus.getNewIndexName() + ")");
           return false;
         }
 
