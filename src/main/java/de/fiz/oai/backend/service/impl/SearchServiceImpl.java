@@ -305,7 +305,7 @@ public class SearchServiceImpl implements SearchService {
   @Override
   public void reindexAll() throws IOException {
     if (reindexStatus != null && StringUtils.isBlank(reindexStatus.getEndTime())) {
-      LOGGER.warn("Reindex process already started since " + reindexStatus.getStartTime()
+      LOGGER.warn("REINDEX status: Reindex process already started since " + reindexStatus.getStartTime()
           + ". It will be blocked and restarted!");
 
       // Stop future process if already running
@@ -315,12 +315,14 @@ public class SearchServiceImpl implements SearchService {
         }
         // Delete index in creation
         dropIndex(reindexStatus.getNewIndexName());
+        LOGGER.info("REINDEX status: Index " + reindexStatus.getNewIndexName() + " dropped.");
       }
     }
 
     reindexStatus = new ReindexStatus();
 
     reindexStatus.setAliasName(ITEMS_ALIAS_INDEX_NAME);
+    LOGGER.info("REINDEX status: Alias name: " + reindexStatus.getAliasName());
 
     reindexAllFuture = CompletableFuture.supplyAsync(() -> {
 
@@ -334,13 +336,17 @@ public class SearchServiceImpl implements SearchService {
           Iterator<String> indexIterator = responseIndexWithAlias.getAliases().keySet().iterator();
           while (indexIterator.hasNext()) {
             reindexStatus.setOriginalIndexName(indexIterator.next().toString());
+            LOGGER.info("REINDEX status: Original index name: " + reindexStatus.getOriginalIndexName());
             break;
           }
         }
 
         if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())) {
-          LOGGER.warn("No existing indexes. Creating it from scratch.");
+          LOGGER.warn("REINDEX status: No existing indexes. Creating it from scratch.");
+          reindexStatus.setOriginalIndexName(ITEMS_ALIAS_INDEX_NAME);
+          LOGGER.info("REINDEX status: Original index name: " + reindexStatus.getOriginalIndexName());
           reindexStatus.setNewIndexName(ITEMS_ALIAS_INDEX_NAME + "1");
+          LOGGER.info("REINDEX status: New index name: " + reindexStatus.getNewIndexName());
         } else {
           final String currentIndexVersionStr = reindexStatus.getOriginalIndexName()
               .substring(ITEMS_ALIAS_INDEX_NAME.length());
@@ -351,6 +357,7 @@ public class SearchServiceImpl implements SearchService {
           newIndexName.append(String.valueOf(newIndexVersion));
 
           reindexStatus.setNewIndexName(newIndexName.toString());
+          LOGGER.info("REINDEX status: New index name: " + reindexStatus.getNewIndexName());
         }
 
         if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())
@@ -368,6 +375,7 @@ public class SearchServiceImpl implements SearchService {
 
         reindexStatus.setTotalCount(daoItem.getCount());
         reindexStatus.setItemResultSet(daoItem.getAllItemsResultSet());
+        LOGGER.info("REINDEX status: Total Items count: " + reindexStatus.getTotalCount());
 
         if (reindexStatus.getTotalCount() < 1) {
           LOGGER.warn("No items to reindex " + reindexStatus.getNewIndexName());
@@ -375,8 +383,10 @@ public class SearchServiceImpl implements SearchService {
         }
 
         reindexStatus.setIndexedCount(0);
+        LOGGER.info("REINDEX status: Indexed Items count: " + reindexStatus.getIndexedCount());
 
         reindexStatus.setStartTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
+        LOGGER.info("REINDEX status: Start Time: " + reindexStatus.getStartTime());
 
         Item mostRecentItem = null;
 
@@ -402,11 +412,14 @@ public class SearchServiceImpl implements SearchService {
             }
           }
 
+          LOGGER.info("REINDEX status: " + reindexStatus.getIndexedCount() + " indexed out of " + reindexStatus.getTotalCount() + ".");
         } while (reindexStatus.getIndexedCount() < reindexStatus.getTotalCount());
 
         // If in the meanwhile some new object has been inserted, reindex the new Items
         if (daoItem.getCount() < reindexStatus.getIndexedCount()) {
 
+          LOGGER.warn("REINDEX status: New inserted items, current Items count " + daoItem.getCount() + ", indexed count " + reindexStatus.getIndexedCount());
+          
           Date mostRecentItemDate = null;
           try {
             mostRecentItemDate = Configuration.getDateformat().parse(mostRecentItem.getDatestamp());
@@ -414,6 +427,8 @@ public class SearchServiceImpl implements SearchService {
             // Cannot establish a date from the most recent Item, do nothing
           }
 
+          LOGGER.info("REINDEX status: most recent item reindexed date: " + Configuration.getDateformat().format(mostRecentItemDate));
+          
           if (mostRecentItemDate != null) {
             List<Format> allFormats = daoFormat.readAll();
             List<Set> allSets = daoSet.readAll();
