@@ -7,6 +7,8 @@ import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
 
 import org.jvnet.hk2.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.models.Set;
@@ -16,6 +18,8 @@ import de.fiz.oai.backend.service.SetService;
 @Service
 public class SetServiceImpl implements SetService {
 
+  private Logger LOGGER = LoggerFactory.getLogger(SetServiceImpl.class);
+  
   @Inject
   DAOSet daoSet;
 
@@ -26,8 +30,6 @@ public class SetServiceImpl implements SetService {
   public Set read(String name) throws IOException {
     Set set = daoSet.read(name);
 
-    searchService.reindexAll();
-
     return set;
   }
 
@@ -35,6 +37,8 @@ public class SetServiceImpl implements SetService {
   public Set create(Set set) throws IOException {
     daoSet.create(set);
 
+    LOGGER.info("Creating Set " + set.getName() + ". Triggering complete reindexing.");
+    
     searchService.reindexAll();
 
     return set;
@@ -49,6 +53,8 @@ public class SetServiceImpl implements SetService {
     }
     daoSet.create(set);
 
+    LOGGER.info("Updating Set " + set.getName() + ". Triggering complete reindexing.");
+    
     searchService.reindexAll();
 
     return set;
@@ -64,6 +70,8 @@ public class SetServiceImpl implements SetService {
   public void delete(String name) throws IOException {
     daoSet.delete(name);
 
+    LOGGER.info("Set " + name + " deleted. Triggering complete reindexing.");
+    
     searchService.reindexAll();
   }
 
