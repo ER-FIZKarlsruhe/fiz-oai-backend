@@ -2,7 +2,6 @@ package de.fiz.oai.backend.service.impl;
 
 import java.io.IOException;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -16,6 +15,7 @@ import javax.inject.Inject;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
+import org.elasticsearch.Version;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest.AliasActions;
 import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequest;
@@ -24,6 +24,7 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.main.MainResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
@@ -69,7 +70,8 @@ public class SearchServiceImpl implements SearchService {
 
   public static String ITEMS_ALIAS_INDEX_NAME = "items";
 
-  public static String ITEMS_MAPPING_FILENAME = "item_mapping_es_v7";
+  public static String ITEMS_MAPPING_V7_FILENAME = "item_mapping_es_v7";
+  public static String ITEMS_MAPPING_V6_FILENAME = "item_mapping_es_v6";
 
   @Inject
   DAOItem daoItem;
@@ -312,6 +314,12 @@ public class SearchServiceImpl implements SearchService {
       if (reindexAllFuture != null) {
         while (!reindexAllFuture.isCancelled()) {
           reindexAllFuture.cancel(true);
+          try {
+            Thread.sleep(5000);
+            LOGGER.warn("Attempt to stop the current Reindex process...");
+          } catch (InterruptedException e) {
+            // Wait a second for the concurrent task to be cancelled
+          }
         }
         // Delete index in creation
         dropIndex(reindexStatus.getNewIndexName());
@@ -362,14 +370,30 @@ public class SearchServiceImpl implements SearchService {
 
         if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())
             || StringUtils.isBlank(reindexStatus.getNewIndexName())) {
-          LOGGER.error("Not able to determine index names: original (" + reindexStatus.getOriginalIndexName() + ") or new (" + reindexStatus.getNewIndexName() + ")");
+          LOGGER.error("Not able to determine index names: original (" + reindexStatus.getOriginalIndexName()
+              + ") or new (" + reindexStatus.getNewIndexName() + ")");
           return false;
         }
 
-        final String mapping = ResourcesUtils.getResourceFileAsString(ITEMS_MAPPING_FILENAME);
+        MainResponse infoResponse = client.info(RequestOptions.DEFAULT);
+        String filenameItemsMapping = ITEMS_MAPPING_V6_FILENAME;
+        if (infoResponse.getVersion().after(Version.V_6_8_4)) {
+          filenameItemsMapping = ITEMS_MAPPING_V7_FILENAME;
+        }
+        LOGGER.info("REINDEX status: ES version found " + Version.displayVersion(infoResponse.getVersion(), false)
+            + " -> mapping " + filenameItemsMapping);
 
+        final String mapping = ResourcesUtils.getResourceFileAsString(filenameItemsMapping);
+
+        if (StringUtils.isBlank(mapping)) {
+          LOGGER.error("REINDEX status: Not able to retrieve mapping " + filenameItemsMapping);
+        }
+
+        LOGGER.info("REINDEX status: Creating new index " + reindexStatus.getNewIndexName() + " with mapping "
+            + mapping.substring(0, 10) + "...");
         if (!createIndex(reindexStatus.getNewIndexName(), mapping)) {
-          LOGGER.error("Something went wrong while creating the new index " + reindexStatus.getNewIndexName());
+          LOGGER.error(
+              "REINDEX status: Something went wrong while creating the new index " + reindexStatus.getNewIndexName());
           return false;
         }
 
@@ -412,14 +436,16 @@ public class SearchServiceImpl implements SearchService {
             }
           }
 
-          LOGGER.info("REINDEX status: " + reindexStatus.getIndexedCount() + " indexed out of " + reindexStatus.getTotalCount() + ".");
+          LOGGER.info("REINDEX status: " + reindexStatus.getIndexedCount() + " indexed out of "
+              + reindexStatus.getTotalCount() + ".");
         } while (reindexStatus.getIndexedCount() < reindexStatus.getTotalCount());
 
         // If in the meanwhile some new object has been inserted, reindex the new Items
         if (daoItem.getCount() < reindexStatus.getIndexedCount()) {
 
-          LOGGER.warn("REINDEX status: New inserted items, current Items count " + daoItem.getCount() + ", indexed count " + reindexStatus.getIndexedCount());
-          
+          LOGGER.warn("REINDEX status: New inserted items, current Items count " + daoItem.getCount()
+              + ", indexed count " + reindexStatus.getIndexedCount());
+
           Date mostRecentItemDate = null;
           try {
             mostRecentItemDate = Configuration.getDateformat().parse(mostRecentItem.getDatestamp());
@@ -427,8 +453,9 @@ public class SearchServiceImpl implements SearchService {
             // Cannot establish a date from the most recent Item, do nothing
           }
 
-          LOGGER.info("REINDEX status: most recent item reindexed date: " + Configuration.getDateformat().format(mostRecentItemDate));
-          
+          LOGGER.info("REINDEX status: most recent item reindexed date: "
+              + Configuration.getDateformat().format(mostRecentItemDate));
+
           if (mostRecentItemDate != null) {
             List<Format> allFormats = daoFormat.readAll();
             List<Set> allSets = daoSet.readAll();
@@ -468,23 +495,23 @@ public class SearchServiceImpl implements SearchService {
             } while (!StringUtils.isBlank(nextLastItemIdentifier));
           }
         }
-        
+
         // Switch alias from old index o new one
         IndicesAliasesRequest actionRequest = new IndicesAliasesRequest();
-        
+
         AliasActions addNewIndexToAliasAction = new AliasActions(AliasActions.Type.ADD)
             .index(reindexStatus.getNewIndexName()).alias(ITEMS_ALIAS_INDEX_NAME);
         actionRequest.addAliasAction(addNewIndexToAliasAction);
-        
+
         AliasActions removeOldIndexToAliasAction = new AliasActions(AliasActions.Type.REMOVE)
             .index(reindexStatus.getOriginalIndexName()).alias(ITEMS_ALIAS_INDEX_NAME);
         actionRequest.addAliasAction(removeOldIndexToAliasAction);
-        
+
         // Delete old index
         AliasActions dropOldIndexAction = new AliasActions(AliasActions.Type.REMOVE_INDEX)
             .index(reindexStatus.getOriginalIndexName());
         actionRequest.addAliasAction(dropOldIndexAction);
-        
+
         client.indices().updateAliases(actionRequest, RequestOptions.DEFAULT);
 
       } catch (IOException e) {
