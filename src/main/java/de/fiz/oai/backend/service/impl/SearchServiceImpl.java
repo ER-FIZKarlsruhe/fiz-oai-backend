@@ -2,6 +2,7 @@ package de.fiz.oai.backend.service.impl;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -70,8 +71,8 @@ public class SearchServiceImpl implements SearchService {
 
   public static String ITEMS_ALIAS_INDEX_NAME = "items";
 
-  public static String ITEMS_MAPPING_V7_FILENAME = "item_mapping_es_v7";
-  public static String ITEMS_MAPPING_V6_FILENAME = "item_mapping_es_v6";
+  public static String ITEMS_MAPPING_V7_FILENAME = "/elasticsearch/item_mapping_es_v7";
+  public static String ITEMS_MAPPING_V6_FILENAME = "/elasticsearch/item_mapping_es_v6";
 
   @Inject
   DAOItem daoItem;
@@ -144,16 +145,14 @@ public class SearchServiceImpl implements SearchService {
     try (RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
 
-      // String xmlContentByte = daoContent.read(item.getIdentifier(),
-      // "oai_dc").getContent();
-      // String oaiDcJson = OaiDcHelper.xmlToJson(xmlContentByte);
-
+      // TODO set and format matching for the update index
+      
       Map<String, Object> itemMap = item.toMap();
-      // itemMap.put("oai_dc", oaiDcJson);
 
       UpdateRequest updateRequest = new UpdateRequest();
       updateRequest.index(ITEMS_ALIAS_INDEX_NAME);
       updateRequest.type("_doc");
+      updateRequest.id(item.getIdentifier());
       updateRequest.doc(itemMap);
       client.update(updateRequest, RequestOptions.DEFAULT);
 
@@ -190,8 +189,20 @@ public class SearchServiceImpl implements SearchService {
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
 
       final BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
-      queryBuilder.filter(QueryBuilders.rangeQuery("datestamp").from(Configuration.getDateformat().format(fromDate))
-          .to(Configuration.getDateformat().format(untilDate)));
+
+      Date finalFromDate = new SimpleDateFormat("yyyy-MM-dd").parse("0001-01-01");
+      Date finalUntilDate = new SimpleDateFormat("yyyy-MM-dd").parse("9999-12-31");
+
+      if (fromDate != null) {
+        finalFromDate = fromDate;
+      }
+      if (untilDate != null) {
+        finalUntilDate = untilDate;
+      }
+
+      queryBuilder
+          .filter(QueryBuilders.rangeQuery("datestamp").from(Configuration.getDateformat().format(finalFromDate))
+              .to(Configuration.getDateformat().format(finalUntilDate)));
       queryBuilder.filter(QueryBuilders.termQuery("formats", format));
 
       if (set != null && !set.toString().isBlank()) {
@@ -273,6 +284,8 @@ public class SearchServiceImpl implements SearchService {
 
       return idResult;
 
+    } catch (Exception e) {
+      throw new IOException(e);
     }
 
   }

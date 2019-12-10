@@ -190,9 +190,16 @@ public class ItemServiceImpl implements ItemService {
   @Override
   public void delete(String identifier) throws IOException {
 
-    // TODO read item and set delete flag, save to cassandra
+    Item itemToDelete = daoItem.read(identifier);
 
-    // TODO update index
+    itemToDelete.setDeleteFlag(true);
+    itemToDelete.setDatestamp(Configuration.getDateformat().format(new Date()));
+
+    daoItem.create(itemToDelete);
+
+    searchService.updateDocument(itemToDelete);
+    
+    // DELETE Content in all formats? Or keep it?
   }
 
   /**
