@@ -8,6 +8,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -20,6 +21,7 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
 import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.action.get.GetResponse;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +80,10 @@ public class ItemServiceImpl implements ItemService {
       Content content = daoContent.read(identifier, format);
       item.setContent(content);
     }
+    //Retrieve sets and formats from elasticsearch
+    GetResponse esResponse = searchService.readDocument(item);
+    item.setSets(esResponse.getField("sets").getValues().stream().map(Object::toString).collect(Collectors.toList()));
+    item.setFormats(esResponse.getField("formats").getValues().stream().map(Object::toString).collect(Collectors.toList()));
 
     return item;
   }

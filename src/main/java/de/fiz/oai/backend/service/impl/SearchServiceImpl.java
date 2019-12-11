@@ -14,6 +14,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -67,6 +69,26 @@ public class SearchServiceImpl implements SearchService {
   @Inject
   DAOSet daoSet;
 
+  
+  /**
+   * 
+   * @param item @throws IOException @throws
+   */
+  @Override
+  public GetResponse readDocument(Item item) throws IOException {
+    try (RestHighLevelClient client = new RestHighLevelClient(
+        RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
+      GetRequest indexRequest = new GetRequest();
+
+      indexRequest.index(ITEMS_INDEX_NAME);
+      indexRequest.type("_doc");
+      indexRequest.id(item.getIdentifier());
+
+      GetResponse getResponse = client.get(indexRequest, RequestOptions.DEFAULT);
+      return getResponse;
+    }
+  }
+  
   /**
    * 
    * @param item @throws IOException @throws

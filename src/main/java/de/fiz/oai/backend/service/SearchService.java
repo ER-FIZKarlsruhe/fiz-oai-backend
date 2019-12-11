@@ -3,6 +3,7 @@ package de.fiz.oai.backend.service;
 import java.io.IOException;
 import java.util.Date;
 
+import org.elasticsearch.action.get.GetResponse;
 import org.jvnet.hk2.annotations.Contract;
 
 import de.fiz.oai.backend.models.Item;
@@ -43,6 +44,12 @@ public interface SearchService {
    * @param item
    */
   void deleteDocument(Item item) throws IOException;
+  
+  /**
+   * 
+   * @param item
+   */
+  GetResponse readDocument(Item item) throws IOException;
   
   /**
    * 
