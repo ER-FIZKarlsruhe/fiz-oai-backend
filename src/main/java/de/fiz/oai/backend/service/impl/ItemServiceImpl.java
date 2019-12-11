@@ -80,10 +80,14 @@ public class ItemServiceImpl implements ItemService {
       Content content = daoContent.read(identifier, format);
       item.setContent(content);
     }
-    //Retrieve sets and formats from elasticsearch
-    GetResponse esResponse = searchService.readDocument(item);
-    item.setSets(esResponse.getField("sets").getValues().stream().map(Object::toString).collect(Collectors.toList()));
-    item.setFormats(esResponse.getField("formats").getValues().stream().map(Object::toString).collect(Collectors.toList()));
+
+    if (item != null) {
+      // Retrieve sets and formats from elasticsearch
+      GetResponse esResponse = searchService.readDocument(item);
+      item.setSets(esResponse.getField("sets").getValues().stream().map(Object::toString).collect(Collectors.toList()));
+      item.setFormats(
+          esResponse.getField("formats").getValues().stream().map(Object::toString).collect(Collectors.toList()));
+    }
 
     return item;
   }
