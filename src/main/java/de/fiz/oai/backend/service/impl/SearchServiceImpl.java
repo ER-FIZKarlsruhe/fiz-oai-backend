@@ -24,6 +24,8 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.main.MainResponse;
 import org.elasticsearch.action.search.SearchRequest;
@@ -89,6 +91,23 @@ public class SearchServiceImpl implements SearchService {
   private ReindexStatus reindexStatus = null;
 
   private CompletableFuture<Boolean> reindexAllFuture;
+
+  /**
+   * 
+   * @param item @throws IOException @throws
+   */
+  @Override
+  public Map<String, Object> readDocument(Item item) throws IOException {
+    try (RestHighLevelClient client = new RestHighLevelClient(
+        RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
+      GetRequest getRequest = new GetRequest(ITEMS_ALIAS_INDEX_NAME, "_doc", item.getIdentifier());
+
+      GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
+      Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
+
+      return sourceAsMap;
+    }
+  }
 
   /**
    * 

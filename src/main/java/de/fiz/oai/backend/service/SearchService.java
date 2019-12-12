@@ -2,6 +2,7 @@ package de.fiz.oai.backend.service;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Map;
 
 import org.jvnet.hk2.annotations.Contract;
 
@@ -44,6 +45,12 @@ public interface SearchService {
    */
   void deleteDocument(Item item) throws IOException;
 
+  /**
+   * 
+   * @param item
+   */
+  Map<String, Object> readDocument(Item item) throws IOException;
+  
   /**
    * 
    * @param offset

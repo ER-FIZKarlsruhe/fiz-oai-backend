@@ -12,6 +12,10 @@ public class Item {
 
   private Boolean deleteFlag;
 
+  private List<String> sets;
+  
+  private List<String> formats;
+  
   private List<String> tags;
 
   private String ingestFormat;
@@ -40,6 +44,22 @@ public class Item {
 
   public void setDeleteFlag(Boolean deleteFlag) {
     this.deleteFlag = deleteFlag;
+  }
+
+  public List<String> getSets() {
+    return sets;
+  }
+
+  public void setSets(List<String> sets) {
+    this.sets = sets;
+  }
+
+  public List<String> getFormats() {
+    return formats;
+  }
+
+  public void setFormats(List<String> formats) {
+    this.formats = formats;
   }
 
   public List<String> getTags() {

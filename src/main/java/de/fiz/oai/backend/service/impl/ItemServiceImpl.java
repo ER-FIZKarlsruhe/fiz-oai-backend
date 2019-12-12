@@ -8,6 +8,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -20,10 +22,14 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
 import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.common.document.DocumentField;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
+
+import com.google.common.collect.Lists;
 
 import de.fiz.oai.backend.dao.DAOContent;
 import de.fiz.oai.backend.dao.DAOCrosswalk;
@@ -77,6 +83,15 @@ public class ItemServiceImpl implements ItemService {
     if (item != null && readContent) {
       Content content = daoContent.read(identifier, format);
       item.setContent(content);
+    }
+
+    if (item != null) {
+      // Retrieve sets and formats from elasticsearch
+      Map<String, Object> esResponse = searchService.readDocument(item);
+      List<String> sets = esResponse.get("sets") instanceof List<?> ? (List<String>)esResponse.get("sets") : List.of((String)esResponse.get("sets"));
+      List<String> formats = esResponse.get("formats") instanceof List<?> ? (List<String>)esResponse.get("formats") : List.of((String)esResponse.get("formats"));
+      item.setSets(sets);
+      item.setFormats(formats);
     }
 
     return item;
