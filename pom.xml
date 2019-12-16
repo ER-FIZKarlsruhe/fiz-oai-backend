@@ -184,43 +184,6 @@
       </plugin>
 
       <plugin>
-        <groupId>org.jvnet.jaxb2.maven2</groupId>
-        <artifactId>maven-jaxb2-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>generate-sources-trans</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-
-          <schemaDirectory>${project.basedir}/src/main/xsd/oai_dc/</schemaDirectory>
-          <schemaIncludes>
-            <include>oai_dc.xsd</include>
-          </schemaIncludes>
-          <bindingDirectory>${project.basedir}/src/main/xjb/</bindingDirectory>
-             <bindingIncludes>
-                      <bindingInclude>bindings.xjb</bindingInclude>
-                  </bindingIncludes>
-          <generatePackage>de.fiz.oai.backend.xsd.oai_dc</generatePackage>
-          <extension>true</extension>
-          <args>
-            <arg>-Xsimplify</arg>
-          </args>
-          <plugins>
-            <plugin>
-              <groupId>org.jvnet.jaxb2_commons</groupId>
-              <artifactId>jaxb2-basics</artifactId>
-              <version>1.11.1</version>
-            </plugin>
-          </plugins>
-        </configuration>
-      </plugin>
-      
-      <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
         <version>5.2.4</version>
