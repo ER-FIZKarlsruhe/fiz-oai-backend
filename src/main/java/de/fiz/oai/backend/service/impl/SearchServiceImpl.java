@@ -28,6 +28,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import javax.inject.Inject;
+import javax.servlet.ServletContext;
+import javax.ws.rs.core.Context;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
@@ -88,8 +90,11 @@ public class SearchServiceImpl implements SearchService {
 
   public static String ITEMS_ALIAS_INDEX_NAME = "items";
 
-  public static String ITEMS_MAPPING_V7_FILENAME = "/elasticsearch/item_mapping_es_v7";
-  public static String ITEMS_MAPPING_V6_FILENAME = "/elasticsearch/item_mapping_es_v6";
+  public static String ITEMS_MAPPING_V7_FILENAME = "/WEB-INF/classes/elasticsearch/item_mapping_es_v7";
+  public static String ITEMS_MAPPING_V6_FILENAME = "/WEB-INF/classes/elasticsearch/item_mapping_es_v6";
+
+  @Context
+  ServletContext servletContext;
 
   @Inject
   DAOItem daoItem;
@@ -180,7 +185,7 @@ public class SearchServiceImpl implements SearchService {
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
 
       // TODO set and format matching for the update index
-      
+
       Map<String, Object> itemMap = item.toMap();
 
       UpdateRequest updateRequest = new UpdateRequest();
@@ -430,7 +435,7 @@ public class SearchServiceImpl implements SearchService {
         LOGGER.info("REINDEX status: ES version found " + Version.displayVersion(infoResponse.getVersion(), false)
             + " -> mapping " + filenameItemsMapping);
 
-        final String mapping = ResourcesUtils.getResourceFileAsString(filenameItemsMapping);
+        final String mapping = ResourcesUtils.getResourceFileAsString(filenameItemsMapping, servletContext);
 
         if (StringUtils.isBlank(mapping)) {
           LOGGER.error("REINDEX status: Not able to retrieve mapping " + filenameItemsMapping);
