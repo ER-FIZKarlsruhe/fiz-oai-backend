@@ -91,7 +91,7 @@ public class CassandraDAOContent implements DAOContent {
     BoundStatement bound = prepared.bind(identifier);
 
     ResultSet rs = session.execute(bound);
-    ö
+    List<Row> resultRows = rs.all();
     List<Content> contents = new ArrayList<Content>();
     if (resultRows != null) {
       for (Row currentRow : resultRows) {
