@@ -54,10 +54,13 @@ public interface ItemService {
   /**
    * Search for Items.
    *
-   * @param sort   ASC/DESC
-   * @param offset the offset
    * @param rows   the rows
-   * @param query  the query
+   * @param set
+   * @param format
+   * @param from
+   * @param until
+   * @param content
+   * @param lastItemId
    * @return the items
    */
   SearchResult<Item> search(Integer rows, String set, String format, Date from, Date until, Boolean content, String lastItemId) throws IOException;

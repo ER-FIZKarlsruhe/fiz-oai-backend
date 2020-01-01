@@ -28,7 +28,8 @@ public interface DAOContent {
   /**
    * Read a Set.
    *
-   * @param name the name
+   * @param identifier the name
+   * @param  format
    * @return the Set
    */
   Content read(String identifier, String format) throws IOException;
@@ -36,7 +37,7 @@ public interface DAOContent {
   /**
    * Create a new Content.
    *
-   * @param Content the Content
+   * @param content the Content
    * @return the Content created
    */
   Content create(Content content) throws IOException;
