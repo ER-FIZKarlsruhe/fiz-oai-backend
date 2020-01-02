@@ -37,10 +37,10 @@ public interface DAOCrosswalk {
    * Create a new Crosswalk.
    *
    * @param content Crosswalk created
+   * @return the Crosswalk created
    */
   Crosswalk create(Crosswalk content) throws IOException;
 
-  
   /**
    * Read all Crosswalks.
    *
@@ -48,7 +48,6 @@ public interface DAOCrosswalk {
    */
   List<Crosswalk> readAll() throws IOException;
 
-  
   /**
    * Delete an Crosswalk.
    *
