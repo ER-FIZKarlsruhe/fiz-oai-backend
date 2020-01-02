@@ -36,7 +36,7 @@ public interface CrosswalkService {
   /**
    * Create a new Crosswalk.
    *
-   * @param Crosswalk the Content
+   * @param content Crosswalk the Content
    * @return the Crosswalk created
    */
   Crosswalk create(Crosswalk content) throws IOException;
@@ -44,7 +44,7 @@ public interface CrosswalkService {
   /**
    * Updates a Crosswalk.
    *
-   * @param Crosswalk the Content
+   * @param content Crosswalk the Content
    * @return the Crosswalk created
    */
   Crosswalk update(Crosswalk content) throws IOException;

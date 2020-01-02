@@ -36,8 +36,7 @@ public interface DAOCrosswalk {
   /**
    * Create a new Crosswalk.
    *
-   * @param Crosswalk the Content
-   * @return the Crosswalk created
+   * @param content Crosswalk created
    */
   Crosswalk create(Crosswalk content) throws IOException;
 

@@ -74,6 +74,7 @@ public interface SearchService {
    * @param format
    * @param fromDate
    * @param untilDate
+   * @param lastItem
    * @return
    * @throws IOException
    */

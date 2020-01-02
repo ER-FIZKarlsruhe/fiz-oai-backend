@@ -36,7 +36,7 @@ public interface SetService {
   /**
    * Create a new Set.
    *
-   * @param Set the Set
+   * @param set Set the Set
    * @return the Set created (in case uuid are processed in the method)
    */
   Set create(Set set) throws IOException;
@@ -45,7 +45,7 @@ public interface SetService {
   /**
    * Updates a Set.
    *
-   * @param Set the Set
+   * @param set Set the Set
    * @return the Set created
    */
   Set update(Set set) throws IOException;
