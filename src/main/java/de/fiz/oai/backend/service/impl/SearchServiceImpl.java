@@ -442,7 +442,7 @@ public class SearchServiceImpl implements SearchService {
         }
 
         LOGGER.info("REINDEX status: Creating new index " + reindexStatus.getNewIndexName() + " with mapping "
-            + mapping.substring(0, 10) + "...");
+            + mapping.substring(0, 30) + "...");
         if (!createIndex(reindexStatus.getNewIndexName(), mapping)) {
           LOGGER.error(
               "REINDEX status: Something went wrong while creating the new index " + reindexStatus.getNewIndexName());
