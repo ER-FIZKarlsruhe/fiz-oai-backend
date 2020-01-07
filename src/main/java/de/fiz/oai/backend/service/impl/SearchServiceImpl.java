@@ -141,7 +141,7 @@ public class SearchServiceImpl implements SearchService {
 
       // Add all available formats
       List<Content> allContents = daoContent.readFormats(item.getIdentifier());
-      List<String> itemFormats = new ArrayList<String>();
+      List<String> itemFormats = new ArrayList<>();
       for (final Content pickedContent : allContents) {
         itemFormats.add(pickedContent.getFormat());
       }
@@ -149,7 +149,7 @@ public class SearchServiceImpl implements SearchService {
 
       // Add all the matching sets
       List<Set> allSets = daoSet.readAll();
-      List<String> itemSets = new ArrayList<String>();
+      List<String> itemSets = new ArrayList<>();
       for (final Set pickedSet : allSets) {
         Map<String, String> xPaths = pickedSet.getxPaths();
         for (final Content pickedContent : allContents) {
@@ -278,14 +278,14 @@ public class SearchServiceImpl implements SearchService {
 
       SearchHits searchHits = searchResponse.getHits();
       Iterator<SearchHit> iterator = searchHits.iterator();
-      List<String> idsRetrieved = new ArrayList<String>();
+      List<String> idsRetrieved = new ArrayList<>();
 
       while (iterator.hasNext()) {
         SearchHit searchHit = iterator.next();
         idsRetrieved.add(searchHit.getId());
       }
 
-      SearchResult<String> idResult = new SearchResult<String>();
+      SearchResult<String> idResult = new SearchResult<>();
       idResult.setSize(idsRetrieved.size());
       idResult.setTotal(searchResponse.getHits().totalHits);
       idResult.setData(idsRetrieved);

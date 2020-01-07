@@ -112,8 +112,8 @@ public class Item {
 
   @Override
   public String toString() {
-    return "Item [identifier=" + identifier + ", datestamp=" + datestamp + ", deleteFlag=" + deleteFlag + ", tags="
-        + tags + ", ingestFormat=" + ingestFormat + "]";
+    return "Item [identifier=" + identifier + ", datestamp=" + datestamp + ", deleteFlag=" + deleteFlag + ", sets=" + sets
+            + ", tags=" + tags + ", ingestFormat=" + ingestFormat + "]";
   }
 
 }
