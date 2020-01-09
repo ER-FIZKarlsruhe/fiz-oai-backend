@@ -107,6 +107,7 @@ public class Item {
     itemMap.put("datestamp", datestamp);
     itemMap.put("deleteFlag", deleteFlag);
     itemMap.put("ingestFormat", ingestFormat);
+    itemMap.put("sets", sets);
     return itemMap;
   }
 
