@@ -1,42 +1,44 @@
 {
-    "properties": {
-        "datestamp": {
-            "type": "date",
-            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
-        },
-        "deleteFlag": {
-            "type": "boolean"
-        },
-        "formats": {
-            "type": "text",
-            "fields": {
-                "keyword": {
-                    "type": "keyword",
-                    "ignore_above": 256
-                }
-            }
-        },
-        "sets": {
-            "type": "text",
-            "fields": {
-                "keyword": {
-                    "type": "keyword",
-                    "ignore_above": 256
-                }
-            }
-        },
-        "identifier": {
-            "type": "keyword",
-            "doc_values": true
-        },
-        "ingestFormat": {
-            "type": "text",
-            "fields": {
-                "keyword": {
-                    "type": "keyword",
-                    "ignore_above": 256
-                }
-            }
-        }
+	"mappings": {
+	    "properties": {
+	        "datestamp": {
+	            "type": "date",
+	            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+	        },
+	        "deleteFlag": {
+	            "type": "boolean"
+	        },
+	        "formats": {
+	            "type": "text",
+	            "fields": {
+	                "keyword": {
+	                    "type": "keyword",
+	                    "ignore_above": 256
+	                }
+	            }
+	        },
+	        "sets": {
+	            "type": "text",
+	            "fields": {
+	                "keyword": {
+	                    "type": "keyword",
+	                    "ignore_above": 256
+	                }
+	            }
+	        },
+	        "identifier": {
+	            "type": "keyword",
+	            "doc_values": true
+	        },
+	        "ingestFormat": {
+	            "type": "text",
+	            "fields": {
+	                "keyword": {
+	                    "type": "keyword",
+	                    "ignore_above": 256
+	                }
+	            }
+	        }
+	    }
     }
 }
