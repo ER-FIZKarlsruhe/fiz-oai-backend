@@ -560,9 +560,10 @@ public class SearchServiceImpl implements SearchService {
         actionRequest.addAliasAction(removeOldIndexToAliasAction);
 
         // Delete old index
-        AliasActions dropOldIndexAction = new AliasActions(AliasActions.Type.REMOVE_INDEX)
-            .index(reindexStatus.getOriginalIndexName());
-        actionRequest.addAliasAction(dropOldIndexAction);
+        //TODO: uncomment it only when all the other previous steps are tested and working!!!
+//        AliasActions dropOldIndexAction = new AliasActions(AliasActions.Type.REMOVE_INDEX)
+//            .index(reindexStatus.getOriginalIndexName());
+//        actionRequest.addAliasAction(dropOldIndexAction);
 
         client.indices().updateAliases(actionRequest, RequestOptions.DEFAULT);
 
