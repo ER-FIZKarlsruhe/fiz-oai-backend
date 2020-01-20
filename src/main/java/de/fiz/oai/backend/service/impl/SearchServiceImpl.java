@@ -49,6 +49,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.GetAliasesResponse;
+import org.elasticsearch.client.IndicesClient;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -331,12 +332,19 @@ public class SearchServiceImpl implements SearchService {
 
   @Override
   public boolean createIndex(final String indexName, final String mapping) throws IOException {
+    LOGGER.info("CREATE status: indexName: " + indexName);
+    LOGGER.info("CREATE status: mapping: " + mapping.substring(0, 30) + "...");
     if (StringUtils.isNotBlank(indexName) && StringUtils.isNotBlank(mapping)) {
       try (RestHighLevelClient client = new RestHighLevelClient(
           RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
+        LOGGER.info("CREATE status: create request");
         CreateIndexRequest request = new CreateIndexRequest(indexName);
-        request.mapping("_doc", mapping, XContentType.JSON);
+//        LOGGER.info("CREATE status: assign mapping");
+//        request.settings(mapping, XContentType.JSON);
+//        request.mapping("_doc", mapping, XContentType.JSON);
+        LOGGER.info("CREATE status: execute nd take response");
         CreateIndexResponse createIndexResponse = client.indices().create(request, RequestOptions.DEFAULT);
+        LOGGER.info("CREATE status: createIndexResponse.isAcknowledged(): " + createIndexResponse.isAcknowledged());
         if (createIndexResponse.isAcknowledged()) {
           return true;
         }
@@ -560,7 +568,8 @@ public class SearchServiceImpl implements SearchService {
         actionRequest.addAliasAction(removeOldIndexToAliasAction);
 
         // Delete old index
-        //TODO: uncomment it only when all the other previous steps are tested and working!!!
+        // TODO: uncomment it only when all the other previous steps are tested and
+        // working!!!
 //        AliasActions dropOldIndexAction = new AliasActions(AliasActions.Type.REMOVE_INDEX)
 //            .index(reindexStatus.getOriginalIndexName());
 //        actionRequest.addAliasAction(dropOldIndexAction);
@@ -613,7 +622,6 @@ public class SearchServiceImpl implements SearchService {
     indexRequest.id(item.getIdentifier());
 
     client.index(indexRequest, RequestOptions.DEFAULT);
-    LOGGER.info("Added item to search index");
   }
 
 }
