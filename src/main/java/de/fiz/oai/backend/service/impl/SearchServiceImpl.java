@@ -592,10 +592,10 @@ public class SearchServiceImpl implements SearchService {
           // Delete old index
 //         TODO: uncomment it only when all the other previous steps are tested and
 //         working!!!
-          Request requestDeletePreviousIndex = new Request("DELETE", "/" + reindexStatus.getOriginalIndexName());
-          Response responseDeletePreviousIndex = lowLevelClient.performRequest(requestDeletePreviousIndex);
-          LOGGER.info("REINDEX status: responseDeletePreviousIndex.getStatusLine().getStatusCode()"
-              + responseDeletePreviousIndex.getStatusLine().getStatusCode());
+//          Request requestDeletePreviousIndex = new Request("DELETE", "/" + reindexStatus.getOriginalIndexName());
+//          Response responseDeletePreviousIndex = lowLevelClient.performRequest(requestDeletePreviousIndex);
+//          LOGGER.info("REINDEX status: responseDeletePreviousIndex.getStatusLine().getStatusCode()"
+//              + responseDeletePreviousIndex.getStatusLine().getStatusCode());
         }
         
         reindexStatus.setEndTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
