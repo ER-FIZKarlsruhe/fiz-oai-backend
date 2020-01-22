@@ -34,13 +34,11 @@ import javax.ws.rs.core.Context;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.elasticsearch.Version;
-import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest;
-import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest.AliasActions;
-import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequest;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
@@ -48,19 +46,12 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.main.MainResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.action.update.UpdateRequest;
-import org.elasticsearch.client.AdminClient;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.client.GetAliasesResponse;
-import org.elasticsearch.client.IndicesClient;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -360,8 +351,6 @@ public class SearchServiceImpl implements SearchService {
           Response responseMapping = lowLevelClient.performRequest(requestMapping);
           LOGGER.info("CREATE status: responseMapping.getStatusLine().getStatusCode(): "
               + responseMapping.getStatusLine().getStatusCode());
-//          AcknowledgedResponse putMappingResponse = client.indices().putMapping(requestMapping, RequestOptions.DEFAULT);
-//          LOGGER.info("CREATE status: putMappingResponse.isAcknowledged(): " + putMappingResponse.isAcknowledged());
           if (responseMapping.getStatusLine().getStatusCode() == 200
               || responseMapping.getStatusLine().getStatusCode() == 204) {
             return true;
@@ -416,37 +405,34 @@ public class SearchServiceImpl implements SearchService {
 
       try (RestHighLevelClient client = new RestHighLevelClient(
           RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
-        GetAliasesRequest requestIndexWithAlias = new GetAliasesRequest(ITEMS_ALIAS_INDEX_NAME);
-        GetAliasesResponse responseIndexWithAlias = client.indices().getAlias(requestIndexWithAlias,
-            RequestOptions.DEFAULT);
 
-        if (responseIndexWithAlias.getAliases().size() > 1) {
-          Iterator<String> indexIterator = responseIndexWithAlias.getAliases().keySet().iterator();
-          while (indexIterator.hasNext()) {
-            reindexStatus.setOriginalIndexName(indexIterator.next().toString());
-            LOGGER.info("REINDEX status: Original index name: " + reindexStatus.getOriginalIndexName());
-            break;
+        ClusterHealthRequest requestAllIndexes = new ClusterHealthRequest();
+        ClusterHealthResponse responseAllIndexes = client.cluster().health(requestAllIndexes, RequestOptions.DEFAULT);
+        java.util.Set<String> allIndexes = responseAllIndexes.getIndices().keySet();
+
+        LOGGER.info("REINDEX status: Found " + allIndexes.size() + " indexes:");
+        int maximumIndexFound = 0;
+        for (final String pickedIndex : allIndexes) {
+          LOGGER.info("REINDEX status: " + pickedIndex);
+          if (pickedIndex.startsWith(ITEMS_ALIAS_INDEX_NAME)) {
+            final String suffixIndex = pickedIndex.substring(ITEMS_ALIAS_INDEX_NAME.length());
+            LOGGER.info("REINDEX status: " + pickedIndex + " -> suffix: " + suffixIndex);
+            if (!StringUtils.isBlank(suffixIndex) && StringUtils.isNumeric(suffixIndex)) {
+              int pickedNumIndexFound = Integer.parseInt(suffixIndex);
+              if (pickedNumIndexFound > maximumIndexFound) {
+                maximumIndexFound = pickedNumIndexFound;
+                reindexStatus.setOriginalIndexName(pickedIndex);
+              }
+            }
           }
         }
 
-        if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())) {
-          LOGGER.warn("REINDEX status: No existing indexes. Creating it from scratch.");
-          reindexStatus.setOriginalIndexName(ITEMS_ALIAS_INDEX_NAME);
-          LOGGER.info("REINDEX status: Original index name: " + reindexStatus.getOriginalIndexName());
-          reindexStatus.setNewIndexName(ITEMS_ALIAS_INDEX_NAME + "1");
-          LOGGER.info("REINDEX status: New index name: " + reindexStatus.getNewIndexName());
-        } else {
-          final String currentIndexVersionStr = reindexStatus.getOriginalIndexName()
-              .substring(ITEMS_ALIAS_INDEX_NAME.length());
-          final long currentIndexVersion = Long.parseLong(currentIndexVersionStr);
-          final long newIndexVersion = currentIndexVersion + 1;
-          final StringBuilder newIndexName = new StringBuilder();
-          newIndexName.append(ITEMS_ALIAS_INDEX_NAME);
-          newIndexName.append(String.valueOf(newIndexVersion));
-
-          reindexStatus.setNewIndexName(newIndexName.toString());
-          LOGGER.info("REINDEX status: New index name: " + reindexStatus.getNewIndexName());
-        }
+        int newIndexVersion = maximumIndexFound + 1;
+        final StringBuilder newIndexName = new StringBuilder();
+        newIndexName.append(ITEMS_ALIAS_INDEX_NAME);
+        newIndexName.append(String.valueOf(newIndexVersion));
+        reindexStatus.setNewIndexName(newIndexName.toString());
+        LOGGER.info("REINDEX status: New index name: " + reindexStatus.getNewIndexName());
 
         if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())
             || StringUtils.isBlank(reindexStatus.getNewIndexName())) {
@@ -455,178 +441,164 @@ public class SearchServiceImpl implements SearchService {
           return false;
         }
 
-        LOGGER.info("REINDEX status: SKIP reindexing for testing alias renaming.");
+        MainResponse infoResponse = client.info(RequestOptions.DEFAULT);
+        String filenameItemsMapping = ITEMS_MAPPING_V6_FILENAME;
+        if (infoResponse.getVersion().after(Version.V_6_8_4)) {
+          filenameItemsMapping = ITEMS_MAPPING_V7_FILENAME;
+        }
+        LOGGER.info("REINDEX status: ES version found " + Version.displayVersion(infoResponse.getVersion(), false)
+            + " -> mapping " + filenameItemsMapping);
 
-//        MainResponse infoResponse = client.info(RequestOptions.DEFAULT);
-//        String filenameItemsMapping = ITEMS_MAPPING_V6_FILENAME;
-//        if (infoResponse.getVersion().after(Version.V_6_8_4)) {
-//          filenameItemsMapping = ITEMS_MAPPING_V7_FILENAME;
-//        }
-//        LOGGER.info("REINDEX status: ES version found " + Version.displayVersion(infoResponse.getVersion(), false)
-//            + " -> mapping " + filenameItemsMapping);
-//
-//        final String mapping = ResourcesUtils.getResourceFileAsString(filenameItemsMapping, servletContext);
-//
-//        if (StringUtils.isBlank(mapping)) {
-//          LOGGER.error("REINDEX status: Not able to retrieve mapping " + filenameItemsMapping);
-//        }
-//
-//
-//        LOGGER.info("REINDEX status: Creating new index " + reindexStatus.getNewIndexName() + " with mapping "
-//            + mapping.substring(0, 30) + "...");
-//        if (!createIndex(reindexStatus.getNewIndexName(), mapping)) {
-//          LOGGER.error(
-//              "REINDEX status: Something went wrong while creating the new index " + reindexStatus.getNewIndexName());
-//          return false;
-//        }
-//
-//        reindexStatus.setTotalCount(daoItem.getCount());
-//        reindexStatus.setItemResultSet(daoItem.getAllItemsResultSet());
-//        LOGGER.info("REINDEX status: Total Items count: " + reindexStatus.getTotalCount());
-//
-//        if (reindexStatus.getTotalCount() < 1) {
-//          LOGGER.warn("No items to reindex " + reindexStatus.getNewIndexName());
-//          return false;
-//        }
-//
-//        reindexStatus.setIndexedCount(0);
-//        LOGGER.info("REINDEX status: Indexed Items count: " + reindexStatus.getIndexedCount());
-//
-//        reindexStatus.setStartTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
-//        LOGGER.info("REINDEX status: Start Time: " + reindexStatus.getStartTime());
-//
-//        Item mostRecentItem = null;
-//
-//        
-//        do {
-//          List<Item> bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
-//
-//          for (final Item pickedItem : bufferListItems) {
-//            reindexDocument(pickedItem, reindexStatus.getNewIndexName(), client);
-//            reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
-//
-//            // Keep the most recent Item identifier
-//            if (mostRecentItem == null) {
-//              mostRecentItem = pickedItem;
-//            } else {
-//              try {
-//                if (Configuration.getDateformat().parse(mostRecentItem.getDatestamp())
-//                    .before(Configuration.getDateformat().parse(pickedItem.getDatestamp()))) {
-//                  mostRecentItem = pickedItem;
-//                }
-//              } catch (ParseException e) {
-//                // leave mostRecentDateItem as it is
-//              }
-//            }
-//          }
-//
-//          LOGGER.info("REINDEX status: " + reindexStatus.getIndexedCount() + " indexed out of "
-//              + reindexStatus.getTotalCount() + ".");
-//        } while (reindexStatus.getIndexedCount() < reindexStatus.getTotalCount());
-//
-//        // If in the meanwhile some new object has been inserted, reindex the new Items
-//        if (daoItem.getCount() < reindexStatus.getIndexedCount()) {
-//
-//          LOGGER.warn("REINDEX status: New inserted items, current Items count " + daoItem.getCount()
-//              + ", indexed count " + reindexStatus.getIndexedCount());
-//
-//          Date mostRecentItemDate = null;
-//          try {
-//            mostRecentItemDate = Configuration.getDateformat().parse(mostRecentItem.getDatestamp());
-//          } catch (ParseException e) {
-//            // Cannot establish a date from the most recent Item, do nothing
-//          }
-//
-//          LOGGER.info("REINDEX status: most recent item reindexed date: "
-//              + Configuration.getDateformat().format(mostRecentItemDate));
-//
-//          if (mostRecentItemDate != null) {
-//            List<Format> allFormats = daoFormat.readAll();
-//            List<Set> allSets = daoSet.readAll();
-//
-//            List<String> allFormatsStr = new ArrayList<String>();
-//            List<String> allSetsStr = new ArrayList<String>();
-//
-//            for (final Format pickedFormat : allFormats) {
-//              allFormatsStr.add(pickedFormat.getMetadataPrefix());
-//            }
-//            for (final Set pickedSet : allSets) {
-//              allSetsStr.add(pickedSet.getName());
-//            }
-//
-//            String nextLastItemIdentifier = mostRecentItem.getIdentifier();
-//            do {
-//              final Item lastItemToStart = daoItem.read(nextLastItemIdentifier);
-//
-//              nextLastItemIdentifier = null;
-//              if (lastItemToStart != null) {
-//
-//                SearchResult<String> resultNewerItems = search(100, allFormatsStr, allSetsStr, mostRecentItemDate,
-//                    new Date(), lastItemToStart);
-//
-//                for (String pickedItemIdentifier : resultNewerItems.getData()) {
-//                  final Item newerItemRetrieved = daoItem.read(pickedItemIdentifier);
-//                  if (newerItemRetrieved != null) {
-//                    reindexDocument(newerItemRetrieved, reindexStatus.getNewIndexName(), client);
-//                    reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
-//                  }
-//                }
-//
-//                if (!StringUtils.isBlank(resultNewerItems.getLastItemId())) {
-//                  nextLastItemIdentifier = resultNewerItems.getLastItemId();
-//                }
-//              }
-//            } while (!StringUtils.isBlank(nextLastItemIdentifier));
-//          }
-//        }
+        final String mapping = ResourcesUtils.getResourceFileAsString(filenameItemsMapping, servletContext);
+
+        if (StringUtils.isBlank(mapping)) {
+          LOGGER.error("REINDEX status: Not able to retrieve mapping " + filenameItemsMapping);
+        }
+
+        LOGGER.info("REINDEX status: Creating new index " + reindexStatus.getNewIndexName() + " with mapping "
+            + mapping.substring(0, 30) + "...");
+        if (!createIndex(reindexStatus.getNewIndexName(), mapping)) {
+          LOGGER.error(
+              "REINDEX status: Something went wrong while creating the new index " + reindexStatus.getNewIndexName());
+          return false;
+        }
+
+        reindexStatus.setTotalCount(daoItem.getCount());
+        reindexStatus.setItemResultSet(daoItem.getAllItemsResultSet());
+        LOGGER.info("REINDEX status: Total Items count: " + reindexStatus.getTotalCount());
+
+        if (reindexStatus.getTotalCount() < 1) {
+          LOGGER.warn("No items to reindex " + reindexStatus.getNewIndexName());
+          return false;
+        }
+
+        reindexStatus.setIndexedCount(0);
+        LOGGER.info("REINDEX status: Indexed Items count: " + reindexStatus.getIndexedCount());
+
+        reindexStatus.setStartTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
+        LOGGER.info("REINDEX status: Start Time: " + reindexStatus.getStartTime());
+
+        Item mostRecentItem = null;
+
+        do {
+          List<Item> bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
+
+          for (final Item pickedItem : bufferListItems) {
+            reindexDocument(pickedItem, reindexStatus.getNewIndexName(), client);
+            reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
+
+            // Keep the most recent Item identifier
+            if (mostRecentItem == null) {
+              mostRecentItem = pickedItem;
+            } else {
+              try {
+                if (Configuration.getDateformat().parse(mostRecentItem.getDatestamp())
+                    .before(Configuration.getDateformat().parse(pickedItem.getDatestamp()))) {
+                  mostRecentItem = pickedItem;
+                }
+              } catch (ParseException e) {
+                // leave mostRecentDateItem as it is
+              }
+            }
+          }
+
+          LOGGER.info("REINDEX status: " + reindexStatus.getIndexedCount() + " indexed out of "
+              + reindexStatus.getTotalCount() + ".");
+        } while (reindexStatus.getIndexedCount() < reindexStatus.getTotalCount());
+
+        // If in the meanwhile some new object has been inserted, reindex the new Items
+        if (daoItem.getCount() < reindexStatus.getIndexedCount()) {
+
+          LOGGER.warn("REINDEX status: New inserted items, current Items count " + daoItem.getCount()
+              + ", indexed count " + reindexStatus.getIndexedCount());
+
+          Date mostRecentItemDate = null;
+          try {
+            mostRecentItemDate = Configuration.getDateformat().parse(mostRecentItem.getDatestamp());
+          } catch (ParseException e) {
+            // Cannot establish a date from the most recent Item, do nothing
+          }
+
+          LOGGER.info("REINDEX status: most recent item reindexed date: "
+              + Configuration.getDateformat().format(mostRecentItemDate));
+
+          if (mostRecentItemDate != null) {
+            List<Format> allFormats = daoFormat.readAll();
+            List<Set> allSets = daoSet.readAll();
+
+            List<String> allFormatsStr = new ArrayList<String>();
+            List<String> allSetsStr = new ArrayList<String>();
+
+            for (final Format pickedFormat : allFormats) {
+              allFormatsStr.add(pickedFormat.getMetadataPrefix());
+            }
+            for (final Set pickedSet : allSets) {
+              allSetsStr.add(pickedSet.getName());
+            }
+
+            String nextLastItemIdentifier = mostRecentItem.getIdentifier();
+            do {
+              final Item lastItemToStart = daoItem.read(nextLastItemIdentifier);
+
+              nextLastItemIdentifier = null;
+              if (lastItemToStart != null) {
+
+                SearchResult<String> resultNewerItems = search(100, allFormatsStr, allSetsStr, mostRecentItemDate,
+                    new Date(), lastItemToStart);
+
+                for (String pickedItemIdentifier : resultNewerItems.getData()) {
+                  final Item newerItemRetrieved = daoItem.read(pickedItemIdentifier);
+                  if (newerItemRetrieved != null) {
+                    reindexDocument(newerItemRetrieved, reindexStatus.getNewIndexName(), client);
+                    reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
+                  }
+                }
+
+                if (!StringUtils.isBlank(resultNewerItems.getLastItemId())) {
+                  nextLastItemIdentifier = resultNewerItems.getLastItemId();
+                }
+              }
+            } while (!StringUtils.isBlank(nextLastItemIdentifier));
+          }
+        }
 
         // Switch alias from old index to new one
         RestClient lowLevelClient = client.getLowLevelClient();
 
-        LOGGER.info("REINDEX status: Add new alias " + ITEMS_ALIAS_INDEX_NAME + " to index " + reindexStatus.getNewIndexName());
+        LOGGER.info("REINDEX status: Remove all old aliases of " + ITEMS_ALIAS_INDEX_NAME);
+        for (final String pickedIndex : allIndexes) {
+          Request requestDeleteOldAlias = new Request("POST", "/_aliases");
+          requestDeleteOldAlias
+              .setJsonEntity("{\n" + "    \"actions\" : [\n" + "        { \"remove\" : { \"index\" : \"" + pickedIndex
+                  + "\", \"alias\" : \"" + ITEMS_ALIAS_INDEX_NAME + "\" } }\n" + "    ]\n" + "}");
+          LOGGER.info("REINDEX status: execute remove alias " + ITEMS_ALIAS_INDEX_NAME + " to " + pickedIndex);
+          Response responseDeleteOldAlias = lowLevelClient.performRequest(requestDeleteOldAlias);
+          LOGGER.info("REINDEX status: responseDeleteOldAlias.getStatusLine().getStatusCode()"
+              + responseDeleteOldAlias.getStatusLine().getStatusCode());
+        }
+
+        LOGGER.info(
+            "REINDEX status: Add new alias " + ITEMS_ALIAS_INDEX_NAME + " to index " + reindexStatus.getNewIndexName());
         Request requestNewAlias = new Request("POST", "/_aliases");
-        requestNewAlias.setJsonEntity("{\n" + 
-            "    \"actions\" : [\n" + 
-            "        { \"add\" : { \"index\" : \"" + reindexStatus.getNewIndexName() + "\", \"alias\" : \"" + ITEMS_ALIAS_INDEX_NAME + "\" } }\n" + 
-            "    ]\n" + 
-            "}");
-        LOGGER.info("CREATE status: execute new alias");
+        requestNewAlias.setJsonEntity(
+            "{\n" + "    \"actions\" : [\n" + "        { \"add\" : { \"index\" : \"" + reindexStatus.getNewIndexName()
+                + "\", \"alias\" : \"" + ITEMS_ALIAS_INDEX_NAME + "\" } }\n" + "    ]\n" + "}");
+        LOGGER.info("REINDEX status: execute new alias");
         Response responseNewAlias = lowLevelClient.performRequest(requestNewAlias);
-        LOGGER.info("CREATE status: responseNewAlias.getStatusLine().getStatusCode()" + responseNewAlias.getStatusLine().getStatusCode());
+        LOGGER.info("REINDEX status: responseNewAlias.getStatusLine().getStatusCode()"
+            + responseNewAlias.getStatusLine().getStatusCode());
+
+        if (responseNewAlias.getStatusLine().getStatusCode() < 300) {
+          // Delete old index
+//         TODO: uncomment it only when all the other previous steps are tested and
+//         working!!!
+          Request requestDeletePreviousIndex = new Request("DELETE", "/" + reindexStatus.getOriginalIndexName());
+          Response responseDeletePreviousIndex = lowLevelClient.performRequest(requestDeletePreviousIndex);
+          LOGGER.info("REINDEX status: responseDeletePreviousIndex.getStatusLine().getStatusCode()"
+              + responseDeletePreviousIndex.getStatusLine().getStatusCode());
+        }
         
-        
-//        IndicesAliasesRequest actionRequest = new IndicesAliasesRequest();
-//
-//        LOGGER.warn(
-//            "REINDEX status: Add new alias " + ITEMS_ALIAS_INDEX_NAME + " to index " + reindexStatus.getNewIndexName());
-//        AliasActions addNewIndexToAliasAction = new AliasActions(AliasActions.Type.ADD)
-//            .index(reindexStatus.getNewIndexName()).alias(ITEMS_ALIAS_INDEX_NAME);
-//        actionRequest.addAliasAction(addNewIndexToAliasAction);
-//        LOGGER.warn("REINDEX status: execute new alias");
-//        AcknowledgedResponse responseAliasNew = client.indices().updateAliases(actionRequest, RequestOptions.DEFAULT);
-//        LOGGER.warn("REINDEX status: responseAliasNew.isAcknowledged(): " + responseAliasNew.isAcknowledged());
-//        if (responseAliasNew.isAcknowledged()) {
-//          LOGGER.warn("REINDEX status: Remove old alias " + ITEMS_ALIAS_INDEX_NAME + " to index "
-//              + reindexStatus.getOriginalIndexName());
-//          actionRequest = new IndicesAliasesRequest();
-//          AliasActions removeOldIndexToAliasAction = new AliasActions(AliasActions.Type.REMOVE)
-//              .index(reindexStatus.getOriginalIndexName()).alias(ITEMS_ALIAS_INDEX_NAME);
-//          actionRequest.addAliasAction(removeOldIndexToAliasAction);
-//          LOGGER.warn("REINDEX status: execute delete old alias");
-//          AcknowledgedResponse responseAliasDeleteOld = client.indices().updateAliases(actionRequest,
-//              RequestOptions.DEFAULT);
-//          LOGGER.warn(
-//              "REINDEX status: responseAliasDeleteOld.isAcknowledged(): " + responseAliasDeleteOld.isAcknowledged());
-//
-//          if (responseAliasDeleteOld.isAcknowledged()) {
-            // Delete old index
-            // TODO: uncomment it only when all the other previous steps are tested and
-            // working!!!
-//        AliasActions dropOldIndexAction = new AliasActions(AliasActions.Type.REMOVE_INDEX)
-//            .index(reindexStatus.getOriginalIndexName());
-//        actionRequest.addAliasAction(dropOldIndexAction);
-//          }
-//        }
+        reindexStatus.setEndTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
 
       } catch (IOException e) {
         LOGGER.error("Something went wrong while processing the new index " + reindexStatus.getNewIndexName(), e);
