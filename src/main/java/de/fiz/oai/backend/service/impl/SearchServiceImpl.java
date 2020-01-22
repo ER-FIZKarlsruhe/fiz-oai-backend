@@ -50,6 +50,7 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
+import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -572,9 +573,18 @@ public class SearchServiceImpl implements SearchService {
               .setJsonEntity("{\n" + "    \"actions\" : [\n" + "        { \"remove\" : { \"index\" : \"" + pickedIndex
                   + "\", \"alias\" : \"" + ITEMS_ALIAS_INDEX_NAME + "\" } }\n" + "    ]\n" + "}");
           LOGGER.info("REINDEX status: execute remove alias " + ITEMS_ALIAS_INDEX_NAME + " to " + pickedIndex);
-          Response responseDeleteOldAlias = lowLevelClient.performRequest(requestDeleteOldAlias);
-          LOGGER.info("REINDEX status: responseDeleteOldAlias.getStatusLine().getStatusCode()"
-              + responseDeleteOldAlias.getStatusLine().getStatusCode());
+          try {            
+            Response responseDeleteOldAlias = lowLevelClient.performRequest(requestDeleteOldAlias);
+            LOGGER.info("REINDEX status: responseDeleteOldAlias.getStatusLine().getStatusCode()"
+                + responseDeleteOldAlias.getStatusLine().getStatusCode());
+          } catch (Exception e) {
+            if (e instanceof ResponseException && ((ResponseException) e).getResponse().getStatusLine().getStatusCode() == 404) {              
+              LOGGER.info("REINDEX status: alias " + ITEMS_ALIAS_INDEX_NAME + " to " + pickedIndex + " not found to delete.");            
+            }
+            else {
+              LOGGER.error("REINDEX status: something went wrong while deleting alias " + ITEMS_ALIAS_INDEX_NAME + " to " + pickedIndex, e);                          
+            }
+          }
         }
 
         LOGGER.info(
@@ -592,17 +602,15 @@ public class SearchServiceImpl implements SearchService {
           // Delete old index
 //         TODO: uncomment it only when all the other previous steps are tested and
 //         working!!!
-//          Request requestDeletePreviousIndex = new Request("DELETE", "/" + reindexStatus.getOriginalIndexName());
-//          Response responseDeletePreviousIndex = lowLevelClient.performRequest(requestDeletePreviousIndex);
-//          LOGGER.info("REINDEX status: responseDeletePreviousIndex.getStatusLine().getStatusCode()"
-//              + responseDeletePreviousIndex.getStatusLine().getStatusCode());
+//          dropIndex(reindexStatus.getOriginalIndexName());
         }
         
-        reindexStatus.setEndTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
-
       } catch (IOException e) {
         LOGGER.error("Something went wrong while processing the new index " + reindexStatus.getNewIndexName(), e);
         return false;
+      }
+      finally {
+        reindexStatus.setEndTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
       }
       return true;
 
