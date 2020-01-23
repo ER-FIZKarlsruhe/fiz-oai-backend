@@ -375,7 +375,7 @@ public class SearchServiceImpl implements SearchService {
   }
 
   @Override
-  public boolean stopReindexAll(final int stopAttempts, final int millisecondsAttemptsDelay) throws IOException {
+  public boolean stopReindexAll(final int stopAttempts, final int millisecondsAttemptsDelay) {
     boolean stopped = true;
 
     // Stop future process if already running
