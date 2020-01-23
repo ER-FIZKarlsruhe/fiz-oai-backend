@@ -21,6 +21,8 @@ public class ReindexStatus {
   private String endTime;
   
   private String mostRecentItemId;
+  
+  private boolean stopSignalReceived;
 
   /**
    * @return the aliasName
@@ -146,6 +148,20 @@ public class ReindexStatus {
    */
   public void setMostRecentItemId(String mostRecentItemId) {
     this.mostRecentItemId = mostRecentItemId;
+  }
+
+  /**
+   * @return the stopSignalReceived
+   */
+  public boolean isStopSignalReceived() {
+    return stopSignalReceived;
+  }
+
+  /**
+   * @param stopSignalReceived the stopSignalReceived to set
+   */
+  public void setStopSignalReceived(boolean stopSignalReceived) {
+    this.stopSignalReceived = stopSignalReceived;
   }
 
   

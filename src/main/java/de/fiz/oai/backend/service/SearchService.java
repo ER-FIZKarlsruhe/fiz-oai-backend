@@ -41,6 +41,11 @@ public interface SearchService {
    * Reindex all documents
    */
   void reindexAll() throws IOException;
+  
+  /**
+   * Stop reindex all documents process
+   */
+  boolean stopReindexAll(final int stopAttempts, final int millisecondsAttemptsDelay) throws IOException;
 
   /**
    * 
