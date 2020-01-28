@@ -40,7 +40,12 @@ public interface SearchService {
   /**
    * Reindex all documents
    */
-  void reindexAll() throws IOException;
+  boolean reindexAll();
+
+  /**
+   * Reindex status
+   */
+  String reindexStatus();
   
   /**
    * Stop reindex all documents process

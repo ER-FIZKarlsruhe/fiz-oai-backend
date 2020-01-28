@@ -406,11 +406,11 @@ public class SearchServiceImpl implements SearchService {
   }
 
   @Override
-  public void reindexAll() throws IOException {
+  public boolean reindexAll() {
     if (reindexStatus != null && StringUtils.isBlank(reindexStatus.getEndTime())) {
       LOGGER.warn("REINDEX status: Reindex process already started since " + reindexStatus.getStartTime()
           + ". Cannot continue until it finishes!");
-      return;
+      return false;
     }
     reindexStatus = new ReindexStatus();
 
@@ -626,8 +626,7 @@ public class SearchServiceImpl implements SearchService {
 //         working!!!
 //          dropIndex(reindexStatus.getOriginalIndexName());
           }
-        }
-        else {
+        } else {
           // Stop signal received, log all the informations
           LOGGER.warn("REINDEX status: stop signal received. Current reindex status so far:");
           LOGGER.warn("REINDEX status: Alias: " + reindexStatus.getAliasName());
@@ -639,7 +638,9 @@ public class SearchServiceImpl implements SearchService {
         }
 
       } catch (IOException e) {
-        LOGGER.error("REINDEX status: Something went wrong while processing the new index " + reindexStatus.getNewIndexName(), e);
+        LOGGER.error(
+            "REINDEX status: Something went wrong while processing the new index " + reindexStatus.getNewIndexName(),
+            e);
         return false;
       } finally {
         reindexStatus.setEndTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
@@ -648,6 +649,7 @@ public class SearchServiceImpl implements SearchService {
 
     });
 
+    return true;
   }
 
   private void reindexDocument(Item item, String indexName, RestHighLevelClient client) throws IOException {
@@ -686,6 +688,45 @@ public class SearchServiceImpl implements SearchService {
     indexRequest.id(item.getIdentifier());
 
     client.index(indexRequest, RequestOptions.DEFAULT);
+  }
+
+  @Override
+  public String reindexStatus() {
+    StringBuilder statusString = new StringBuilder();
+    if (reindexStatus == null) {
+      statusString.append("Reindex process not started.");
+    } else {
+      statusString.append("Reindex process STARTED on ");
+      statusString.append(reindexStatus.getStartTime());
+      if (!StringUtils.isBlank(reindexStatus.getEndTime())) {
+        statusString.append(" and FINISHED on ");
+        statusString.append(reindexStatus.getEndTime());
+
+      }
+      statusString.append(".");
+      statusString.append("\n");
+      statusString.append("Alias ");
+      statusString.append(reindexStatus.getAliasName());
+      statusString.append(" -> last index created ");
+      statusString.append(reindexStatus.getNewIndexName());
+      statusString.append(".");
+      statusString.append("\n");
+      statusString.append("Previous index ");
+      statusString.append(reindexStatus.getOriginalIndexName());
+      statusString.append(".");
+      statusString.append("\n");
+      statusString.append("Reindexed elements ");
+      statusString.append(reindexStatus.getIndexedCount());
+      statusString.append(" out of ");
+      statusString.append(reindexStatus.getTotalCount());
+      statusString.append(".");
+      statusString.append("\n");
+      statusString.append("Stop signal sent: ");
+      statusString.append(reindexStatus.isStopSignalReceived());
+      statusString.append(".");
+    }
+
+    return statusString.toString();
   }
 
 }

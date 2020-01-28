@@ -137,20 +137,6 @@ public class ReindexStatus {
   }
 
   /**
-   * @return the mostRecentItemId
-   */
-  public String getMostRecentItemId() {
-    return mostRecentItemId;
-  }
-
-  /**
-   * @param mostRecentItemId the mostRecentItemId to set
-   */
-  public void setMostRecentItemId(String mostRecentItemId) {
-    this.mostRecentItemId = mostRecentItemId;
-  }
-
-  /**
    * @return the stopSignalReceived
    */
   public boolean isStopSignalReceived() {
