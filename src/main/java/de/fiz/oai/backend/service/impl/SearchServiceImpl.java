@@ -18,6 +18,7 @@ package de.fiz.oai.backend.service.impl;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -380,6 +381,7 @@ public class SearchServiceImpl implements SearchService {
 
     // Stop future process if already running
     if (reindexStatus != null && StringUtils.isBlank(reindexStatus.getEndTime())) {
+      reindexStatus.setStopSignalReceived(true);
       if (reindexAllFuture != null) {
         int attempt = 0;
         while (!reindexAllFuture.isCancelled() && attempt <= stopAttempts) {
@@ -703,27 +705,71 @@ public class SearchServiceImpl implements SearchService {
         statusString.append(reindexStatus.getEndTime());
 
       }
-      statusString.append(".");
-      statusString.append("\n");
+      statusString.append(".\n");
       statusString.append("Alias ");
       statusString.append(reindexStatus.getAliasName());
       statusString.append(" -> last index created ");
       statusString.append(reindexStatus.getNewIndexName());
-      statusString.append(".");
-      statusString.append("\n");
+      statusString.append(".\n");
       statusString.append("Previous index ");
       statusString.append(reindexStatus.getOriginalIndexName());
-      statusString.append(".");
-      statusString.append("\n");
+      statusString.append(".\n");
       statusString.append("Reindexed elements ");
       statusString.append(reindexStatus.getIndexedCount());
       statusString.append(" out of ");
       statusString.append(reindexStatus.getTotalCount());
-      statusString.append(".");
-      statusString.append("\n");
+      statusString.append(".\n");
+
+      double percProgress = 0;
+      if (reindexStatus.getIndexedCount() > 0 && reindexStatus.getTotalCount() > 0) {
+        percProgress = ((double) reindexStatus.getIndexedCount() / reindexStatus.getTotalCount()) * 100;
+      }
+
+      long hours = 0;
+      long minutesOfHours = 0;
+      int secondsOfMinutes = 0;
+      long totalSecondsSoFar = 0;
+      ZonedDateTime startZDT = null;
+      if (StringUtils.isNotBlank(reindexStatus.getStartTime())) {
+        startZDT = ZonedDateTime.parse(reindexStatus.getStartTime());
+      }
+
+      Duration timeLapsed = null;
+      if (startZDT != null) {
+        timeLapsed = Duration.between(startZDT,
+            StringUtils.isBlank(reindexStatus.getEndTime()) ? ZonedDateTime.now(ZoneOffset.UTC)
+                : ZonedDateTime.parse(reindexStatus.getEndTime()));
+        hours = timeLapsed.toHours();
+        minutesOfHours = timeLapsed.toMinutesPart();
+        secondsOfMinutes = timeLapsed.toSecondsPart();
+        totalSecondsSoFar = timeLapsed.toSeconds();
+      }
+
+      statusString.append("Progress: ");
+      statusString.append(String.format("%.2f", percProgress));
+      statusString.append(" % in ");
+      statusString.append(hours);
+      statusString.append(":");
+      statusString.append(String.format("%02d", minutesOfHours));
+      statusString.append(":");
+      statusString.append(String.format("%02d", secondsOfMinutes));
+      statusString.append(".\n");
+      
+      String eta = "";
+      if (StringUtils.isBlank(reindexStatus.getEndTime()) && percProgress > 0 && totalSecondsSoFar > 0 && startZDT != null) {
+        final double estimatedTotalSeconds = ((double) totalSecondsSoFar / percProgress) * 100;
+        final ZonedDateTime etaZDT = startZDT.plusSeconds((long) estimatedTotalSeconds).withZoneSameInstant(ZoneOffset.UTC);
+        if (etaZDT != null) {
+          eta = etaZDT.toString();
+        }
+      }
+
+      statusString.append("ETA: ");
+      statusString.append(eta);
+      statusString.append(".\n");
       statusString.append("Stop signal sent: ");
       statusString.append(reindexStatus.isStopSignalReceived());
-      statusString.append(".");
+      statusString.append(".\n");
     }
 
     return statusString.toString();
