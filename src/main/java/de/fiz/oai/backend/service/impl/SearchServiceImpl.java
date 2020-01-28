@@ -507,7 +507,7 @@ public class SearchServiceImpl implements SearchService {
             reindexDocument(pickedItem, reindexStatus.getNewIndexName(), client);
             reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
 
-            // Keep the most recent Item identifier
+            // Keep the most recent Item
             if (mostRecentItem == null) {
               mostRecentItem = pickedItem;
             } else {
@@ -517,7 +517,7 @@ public class SearchServiceImpl implements SearchService {
                   mostRecentItem = pickedItem;
                 }
               } catch (ParseException e) {
-                // leave mostRecentDateItem as it is
+                // leave mostRecentItem as it is
               }
             }
           }
@@ -530,7 +530,7 @@ public class SearchServiceImpl implements SearchService {
         // If in the meanwhile some new object has been inserted, reindex the new Items
         if (!reindexStatus.isStopSignalReceived()) {
 
-          if (daoItem.getCount() < reindexStatus.getIndexedCount()) {
+          if (daoItem.getCount() > reindexStatus.getIndexedCount()) {
 
             LOGGER.warn("REINDEX status: New inserted items, current Items count " + daoItem.getCount()
                 + ", indexed count " + reindexStatus.getIndexedCount());
@@ -624,9 +624,7 @@ public class SearchServiceImpl implements SearchService {
 
           if (responseNewAlias.getStatusLine().getStatusCode() < 300) {
             // Delete old index
-//         TODO: uncomment it only when all the other previous steps are tested and
-//         working!!!
-//          dropIndex(reindexStatus.getOriginalIndexName());
+            dropIndex(reindexStatus.getOriginalIndexName());
           }
         } else {
           // Stop signal received, log all the informations
@@ -754,11 +752,13 @@ public class SearchServiceImpl implements SearchService {
       statusString.append(":");
       statusString.append(String.format("%02d", secondsOfMinutes));
       statusString.append(".\n");
-      
+
       String eta = "";
-      if (StringUtils.isBlank(reindexStatus.getEndTime()) && percProgress > 0 && totalSecondsSoFar > 0 && startZDT != null) {
+      if (StringUtils.isBlank(reindexStatus.getEndTime()) && percProgress > 0 && totalSecondsSoFar > 0
+          && startZDT != null) {
         final double estimatedTotalSeconds = ((double) totalSecondsSoFar / percProgress) * 100;
-        final ZonedDateTime etaZDT = startZDT.plusSeconds((long) estimatedTotalSeconds).withZoneSameInstant(ZoneOffset.UTC);
+        final ZonedDateTime etaZDT = startZDT.plusSeconds((long) estimatedTotalSeconds)
+            .withZoneSameInstant(ZoneOffset.UTC);
         if (etaZDT != null) {
           eta = etaZDT.toString();
         }
