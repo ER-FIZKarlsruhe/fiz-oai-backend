@@ -530,61 +530,6 @@ public class SearchServiceImpl implements SearchService {
         // If in the meanwhile some new object has been inserted, reindex the new Items
         if (!reindexStatus.isStopSignalReceived()) {
 
-          if (daoItem.getCount() > reindexStatus.getIndexedCount()) {
-
-            LOGGER.warn("REINDEX status: New inserted items, current Items count " + daoItem.getCount()
-                + ", indexed count " + reindexStatus.getIndexedCount());
-
-            Date mostRecentItemDate = null;
-            try {
-              mostRecentItemDate = Configuration.getDateformat().parse(mostRecentItem.getDatestamp());
-            } catch (ParseException e) {
-              // Cannot establish a date from the most recent Item, do nothing
-            }
-
-            LOGGER.info("REINDEX status: most recent item reindexed date: "
-                + Configuration.getDateformat().format(mostRecentItemDate));
-
-            if (mostRecentItemDate != null) {
-              List<Format> allFormats = daoFormat.readAll();
-              List<Set> allSets = daoSet.readAll();
-
-              List<String> allFormatsStr = new ArrayList<String>();
-              List<String> allSetsStr = new ArrayList<String>();
-
-              for (final Format pickedFormat : allFormats) {
-                allFormatsStr.add(pickedFormat.getMetadataPrefix());
-              }
-              for (final Set pickedSet : allSets) {
-                allSetsStr.add(pickedSet.getName());
-              }
-
-              String nextLastItemIdentifier = mostRecentItem.getIdentifier();
-              do {
-                final Item lastItemToStart = daoItem.read(nextLastItemIdentifier);
-
-                nextLastItemIdentifier = null;
-                if (lastItemToStart != null) {
-
-                  SearchResult<String> resultNewerItems = search(100, allFormatsStr, allSetsStr, mostRecentItemDate,
-                      new Date(), lastItemToStart);
-
-                  for (String pickedItemIdentifier : resultNewerItems.getData()) {
-                    final Item newerItemRetrieved = daoItem.read(pickedItemIdentifier);
-                    if (newerItemRetrieved != null) {
-                      reindexDocument(newerItemRetrieved, reindexStatus.getNewIndexName(), client);
-                      reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
-                    }
-                  }
-
-                  if (!StringUtils.isBlank(resultNewerItems.getLastItemId())) {
-                    nextLastItemIdentifier = resultNewerItems.getLastItemId();
-                  }
-                }
-              } while (!StringUtils.isBlank(nextLastItemIdentifier));
-            }
-          }
-
           // Switch alias from old index to new one
           RestClient lowLevelClient = client.getLowLevelClient();
 
