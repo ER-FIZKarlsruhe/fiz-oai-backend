@@ -392,6 +392,12 @@ public class SearchServiceImpl implements SearchService {
       }
     }
 
+    if (stopped) {
+      LOGGER.info("Current reindex process stopped.");
+    } else {
+      LOGGER.warn("Current reindex process NOT stopped!");
+    }
+
     return stopped;
   }
 
