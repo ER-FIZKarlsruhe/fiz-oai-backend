@@ -1,6 +1,10 @@
 package de.fiz.oai.backend.models.reindex;
 
+import java.util.List;
+
 import com.datastax.driver.core.ResultSet;
+
+import de.fiz.oai.backend.models.Set;
 
 public class ReindexStatus {
 
@@ -21,6 +25,8 @@ public class ReindexStatus {
   private String endTime;
 
   private boolean stopSignalReceived;
+  
+  private List<Set> allSetsBeforeReindexing;
 
   /**
    * @return the aliasName
@@ -146,6 +152,20 @@ public class ReindexStatus {
    */
   public void setStopSignalReceived(boolean stopSignalReceived) {
     this.stopSignalReceived = stopSignalReceived;
+  }
+
+  /**
+   * @return the allSetsBeforeReindexing
+   */
+  public List<Set> getAllSetsBeforeReindexing() {
+    return allSetsBeforeReindexing;
+  }
+
+  /**
+   * @param allSetsBeforeReindexing the allSetsBeforeReindexing to set
+   */
+  public void setAllSetsBeforeReindexing(List<Set> allSetsBeforeReindexing) {
+    this.allSetsBeforeReindexing = allSetsBeforeReindexing;
   }
 
 }

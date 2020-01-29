@@ -184,8 +184,6 @@ public class SearchServiceImpl implements SearchService {
     try (RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
 
-      // TODO set and format matching for the update index
-
       Map<String, Object> itemMap = item.toMap();
 
       UpdateRequest updateRequest = new UpdateRequest();
@@ -404,7 +402,19 @@ public class SearchServiceImpl implements SearchService {
           + ". Cannot continue until it finishes!");
       return false;
     }
+
+    List<Set> allSetsBeforeReindexing = new ArrayList<Set>();
+
+    try {
+      allSetsBeforeReindexing = daoSet.readAll();
+    } catch (IOException e1) {
+      LOGGER.error("REINDEX status: Not able to retrieve Sets from DB.", e1);
+      return false;
+    }
+
     reindexStatus = new ReindexStatus();
+
+    reindexStatus.setAllSetsBeforeReindexing(allSetsBeforeReindexing);
 
     reindexStatus.setStopSignalReceived(false);
 
@@ -579,6 +589,96 @@ public class SearchServiceImpl implements SearchService {
         return false;
       } finally {
         reindexStatus.setEndTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
+
+        if (!reindexStatus.isStopSignalReceived()) {
+          boolean restartReindexProcess = false;
+          // Check if the reindex process must be started again
+          // 1) check list sets before the reindexing and now, if the count is different
+          // or at least one is different then restart the reindex process
+          List<Set> allSetsAfterReindexing = new ArrayList<Set>();
+          try {
+            allSetsAfterReindexing = daoSet.readAll();
+          } catch (IOException e1) {
+            LOGGER.error("REINDEX status: Not able to retrieve Sets from DB.", e1);
+          }
+
+          if (allSetsAfterReindexing != null && !allSetsAfterReindexing.isEmpty()
+              && reindexStatus.getAllSetsBeforeReindexing() != null
+              && !reindexStatus.getAllSetsBeforeReindexing().isEmpty()) {
+            if (allSetsAfterReindexing.size() != reindexStatus.getAllSetsBeforeReindexing().size()) {
+              LOGGER.info("REINDEX status: triggering new reindex process due to Set inserted/deleted: Sets in DB "
+                  + allSetsAfterReindexing.size() + " != " + reindexStatus.getAllSetsBeforeReindexing().size()
+                  + " reindexed.");
+              restartReindexProcess = true;
+            } else {
+              for (final Set pickedOriginalSet : reindexStatus.getAllSetsBeforeReindexing()) {
+                Set pickedCurrentSet = null;
+                try {
+                  pickedCurrentSet = daoSet.read(pickedOriginalSet.getName());
+                } catch (IOException e) {
+                  LOGGER.error("REINDEX status: Not able to retrieve Sets from DB.", e);
+                }
+                if (pickedCurrentSet != null) {
+                  if (!pickedCurrentSet.equals(pickedOriginalSet)) {
+                    StringBuilder editedSetMsg = new StringBuilder();
+                    editedSetMsg.append("REINDEX status: triggering new reindex process due to a Set edited:");
+                    editedSetMsg.append("\n");
+                    editedSetMsg.append("Name: ");
+                    editedSetMsg.append(pickedOriginalSet.getName());
+                    editedSetMsg.append(" -> ");
+                    editedSetMsg.append(pickedCurrentSet.getName());
+                    editedSetMsg.append("\n");
+                    editedSetMsg.append("Description: ");
+                    editedSetMsg.append(pickedOriginalSet.getDescription());
+                    editedSetMsg.append(" -> ");
+                    editedSetMsg.append(pickedCurrentSet.getDescription());
+                    editedSetMsg.append("\n");
+                    editedSetMsg.append("Spec: ");
+                    editedSetMsg.append(pickedOriginalSet.getSpec());
+                    editedSetMsg.append(" -> ");
+                    editedSetMsg.append(pickedCurrentSet.getSpec());
+                    editedSetMsg.append("\n");
+                    editedSetMsg.append("Status: ");
+                    editedSetMsg.append(pickedOriginalSet.getStatus());
+                    editedSetMsg.append(" -> ");
+                    editedSetMsg.append(pickedCurrentSet.getStatus());
+                    editedSetMsg.append("\n");
+                    editedSetMsg.append("XPaths: ");
+                    editedSetMsg.append(pickedOriginalSet.getxPaths().toString());
+                    editedSetMsg.append(" -> ");
+                    editedSetMsg.append(pickedCurrentSet.getxPaths().toString());
+                    editedSetMsg.append("\n");
+
+                    LOGGER.info(editedSetMsg.toString());
+                    restartReindexProcess = true;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+
+          // 2) check the current count of Items in Cassandra, if differs from the
+          // reindexed ones then restart reindex process
+          if (!restartReindexProcess) {
+            long currentItemsCount = 0;
+            try {
+              currentItemsCount = daoItem.getCount();
+            } catch (IOException e) {
+              LOGGER.error("REINDEX status: Not able to retrieve Items count from DB.", e);
+            }
+            if (currentItemsCount > reindexStatus.getIndexedCount()) {
+              LOGGER.info("REINDEX status: triggering new reindex process due to new Items inserted: Items in DB "
+                  + currentItemsCount + " > " + reindexStatus.getIndexedCount() + " reindexed.");
+              restartReindexProcess = true;
+            }
+          }
+
+          // restart?
+          if (restartReindexProcess) {
+            reindexAll();
+          }
+        }
       }
       return true;
 
