@@ -45,7 +45,7 @@ public interface SearchService {
   /**
    * Reindex status
    */
-  String reindexStatus();
+  String getReindexStatusVerbose();
   
   /**
    * Stop reindex all documents process
@@ -90,5 +90,7 @@ public interface SearchService {
    */
   SearchResult<String> search(Integer rows, Object set, Object format, Date fromDate, Date untilDate, Item lastItem)
       throws IOException;
+
+  
 
 }

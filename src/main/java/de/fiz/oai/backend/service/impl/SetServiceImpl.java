@@ -53,8 +53,6 @@ public class SetServiceImpl implements SetService {
     daoSet.create(set);
 
     LOGGER.info("Creating Set " + set.getName() + ". Triggering complete reindexing.");
-    
-    searchService.reindexAll();
 
     return set;
   }

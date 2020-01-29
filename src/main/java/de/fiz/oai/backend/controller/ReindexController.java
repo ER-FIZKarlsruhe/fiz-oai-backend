@@ -46,7 +46,7 @@ public class ReindexController extends AbstractController {
   @Produces(MediaType.TEXT_PLAIN)
   public String getStatus(){
 
-    return searchService.reindexStatus();
+    return searchService.getReindexStatusVerbose();
     
   }
 

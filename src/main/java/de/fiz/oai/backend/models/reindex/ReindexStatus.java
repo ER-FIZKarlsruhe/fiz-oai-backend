@@ -5,23 +5,21 @@ import com.datastax.driver.core.ResultSet;
 public class ReindexStatus {
 
   private ResultSet itemResultSet = null;
-  
+
   private String aliasName = null;
-  
+
   private String originalIndexName = null;
-  
+
   private String newIndexName = null;
-  
+
   private long totalCount;
-  
+
   private long indexedCount;
-  
+
   private String startTime;
-  
+
   private String endTime;
-  
-  private String mostRecentItemId;
-  
+
   private boolean stopSignalReceived;
 
   /**
@@ -150,5 +148,4 @@ public class ReindexStatus {
     this.stopSignalReceived = stopSignalReceived;
   }
 
-  
 }

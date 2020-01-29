@@ -70,7 +70,6 @@ import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.models.Content;
-import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.models.Set;
@@ -333,26 +332,17 @@ public class SearchServiceImpl implements SearchService {
   @SuppressWarnings("deprecation")
   @Override
   public boolean createIndex(final String indexName, final String mapping) throws IOException {
-    LOGGER.info("CREATE status: indexName: " + indexName);
-    LOGGER.info("CREATE status: mapping: " + mapping.substring(0, 30) + "...");
     if (StringUtils.isNotBlank(indexName) && StringUtils.isNotBlank(mapping)) {
       try (RestHighLevelClient client = new RestHighLevelClient(
           RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
-        LOGGER.info("CREATE status: create request");
         CreateIndexRequest request = new CreateIndexRequest(indexName);
-        LOGGER.info("CREATE status: execute nd take response");
         CreateIndexResponse createIndexResponse = client.indices().create(request, RequestOptions.DEFAULT);
-        LOGGER.info("CREATE status: createIndexResponse.isAcknowledged(): " + createIndexResponse.isAcknowledged());
         if (createIndexResponse.isAcknowledged()) {
           RestClient lowLevelClient = client.getLowLevelClient();
 
-          LOGGER.info("CREATE status: build mapping");
           Request requestMapping = new Request("PUT", "/" + indexName + "/_mapping");
           requestMapping.setJsonEntity(mapping);
-          LOGGER.info("CREATE status: put mapping");
           Response responseMapping = lowLevelClient.performRequest(requestMapping);
-          LOGGER.info("CREATE status: responseMapping.getStatusLine().getStatusCode(): "
-              + responseMapping.getStatusLine().getStatusCode());
           if (responseMapping.getStatusLine().getStatusCode() == 200
               || responseMapping.getStatusLine().getStatusCode() == 204) {
             return true;
@@ -636,7 +626,7 @@ public class SearchServiceImpl implements SearchService {
   }
 
   @Override
-  public String reindexStatus() {
+  public String getReindexStatusVerbose() {
     StringBuilder statusString = new StringBuilder();
     if (reindexStatus == null) {
       statusString.append("Reindex process not started.");
