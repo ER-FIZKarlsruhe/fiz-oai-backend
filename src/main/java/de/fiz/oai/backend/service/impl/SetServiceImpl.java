@@ -66,10 +66,6 @@ public class SetServiceImpl implements SetService {
     }
     daoSet.create(set);
 
-    LOGGER.info("Updating Set " + set.getName() + ". Triggering complete reindexing.");
-    
-    searchService.reindexAll();
-
     return set;
   }
 
@@ -82,10 +78,6 @@ public class SetServiceImpl implements SetService {
   @Override
   public void delete(String name) throws IOException {
     daoSet.delete(name);
-
-    LOGGER.info("Set " + name + " deleted. Triggering complete reindexing.");
-    
-    searchService.reindexAll();
   }
 
 }
