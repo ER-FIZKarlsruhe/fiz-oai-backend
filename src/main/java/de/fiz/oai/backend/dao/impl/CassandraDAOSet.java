@@ -42,6 +42,7 @@ public class CassandraDAOSet implements DAOSet {
   public static final String SET_SPEC = "spec";
   public static final String SET_DESCRIPTION = "description";
   public static final String SET_XPATHS = "xpaths";
+  public static final String SET_TAGS = "tags";
   public static final String SET_STATUS = "status";
 
   public static final String TABLENAME_SET = "oai_set";
@@ -80,6 +81,7 @@ public class CassandraDAOSet implements DAOSet {
     set.setName(resultRow.getString(SET_NAME));
     set.setDescription(resultRow.getString(SET_DESCRIPTION));
     set.setxPaths(resultRow.getMap(SET_XPATHS, String.class, String.class));
+    set.setTags(resultRow.getList(SET_TAGS, String.class));
     set.setStatus(resultRow.getString(SET_STATUS));
     return set;
   }
@@ -123,6 +125,8 @@ public class CassandraDAOSet implements DAOSet {
       insertStmt.append(", ");
       insertStmt.append(SET_XPATHS);
       insertStmt.append(", ");
+      insertStmt.append(SET_TAGS);
+      insertStmt.append(", ");      
       insertStmt.append(SET_STATUS);
       insertStmt.append(") VALUES (?, ?, ?, ?, ?)");
 
