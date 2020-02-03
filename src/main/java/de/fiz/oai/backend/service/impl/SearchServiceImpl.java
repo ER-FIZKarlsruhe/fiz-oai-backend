@@ -137,52 +137,57 @@ public class SearchServiceImpl implements SearchService {
   public void createDocument(Item item) throws IOException {
     try (RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
-      Map<String, Object> itemMap = item.toMap();
 
-      // Add all available formats
-      List<Content> allContents = daoContent.readFormats(item.getIdentifier());
-      List<String> itemFormats = new ArrayList<>();
+      indexDocument(item, ITEMS_ALIAS_INDEX_NAME, client);
+    }
+  }
+
+  private void indexDocument(Item item, String indexName, RestHighLevelClient client) throws IOException {
+
+    Map<String, Object> itemMap = item.toMap();
+
+    // Add all available formats
+    List<Content> allContents = daoContent.readFormats(item.getIdentifier());
+    List<String> itemFormats = new ArrayList<>();
+    for (final Content pickedContent : allContents) {
+      itemFormats.add(pickedContent.getFormat());
+    }
+    itemMap.put("formats", itemFormats);
+
+    // Add all the matching sets
+    List<Set> allSets = daoSet.readAll();
+    List<String> itemSets = new ArrayList<>();
+    for (final Set pickedSet : allSets) {
+      // Check set membership via xPath
+      Map<String, String> xPaths = pickedSet.getxPaths();
       for (final Content pickedContent : allContents) {
-        itemFormats.add(pickedContent.getFormat());
-      }
-      itemMap.put("formats", itemFormats);
-
-      // Add all the matching sets
-      List<Set> allSets = daoSet.readAll();
-      List<String> itemSets = new ArrayList<>();
-      for (final Set pickedSet : allSets) {
-        //Check set membership via xPath
-        Map<String, String> xPaths = pickedSet.getxPaths();
-        for (final Content pickedContent : allContents) {
-          if (xPaths.containsKey(pickedContent.getFormat())) {
-            final String xPathToCheck = xPaths.get(pickedContent.getFormat());
-            if (XPathHelper.isTextValueMatching(pickedContent.getContent(), xPathToCheck)) {
-              itemSets.add(pickedSet.getName());
-            }
-          }
-        }
-
-        //Check set membership via item tags
-        List<String> setTags = pickedSet.getTags();
-        for (String setTag : setTags) {
-          if (item.getTags().contains(setTag)) {
+        if (xPaths.containsKey(pickedContent.getFormat())) {
+          final String xPathToCheck = xPaths.get(pickedContent.getFormat());
+          if (XPathHelper.isTextValueMatching(pickedContent.getContent(), xPathToCheck)) {
             itemSets.add(pickedSet.getName());
           }
         }
-
       }
-      itemMap.put("sets", itemSets);
 
-      IndexRequest indexRequest = new IndexRequest();
+      // Check set membership via item tags
+      List<String> setTags = pickedSet.getTags();
+      for (String setTag : setTags) {
+        if (item.getTags().contains(setTag)) {
+          itemSets.add(pickedSet.getName());
+        }
+      }
 
-      indexRequest.index(ITEMS_ALIAS_INDEX_NAME);
-      indexRequest.type("_doc");
-      indexRequest.source(itemMap);
-      indexRequest.id(item.getIdentifier());
-
-      client.index(indexRequest, RequestOptions.DEFAULT);
-      LOGGER.info("Added item to search index");
     }
+    itemMap.put("sets", itemSets);
+
+    IndexRequest indexRequest = new IndexRequest();
+
+    indexRequest.index(indexName);
+    indexRequest.type("_doc");
+    indexRequest.source(itemMap);
+    indexRequest.id(item.getIdentifier());
+
+    client.index(indexRequest, RequestOptions.DEFAULT);
   }
 
   /**
@@ -509,7 +514,7 @@ public class SearchServiceImpl implements SearchService {
           List<Item> bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
 
           for (final Item pickedItem : bufferListItems) {
-            reindexDocument(pickedItem, reindexStatus.getNewIndexName(), client);
+            indexDocument(pickedItem, reindexStatus.getNewIndexName(), client);
             reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
 
             // Keep the most recent Item
@@ -601,44 +606,6 @@ public class SearchServiceImpl implements SearchService {
     });
 
     return true;
-  }
-
-  private void reindexDocument(Item item, String indexName, RestHighLevelClient client) throws IOException {
-
-    Map<String, Object> itemMap = item.toMap();
-
-    // Add all available formats
-    List<Content> allContents = daoContent.readFormats(item.getIdentifier());
-    List<String> itemFormats = new ArrayList<String>();
-    for (final Content pickedContent : allContents) {
-      itemFormats.add(pickedContent.getFormat());
-    }
-    itemMap.put("formats", itemFormats);
-
-    // Add all the matching sets
-    List<Set> allSets = daoSet.readAll();
-    List<String> itemSets = new ArrayList<String>();
-    for (final Set pickedSet : allSets) {
-      Map<String, String> xPaths = pickedSet.getxPaths();
-      for (final Content pickedContent : allContents) {
-        if (xPaths.containsKey(pickedContent.getFormat())) {
-          final String xPathToCheck = xPaths.get(pickedContent.getFormat());
-          if (XPathHelper.isTextValueMatching(pickedContent.getContent(), xPathToCheck)) {
-            itemSets.add(pickedSet.getName());
-          }
-        }
-      }
-    }
-    itemMap.put("sets", itemSets);
-
-    IndexRequest indexRequest = new IndexRequest();
-
-    indexRequest.index(indexName);
-    indexRequest.type("_doc");
-    indexRequest.source(itemMap);
-    indexRequest.id(item.getIdentifier());
-
-    client.index(indexRequest, RequestOptions.DEFAULT);
   }
 
   @Override
