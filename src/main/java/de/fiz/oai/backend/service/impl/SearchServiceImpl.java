@@ -241,7 +241,7 @@ public class SearchServiceImpl implements SearchService {
   }
 
   @Override
-  public SearchResult<String> search(Integer rows, Object set, Object format, Date fromDate, Date untilDate,
+  public SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate,
       Item lastItem) throws IOException {
 
     LOGGER.info("DEBUG: rows: " + rows);
@@ -268,7 +268,7 @@ public class SearchServiceImpl implements SearchService {
               .to(Configuration.getDateformat().format(finalUntilDate)));
       queryBuilder.filter(QueryBuilders.termQuery("formats", format));
 
-      if (set != null && !set.toString().isBlank()) {
+      if (StringUtils.isNotBlank(set)) {
         queryBuilder.filter(QueryBuilders.termQuery("sets", set));
       }
 
