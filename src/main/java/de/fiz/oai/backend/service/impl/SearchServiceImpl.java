@@ -139,6 +139,7 @@ public class SearchServiceImpl implements SearchService {
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
 
       indexDocument(item, ITEMS_ALIAS_INDEX_NAME, client);
+      LOGGER.info("Added item to search index");
     }
   }
 
