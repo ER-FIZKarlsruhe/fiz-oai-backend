@@ -150,31 +150,40 @@ public class SearchServiceImpl implements SearchService {
     // Add all available formats
     List<Content> allContents = daoContent.readFormats(item.getIdentifier());
     List<String> itemFormats = new ArrayList<>();
-    for (final Content pickedContent : allContents) {
-      itemFormats.add(pickedContent.getFormat());
+    if (allContents != null && !allContents.isEmpty()) {
+      for (final Content pickedContent : allContents) {
+        itemFormats.add(pickedContent.getFormat());
+      }
     }
     itemMap.put("formats", itemFormats);
 
     // Add all the matching sets
     List<Set> allSets = daoSet.readAll();
     List<String> itemSets = new ArrayList<>();
-    for (final Set pickedSet : allSets) {
-      // Check set membership via xPath
-      Map<String, String> xPaths = pickedSet.getxPaths();
-      for (final Content pickedContent : allContents) {
-        if (xPaths.containsKey(pickedContent.getFormat())) {
-          final String xPathToCheck = xPaths.get(pickedContent.getFormat());
-          if (XPathHelper.isTextValueMatching(pickedContent.getContent(), xPathToCheck)) {
-            itemSets.add(pickedSet.getName());
+    if (allSets != null && !allSets.isEmpty()) {
+
+      for (final Set pickedSet : allSets) {
+        // Check set membership via xPath
+        Map<String, String> xPaths = pickedSet.getxPaths();
+        if (allContents != null && !allContents.isEmpty()) {
+          for (final Content pickedContent : allContents) {
+            if (xPaths.containsKey(pickedContent.getFormat())) {
+              final String xPathToCheck = xPaths.get(pickedContent.getFormat());
+              if (XPathHelper.isTextValueMatching(pickedContent.getContent(), xPathToCheck)) {
+                itemSets.add(pickedSet.getName());
+              }
+            }
           }
         }
-      }
 
-      // Check set membership via item tags
-      List<String> setTags = pickedSet.getTags();
-      for (String setTag : setTags) {
-        if (item.getTags().contains(setTag)) {
-          itemSets.add(pickedSet.getName());
+        // Check set membership via item tags
+        List<String> setTags = pickedSet.getTags();
+        if (setTags != null && !setTags.isEmpty()) {
+          for (String setTag : setTags) {
+            if (item.getTags().contains(setTag)) {
+              itemSets.add(pickedSet.getName());
+            }
+          }
         }
       }
 
@@ -601,6 +610,7 @@ public class SearchServiceImpl implements SearchService {
         return false;
       } finally {
         reindexStatus.setEndTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
+        LOGGER.info("REINDEX status: End Time: " + reindexStatus.getEndTime());
       }
       return true;
 
