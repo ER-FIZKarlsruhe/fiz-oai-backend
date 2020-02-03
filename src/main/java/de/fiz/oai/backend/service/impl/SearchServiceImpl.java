@@ -136,9 +136,11 @@ public class SearchServiceImpl implements SearchService {
 
         //Check set membership via item tags
         List<String> setTags = pickedSet.getTags();
-        for (String setTag : setTags) {
-          if (item.getTags().contains(setTag)) {
-            itemSets.add(pickedSet.getName());
+        if (setTags != null) {
+          for (String setTag : setTags) {
+            if (item.getTags().contains(setTag)) {
+              itemSets.add(pickedSet.getName());
+            }
           }
         }
 
