@@ -34,7 +34,6 @@ import javax.ws.rs.core.Context;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
-import org.elasticsearch.Version;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
@@ -44,7 +43,6 @@ import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.main.MainResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
@@ -91,7 +89,6 @@ public class SearchServiceImpl implements SearchService {
   public static String ITEMS_ALIAS_INDEX_NAME = "items";
 
   public static String ITEMS_MAPPING_V7_FILENAME = "/WEB-INF/classes/elasticsearch/item_mapping_es_v7";
-  public static String ITEMS_MAPPING_V6_FILENAME = "/WEB-INF/classes/elasticsearch/item_mapping_es_v6";
 
   @Context
   ServletContext servletContext;
@@ -178,7 +175,7 @@ public class SearchServiceImpl implements SearchService {
 
         // Check set membership via item tags
         List<String> setTags = pickedSet.getTags();
-        
+
         if (setTags != null && !setTags.isEmpty()) {
           for (String setTag : setTags) {
             if (item.getTags().contains(setTag)) {
@@ -482,22 +479,13 @@ public class SearchServiceImpl implements SearchService {
           return false;
         }
 
-        MainResponse infoResponse = client.info(RequestOptions.DEFAULT);
-        String filenameItemsMapping = ITEMS_MAPPING_V6_FILENAME;
-        if (infoResponse.getVersion().after(Version.V_6_8_4)) {
-          filenameItemsMapping = ITEMS_MAPPING_V7_FILENAME;
-        }
-        LOGGER.info("REINDEX status: ES version found " + Version.displayVersion(infoResponse.getVersion(), false)
-            + " -> mapping " + filenameItemsMapping);
+        final String filenameItemsMapping = ITEMS_MAPPING_V7_FILENAME;
 
         final String mapping = ResourcesUtils.getResourceFileAsString(filenameItemsMapping, servletContext);
 
         if (StringUtils.isBlank(mapping)) {
           LOGGER.error("REINDEX status: Not able to retrieve mapping " + filenameItemsMapping);
         }
-
-        LOGGER.info("REINDEX status: Creating new index " + reindexStatus.getNewIndexName() + " with mapping "
-            + mapping.substring(0, 30) + "...");
         if (!createIndex(reindexStatus.getNewIndexName(), mapping)) {
           LOGGER.error(
               "REINDEX status: Something went wrong while creating the new index " + reindexStatus.getNewIndexName());
