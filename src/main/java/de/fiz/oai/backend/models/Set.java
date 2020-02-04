@@ -15,6 +15,7 @@
  */
 package de.fiz.oai.backend.models;
 
+import java.util.List;
 import java.util.Map;
 
 public class Set {
@@ -26,6 +27,8 @@ public class Set {
   private String description;
 
   private Map<String, String> xPaths;
+  
+  private List<String> tags;
 
   private String status;
 
@@ -59,6 +62,14 @@ public class Set {
 
   public void setxPaths(Map<String, String> xPaths) {
     this.xPaths = xPaths;
+  }
+
+  public List<String> getTags() {
+    return tags;
+  }
+
+  public void setTags(List<String> tags) {
+    this.tags = tags;
   }
 
   public String getStatus() {

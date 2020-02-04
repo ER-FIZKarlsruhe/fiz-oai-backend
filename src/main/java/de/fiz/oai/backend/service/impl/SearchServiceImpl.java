@@ -151,6 +151,7 @@ public class SearchServiceImpl implements SearchService {
       List<Set> allSets = daoSet.readAll();
       List<String> itemSets = new ArrayList<>();
       for (final Set pickedSet : allSets) {
+        //Check set membership via xPath
         Map<String, String> xPaths = pickedSet.getxPaths();
         for (final Content pickedContent : allContents) {
           if (xPaths.containsKey(pickedContent.getFormat())) {
@@ -160,6 +161,17 @@ public class SearchServiceImpl implements SearchService {
             }
           }
         }
+
+        //Check set membership via item tags
+        List<String> setTags = pickedSet.getTags();
+        if (setTags != null) {
+          for (String setTag : setTags) {
+            if (item.getTags().contains(setTag)) {
+              itemSets.add(pickedSet.getName());
+            }
+          }
+        }
+
       }
       itemMap.put("sets", itemSets);
 

@@ -90,6 +90,8 @@ public class CassandraUtils {
         createTableSetStmt.append(" text, ");
         createTableSetStmt.append(CassandraDAOSet.SET_XPATHS);
         createTableSetStmt.append(" map<text, text>, ");
+        createTableSetStmt.append(CassandraDAOSet.SET_TAGS);
+        createTableSetStmt.append(" list<text>, ");
         createTableSetStmt.append(CassandraDAOSet.SET_STATUS);
         createTableSetStmt.append(" text, PRIMARY KEY (");
         createTableSetStmt.append(CassandraDAOSet.SET_NAME);
