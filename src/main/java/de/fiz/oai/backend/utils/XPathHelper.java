@@ -70,6 +70,9 @@ public class XPathHelper {
     if (!StringUtils.isBlank(contentStr) && !StringUtils.isBlank(xPathStr)) {
       try {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+
         if (xPathStr.contains(":")) {
           factory.setNamespaceAware(true);
         }

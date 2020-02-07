@@ -42,7 +42,7 @@ public class CassandraUtils {
 
     public static void createKeyspace(Session session, String replicationFactor, String keyspace) {
         if (StringUtils.isBlank(replicationFactor)) {
-            throw new RuntimeException("Cannot create keyspace " + keyspace + " because the property cassandra.replication.factor is not set.");
+            throw new IllegalArgumentException("Cannot create keyspace " + keyspace + " because the property cassandra.replication.factor is not set.");
         }
 
         final StringBuilder createStmt = new StringBuilder();

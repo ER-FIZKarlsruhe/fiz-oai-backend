@@ -19,14 +19,16 @@ import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashSet;
 
-import com.datastax.driver.core.exceptions.InvalidQueryException;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Cluster.Builder;
-import com.datastax.driver.core.Host;
+
+import de.fiz.oai.backend.service.impl.ItemServiceImpl;
+
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.Session.State;
 import com.datastax.driver.core.SocketOptions;
 
 public class ClusterManager {
@@ -44,6 +46,8 @@ public class ClusterManager {
     private Session[] sessions = null;
     private int rrSessionCounter = 0;
 
+    private Logger LOGGER = LoggerFactory.getLogger(ClusterManager.class);
+    
     private ClusterManager() {
         Configuration config = Configuration.getInstance();
         keyspace = config.getProperty("cassandra.keyspace");
@@ -71,6 +75,7 @@ public class ClusterManager {
             try {
                 cassandraSessions = Integer.parseInt(cassandraSessionsStr);
             } catch (NumberFormatException e) {
+              LOGGER.warn("Invalid value of property: cassandra.sessions", e);
             }
         }
         numberOfCassandraSessions = cassandraSessions;

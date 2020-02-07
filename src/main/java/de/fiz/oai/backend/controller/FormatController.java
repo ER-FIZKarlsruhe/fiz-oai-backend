@@ -144,7 +144,7 @@ public class FormatController extends AbstractController {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
 
-    LOGGER.info("newSet: " + newFormat);
+    LOGGER.info("newFormat: {}", newFormat);
     return newFormat;
   }
 

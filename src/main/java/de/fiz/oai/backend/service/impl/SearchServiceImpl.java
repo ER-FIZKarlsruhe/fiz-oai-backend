@@ -241,9 +241,9 @@ public class SearchServiceImpl implements SearchService {
   public SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate,
       Item lastItem) throws IOException {
 
-    LOGGER.info("DEBUG: rows: " + rows);
-    LOGGER.info("DEBUG: format: " + format);
-    LOGGER.info("DEBUG: lastItem: " + lastItem);
+    LOGGER.info("DEBUG: rows: {}", rows);
+    LOGGER.info("DEBUG: format: {}", format);
+    LOGGER.info("DEBUG: lastItem: {}", lastItem);
 
     try (RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
@@ -293,7 +293,7 @@ public class SearchServiceImpl implements SearchService {
       SearchRequest searchRequest = new SearchRequest(ITEMS_ALIAS_INDEX_NAME);
       searchRequest.source(searchSourceBuilder);
 
-      LOGGER.info("DEBUG: searchRequest: " + searchRequest.toString());
+      LOGGER.info("DEBUG: searchRequest: {}", searchRequest.toString());
 
       SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
 
@@ -321,9 +321,9 @@ public class SearchServiceImpl implements SearchService {
       if (StringUtils.isNotBlank(newLastItemId)) {
 
         newLastItem = daoItem.read(newLastItemId);
-        LOGGER.info("searchSourceBuilder: " + searchSourceBuilder);
-        LOGGER.info("newLastItemId: " + newLastItemId);
-        LOGGER.info("newLastItem: " + newLastItem);
+        LOGGER.info("searchSourceBuilder: {}", searchSourceBuilder);
+        LOGGER.info("newLastItemId: {}", newLastItemId);
+        LOGGER.info("newLastItem: {}", newLastItem);
 
         Long timestamp = null;
         try {
@@ -334,8 +334,8 @@ public class SearchServiceImpl implements SearchService {
         searchSourceBuilder.searchAfter(new Object[] { timestamp, newLastItem.getIdentifier() });
         searchRequest.source(searchSourceBuilder);
 
-        LOGGER.info("DEBUG: currentLastItemId: " + newLastItemId);
-        LOGGER.info("DEBUG: searchRequest next elements?: " + searchRequest.toString());
+        LOGGER.info("DEBUG: currentLastItemId: {}", newLastItemId);
+        LOGGER.info("DEBUG: searchRequest next elements?: {}", searchRequest.toString());
         searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         if (searchResponse.getHits().getHits().length == 0) {
           idResult.setLastItemId(null);
@@ -437,7 +437,7 @@ public class SearchServiceImpl implements SearchService {
     reindexStatus.setStopSignalReceived(false);
 
     reindexStatus.setAliasName(ITEMS_ALIAS_INDEX_NAME);
-    LOGGER.info("REINDEX status: Alias name: " + reindexStatus.getAliasName());
+    LOGGER.info("REINDEX status: Alias name: {}", reindexStatus.getAliasName());
 
     reindexAllFuture = CompletableFuture.supplyAsync(() -> {
 
@@ -451,7 +451,7 @@ public class SearchServiceImpl implements SearchService {
         LOGGER.info("REINDEX status: Found " + allIndexes.size() + " indexes:");
         int maximumIndexFound = 0;
         for (final String pickedIndex : allIndexes) {
-          LOGGER.info("REINDEX status: " + pickedIndex);
+          LOGGER.info("REINDEX status: {}", pickedIndex);
           if (pickedIndex.startsWith(ITEMS_ALIAS_INDEX_NAME)) {
             final String suffixIndex = pickedIndex.substring(ITEMS_ALIAS_INDEX_NAME.length());
             LOGGER.info("REINDEX status: " + pickedIndex + " -> suffix: " + suffixIndex);
@@ -470,7 +470,7 @@ public class SearchServiceImpl implements SearchService {
         newIndexName.append(ITEMS_ALIAS_INDEX_NAME);
         newIndexName.append(String.valueOf(newIndexVersion));
         reindexStatus.setNewIndexName(newIndexName.toString());
-        LOGGER.info("REINDEX status: New index name: " + reindexStatus.getNewIndexName());
+        LOGGER.info("REINDEX status: New index name: {}", reindexStatus.getNewIndexName());
 
         if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())
             || StringUtils.isBlank(reindexStatus.getNewIndexName())) {
@@ -484,7 +484,7 @@ public class SearchServiceImpl implements SearchService {
         final String mapping = ResourcesUtils.getResourceFileAsString(filenameItemsMapping, servletContext);
 
         if (StringUtils.isBlank(mapping)) {
-          LOGGER.error("REINDEX status: Not able to retrieve mapping " + filenameItemsMapping);
+          LOGGER.error("REINDEX status: Not able to retrieve mapping {}", filenameItemsMapping);
         }
         if (!createIndex(reindexStatus.getNewIndexName(), mapping)) {
           LOGGER.error(
@@ -494,18 +494,18 @@ public class SearchServiceImpl implements SearchService {
 
         reindexStatus.setTotalCount(daoItem.getCount());
         reindexStatus.setItemResultSet(daoItem.getAllItemsResultSet());
-        LOGGER.info("REINDEX status: Total Items count: " + reindexStatus.getTotalCount());
+        LOGGER.info("REINDEX status: Total Items count: {}", reindexStatus.getTotalCount());
 
         if (reindexStatus.getTotalCount() < 1) {
-          LOGGER.warn("No items to reindex " + reindexStatus.getNewIndexName());
+          LOGGER.warn("No items to reindex {}", reindexStatus.getNewIndexName());
           return false;
         }
 
         reindexStatus.setIndexedCount(0);
-        LOGGER.info("REINDEX status: Indexed Items count: " + reindexStatus.getIndexedCount());
+        LOGGER.info("REINDEX status: Indexed Items count: {}", reindexStatus.getIndexedCount());
 
         reindexStatus.setStartTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
-        LOGGER.info("REINDEX status: Start Time: " + reindexStatus.getStartTime());
+        LOGGER.info("REINDEX status: Start Time: {}", reindexStatus.getStartTime());
 
         Item mostRecentItem = null;
 
@@ -542,7 +542,7 @@ public class SearchServiceImpl implements SearchService {
           // Switch alias from old index to new one
           RestClient lowLevelClient = client.getLowLevelClient();
 
-          LOGGER.info("REINDEX status: Remove all old aliases of " + ITEMS_ALIAS_INDEX_NAME);
+          LOGGER.info("REINDEX status: Remove all old aliases of {}", ITEMS_ALIAS_INDEX_NAME);
           for (final String pickedIndex : allIndexes) {
             Request requestDeleteOldAlias = new Request("POST", "/_aliases");
             requestDeleteOldAlias
@@ -583,12 +583,12 @@ public class SearchServiceImpl implements SearchService {
         } else {
           // Stop signal received, log all the informations
           LOGGER.warn("REINDEX status: stop signal received. Current reindex status so far:");
-          LOGGER.warn("REINDEX status: Alias: " + reindexStatus.getAliasName());
-          LOGGER.warn("REINDEX status: New index (to drop): " + reindexStatus.getNewIndexName());
-          LOGGER.warn("REINDEX status: Previous index: " + reindexStatus.getOriginalIndexName());
-          LOGGER.warn("REINDEX status: Count total: " + reindexStatus.getTotalCount());
-          LOGGER.warn("REINDEX status: Count indexed: " + reindexStatus.getIndexedCount());
-          LOGGER.warn("REINDEX status: Start time: " + reindexStatus.getStartTime());
+          LOGGER.warn("REINDEX status: Alias: {}", reindexStatus.getAliasName());
+          LOGGER.warn("REINDEX status: New index (to drop): {}", reindexStatus.getNewIndexName());
+          LOGGER.warn("REINDEX status: Previous index: {}", reindexStatus.getOriginalIndexName());
+          LOGGER.warn("REINDEX status: Count total: {}", reindexStatus.getTotalCount());
+          LOGGER.warn("REINDEX status: Count indexed: {}", reindexStatus.getIndexedCount());
+          LOGGER.warn("REINDEX status: Start time: {}", reindexStatus.getStartTime());
           dropIndex(reindexStatus.getNewIndexName());
         }
 
@@ -599,7 +599,7 @@ public class SearchServiceImpl implements SearchService {
         return false;
       } finally {
         reindexStatus.setEndTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
-        LOGGER.info("REINDEX status: End Time: " + reindexStatus.getEndTime());
+        LOGGER.info("REINDEX status: End Time: {}", reindexStatus.getEndTime());
       }
       return true;
 

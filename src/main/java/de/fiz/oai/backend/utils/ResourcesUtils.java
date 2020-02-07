@@ -18,11 +18,11 @@ public class ResourcesUtils {
   public static String getResourceFileAsString(final String fileName, final ServletContext servletContext) {
     try (InputStream is = servletContext.getResourceAsStream(fileName)) {
       if (is == null) {
-        LOGGER.warn("TEMP-DEBUG: is is null, file URL: " + servletContext.getResource(fileName));
+        LOGGER.warn("TEMP-DEBUG: is is null, file URL: {}", servletContext.getResource(fileName));
         return null;
       }
       try (InputStreamReader isr = new InputStreamReader(is); BufferedReader reader = new BufferedReader(isr)) {
-        LOGGER.info("Reading file: " + fileName);
+        LOGGER.info("Reading file: {}", fileName);
         return reader.lines().collect(Collectors.joining(System.lineSeparator()));
       }
     } catch (final IOException e) {

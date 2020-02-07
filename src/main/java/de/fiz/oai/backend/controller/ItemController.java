@@ -66,14 +66,14 @@ public class ItemController extends AbstractController {
   @Produces(MediaType.APPLICATION_JSON)
   public Item getItem(@PathParam("identifier") String identifier, @QueryParam("format") String format,
       @QueryParam("content") Boolean content, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws WebApplicationException, IOException {
 
     if (content == null) {
       content = false;
     }
 
     final Item item = itemService.read(identifier, format, content);
-    LOGGER.info("getItem: " + item);
+    LOGGER.info("getItem: {} ", item);
 
     if (item == null) {
       throw new WebApplicationException(Status.NOT_FOUND);
@@ -87,15 +87,15 @@ public class ItemController extends AbstractController {
   public SearchResult<Item> searchItems(@QueryParam("rows") Integer rows,
       @QueryParam("set") String set, @QueryParam("format") String format, @QueryParam("from") String from,
       @QueryParam("until") String until, @QueryParam("content") Boolean content, @QueryParam("lastItemId") String lastItemId, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws WebApplicationException, IOException {
 
-    LOGGER.info("rows: " + rows);
-    LOGGER.info("set: " + set);
-    LOGGER.info("format: " + format);
-    LOGGER.info("from: " + from);
-    LOGGER.info("until: " + until);
-    LOGGER.info("content: " + content);
-    LOGGER.info("lastItemId: " + lastItemId);
+    LOGGER.info("rows: {}", rows);
+    LOGGER.info("set: {}", set);
+    LOGGER.info("format: {}", format);
+    LOGGER.info("from: {}", from);
+    LOGGER.info("until: {}", until);
+    LOGGER.info("content: {}", content);
+    LOGGER.info("lastItemId: {}", lastItemId);
     
     Date fromDate = null;
     Date untilDate = null;
@@ -132,7 +132,7 @@ public class ItemController extends AbstractController {
   @DELETE
   @Path("/{identifier}")
   public void deleteItem(@PathParam("identifier") String identifier, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws WebApplicationException, IOException {
 
     if (StringUtils.isBlank(identifier)) {
       throw new BadRequestException("identifier to delete cannot be empty!");
@@ -150,7 +150,7 @@ public class ItemController extends AbstractController {
   @Produces(MediaType.APPLICATION_JSON)
   public Item createItem(@FormDataParam("content") String content, @FormDataParam("item") Item item,
       @Context HttpServletRequest request, @Context HttpServletResponse response) {
-    LOGGER.info("createItem item: " + item.toString());
+    LOGGER.info("createItem item: {}", item.toString());
 
     if (!content.contains(item.getIdentifier())) {
       throw new WebApplicationException("Cannot find the identifier in the content!", Status.BAD_REQUEST);

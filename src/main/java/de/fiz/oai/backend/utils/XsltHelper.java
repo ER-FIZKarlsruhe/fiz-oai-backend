@@ -57,7 +57,8 @@ public class XsltHelper {
       TransformerFactory factory = TransformerFactory.newInstance("com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl", null);
       factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "all");
       factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "all");
-
+      factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+      
       final Transformer transformer = factory.newTransformer(xsltSource);
       transformer.setOutputProperty(OutputKeys.METHOD, "xml");
       transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");

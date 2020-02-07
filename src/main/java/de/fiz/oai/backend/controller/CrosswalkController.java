@@ -49,8 +49,6 @@ public class CrosswalkController extends AbstractController {
   @Inject
   CrosswalkService crosswalkService;
 
-  private Logger LOGGER = LoggerFactory.getLogger(CrosswalkController.class);
-
   @GET
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)

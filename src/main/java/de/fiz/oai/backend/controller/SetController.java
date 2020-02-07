@@ -54,14 +54,11 @@ public class SetController extends AbstractController {
   @Inject
   SetService setService;
 
-  private Logger LOGGER = LoggerFactory.getLogger(SetController.class);
-  
-  
   @GET
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
   public Set getSet(@PathParam("name") String name ,  @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws WebApplicationException, IOException {
 
     if (name == null || StringUtils.isBlank(name)) {
       throw new BadRequestException("name QueryParam cannot be empty!");
@@ -79,7 +76,7 @@ public class SetController extends AbstractController {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   public List<Set> getAllSets( @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws WebApplicationException, IOException {
     final List<Set> setList = setService.readAll();
     
     return setList;
@@ -88,7 +85,7 @@ public class SetController extends AbstractController {
   @DELETE
   @Path("/{name}")
   public void deleteSet(@PathParam("name") String name, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws WebApplicationException, IOException {
 
     if (StringUtils.isBlank(name)) {
       throw new BadRequestException("name to delete cannot be empty!");

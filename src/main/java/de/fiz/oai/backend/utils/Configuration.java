@@ -90,7 +90,7 @@ public class Configuration {
           confFolderPath = new File(tomcatRoot, "conf").getAbsolutePath();
         }
 
-        LOGGER.info("Use confFolderPath: " + confFolderPath);
+        LOGGER.info("Use confFolderPath: {}", confFolderPath);
         
         return confFolderPath;
     }
@@ -106,7 +106,7 @@ public class Configuration {
             } finally {
                 reader.close();
             }
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOGGER.error("Unable to read property file: {}", file.getAbsolutePath());
             return false;
         }
@@ -126,7 +126,7 @@ public class Configuration {
                 builder.append(entry.getKey() + " : " + entry.getValue() + "\n");
             }
         }
-        LOGGER.info("Using the following configuration: \n" + builder.toString());
+        LOGGER.info("Using the following configuration: \n{}", builder.toString());
     }
 
 }

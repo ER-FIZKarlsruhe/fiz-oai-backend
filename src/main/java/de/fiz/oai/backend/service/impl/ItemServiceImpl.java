@@ -15,19 +15,15 @@
  */
 package de.fiz.oai.backend.service.impl;
 
-import de.fiz.oai.backend.dao.*;
-import de.fiz.oai.backend.exceptions.FormatValidationException;
-import de.fiz.oai.backend.exceptions.UnknownFormatException;
-import de.fiz.oai.backend.models.*;
-import de.fiz.oai.backend.service.ItemService;
-import de.fiz.oai.backend.service.SearchService;
-import de.fiz.oai.backend.utils.Configuration;
-import de.fiz.oai.backend.utils.XsltHelper;
-import org.apache.commons.lang3.StringUtils;
-import org.jvnet.hk2.annotations.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -38,15 +34,29 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.jvnet.hk2.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
+
+import de.fiz.oai.backend.dao.DAOContent;
+import de.fiz.oai.backend.dao.DAOCrosswalk;
+import de.fiz.oai.backend.dao.DAOFormat;
+import de.fiz.oai.backend.dao.DAOItem;
+import de.fiz.oai.backend.dao.DAOSet;
+import de.fiz.oai.backend.exceptions.FormatValidationException;
+import de.fiz.oai.backend.exceptions.UnknownFormatException;
+import de.fiz.oai.backend.models.Content;
+import de.fiz.oai.backend.models.Crosswalk;
+import de.fiz.oai.backend.models.Format;
+import de.fiz.oai.backend.models.Item;
+import de.fiz.oai.backend.models.SearchResult;
+import de.fiz.oai.backend.service.ItemService;
+import de.fiz.oai.backend.service.SearchService;
+import de.fiz.oai.backend.utils.Configuration;
+import de.fiz.oai.backend.utils.XsltHelper;
 
 @Service
 public class ItemServiceImpl implements ItemService {
@@ -74,7 +84,7 @@ public class ItemServiceImpl implements ItemService {
   @Override
   public Item read(String identifier, String format, Boolean readContent) throws IOException {
     final Item item = daoItem.read(identifier);
-    LOGGER.debug("getItem: " + item);
+    LOGGER.debug("getItem: {}", item);
 
     if (item != null && format == null) {
       format = item.getIngestFormat();
@@ -125,7 +135,6 @@ public class ItemServiceImpl implements ItemService {
     // Create Crosswalk content
     createCrosswalks(item, itemFormats);
 
-    // TODO For indexing its important that oai_dc content exits!
     searchService.createDocument(newItem);
 
     return newItem;
@@ -226,12 +235,17 @@ public class ItemServiceImpl implements ItemService {
    */
   private void validate(String schemaLocation, String xml) throws IOException {
     URL schemaLocationUrl = new URL(schemaLocation);
-    Source xsdSource = new StreamSource(new InputStreamReader(schemaLocationUrl.openStream()));
-    SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-    Schema schema;
     try {
-      schema = schemaFactory.newSchema(xsdSource);
+      Source xsdSource = new StreamSource(new InputStreamReader(schemaLocationUrl.openStream()));
+      SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+      schemaFactory.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+      schemaFactory.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+      
+      Schema schema = schemaFactory.newSchema(xsdSource);
       Validator validator = schema.newValidator();
+      validator.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+      validator.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+      
       Source xmlSource = new StreamSource(new StringReader(xml));
       validator.validate(xmlSource);
     } catch (SAXException e) {
