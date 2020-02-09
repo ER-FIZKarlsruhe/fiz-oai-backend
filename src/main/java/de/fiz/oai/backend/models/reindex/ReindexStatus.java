@@ -1,6 +1,6 @@
 package de.fiz.oai.backend.models.reindex;
 
-import com.datastax.driver.core.ResultSet;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
 
 public class ReindexStatus {
 

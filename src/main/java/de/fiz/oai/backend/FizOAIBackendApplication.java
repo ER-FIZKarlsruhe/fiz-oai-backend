@@ -20,8 +20,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
 
 import de.fiz.oai.backend.utils.CassandraUtils;
 import de.fiz.oai.backend.utils.ClusterManager;
@@ -44,9 +43,9 @@ public class FizOAIBackendApplication extends ResourceConfig {
         if (config.isApplicationConfigured()) {
             try {
                 ClusterManager cm = ClusterManager.getInstance();
-                Session session = cm.getCassandraSession();
-                LOGGER.info("Using Cassandra Driver {}", Cluster.getDriverVersion());
-                LOGGER.info("Connected to cluster: {}", cm.getCluster().getMetadata().getClusterName());
+                CqlSession session = cm.getCassandraSession();
+                //LOGGER.info("Using Cassandra Driver {}", Cluster.getDriverVersion());
+                //LOGGER.info("Connected to cluster: {}", cm.getCluster().getMetadata().getClusterName());
                 LOGGER.debug(CassandraUtils.getClusterTopologyInformation(session));
                 applicationReady = true;
                 LOGGER.info("FIZ OAI Backend has started and is now accepting requests");

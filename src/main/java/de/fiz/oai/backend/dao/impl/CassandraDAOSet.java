@@ -24,11 +24,12 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.session.Session;
 
 import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.exceptions.NotFoundException;
@@ -51,7 +52,7 @@ public class CassandraDAOSet implements DAOSet {
 
   public Set read(String name) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     PreparedStatement prepared = preparedStatements.get("read");
     if (prepared == null) {
@@ -88,7 +89,7 @@ public class CassandraDAOSet implements DAOSet {
 
   public List<Set> readAll() throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     final List<Set> allSets = new ArrayList<Set>();
 
@@ -105,7 +106,7 @@ public class CassandraDAOSet implements DAOSet {
 
   public Set create(Set set) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     if (StringUtils.isBlank(set.getName())) {
       throw new IOException("Set's name cannot be empty!");
@@ -147,7 +148,7 @@ public class CassandraDAOSet implements DAOSet {
     }
 
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     PreparedStatement prepared = preparedStatements.get("delete");
     if (prepared == null) {

@@ -36,15 +36,11 @@
       <version>3.0.1</version>
       <scope>provided</scope>
     </dependency>
+
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-jcl</artifactId>
-      <version>1.7.25</version>
-    </dependency>
-    <dependency>
-      <groupId>com.datastax.cassandra</groupId>
-      <artifactId>cassandra-driver-core</artifactId>
-      <version>3.8.0</version>
+      <groupId>com.datastax.oss</groupId>
+      <artifactId>java-driver-core</artifactId>
+      <version>4.4.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -121,6 +117,13 @@
       <artifactId>jackson-dataformat-xml</artifactId>
       <version>2.10.1</version>
     </dependency>
+    
+  <dependency>
+     <groupId>org.apache.logging.log4j</groupId>
+     <artifactId>log4j-slf4j-impl</artifactId>
+     <version>2.9.0</version>
+  </dependency>
+
   </dependencies>
 
   <build>
@@ -194,6 +197,18 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      
+        <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.1.1</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.shared</groupId>
+            <artifactId>maven-dependency-analyzer</artifactId>
+            <version>1.11.1</version>
+          </dependency>
+        </dependencies>
       </plugin>
     </plugins>
   </build>

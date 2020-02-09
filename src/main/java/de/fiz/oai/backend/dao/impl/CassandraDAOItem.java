@@ -24,11 +24,12 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 
 import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.exceptions.NotFoundException;
@@ -50,7 +51,7 @@ public class CassandraDAOItem implements DAOItem {
 
   public Item read(String identifier) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     PreparedStatement prepared = preparedStatements.get("read");
     if (prepared == null) {
@@ -79,7 +80,7 @@ public class CassandraDAOItem implements DAOItem {
     final Item item = new Item();
     item.setIdentifier(resultRow.getString(ITEM_IDENTIFIER));
     item.setDatestamp(resultRow.getString(ITEM_DATESTAMP));
-    item.setDeleteFlag(resultRow.getBool(ITEM_DELETEFLAG));
+    item.setDeleteFlag(resultRow.getBoolean(ITEM_DELETEFLAG));
     item.setIngestFormat(resultRow.getString(ITEM_INGESTFORMAT));
 
     return item;
@@ -87,7 +88,7 @@ public class CassandraDAOItem implements DAOItem {
 
   public Item create(Item item) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     if (StringUtils.isBlank(item.getIdentifier())) {
       throw new IllegalArgumentException("Item's identifier cannot be empty!");
@@ -136,7 +137,7 @@ public class CassandraDAOItem implements DAOItem {
     }
 
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     PreparedStatement prepared = preparedStatements.get("delete");
     if (prepared == null) {
@@ -163,32 +164,29 @@ public class CassandraDAOItem implements DAOItem {
 
   public long getCount() throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     StringBuilder selectStmt = new StringBuilder();
     selectStmt.append("SELECT ");
     selectStmt.append(ITEM_IDENTIFIER);
     selectStmt.append(" FROM ");
     selectStmt.append(TABLENAME_ITEM);
-
-    ResultSet prepareResult = session.execute(selectStmt.toString());
+    
+    SimpleStatement statement = SimpleStatement.newInstance(selectStmt.toString());
+    ResultSet prepareResult = session.execute(statement);
     long i = 0;
-
-    if (!prepareResult.isExhausted()) {
-      for (@SuppressWarnings("unused")
-      Row row : prepareResult) {
-        if ((prepareResult.getAvailableWithoutFetching() < 10) && !prepareResult.isFullyFetched()) {
-          prepareResult.fetchMoreResults();
-        }
-        i++;
-      }
+    
+    //TODO this is the slow asynchronous approach. Replace it with the async one, see https://docs.datastax.com/en/developer/java-driver/4.4/manual/core/paging/#asynchronous-paging
+    for (Row row : prepareResult) {
+      i++;
     }
+ 
     return i;
   }
 
   public ResultSet getAllItemsResultSet() throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     StringBuilder selectStmt = new StringBuilder();
     selectStmt.append("SELECT ");
@@ -203,18 +201,14 @@ public class CassandraDAOItem implements DAOItem {
 
     List<Item> itemsRetrieved = new ArrayList<Item>();
     int i = 0;
-    if (!resultSet.isExhausted()) {
-      for (final Row row : resultSet) {
-        if ((resultSet.getAvailableWithoutFetching() < itemsToRetrieve) && !resultSet.isFullyFetched()) {
-          resultSet.fetchMoreResults();
-        }
-        itemsRetrieved.add(populateItem(row));
-        i++;
-        if (itemsToRetrieve < i) {
-          break;
-        }
-      }
+
+    //TODO this is the slow asynchronous approach. Replace it with the async one, see https://docs.datastax.com/en/developer/java-driver/4.4/manual/core/paging/#asynchronous-paging
+    for (Row row : resultSet) {
+      itemsRetrieved.add(populateItem(row));
+      i++;
     }
+    
+
     return itemsRetrieved;
   }
 

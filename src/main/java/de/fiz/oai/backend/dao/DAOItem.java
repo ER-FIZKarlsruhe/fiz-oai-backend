@@ -20,7 +20,7 @@ import java.util.List;
 
 import org.jvnet.hk2.annotations.Contract;
 
-import com.datastax.driver.core.ResultSet;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
 
 import de.fiz.oai.backend.models.Item;
 

@@ -24,11 +24,12 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.session.Session;
 
 import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.exceptions.NotFoundException;
@@ -50,7 +51,7 @@ public class CassandraDAOFormat implements DAOFormat {
 
   public Format read(String metadataPrefix) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     PreparedStatement prepared = preparedStatements.get("read");
     if (prepared == null) {
@@ -76,7 +77,7 @@ public class CassandraDAOFormat implements DAOFormat {
 
   public List<Format> readAll() throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     final List<Format> allFormats = new ArrayList<Format>();
 
@@ -103,7 +104,7 @@ public class CassandraDAOFormat implements DAOFormat {
 
   public Format create(Format format) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     if (StringUtils.isBlank(format.getMetadataPrefix())) {
       throw new IOException("Format's MetadataPrefix cannot be empty!");
@@ -143,7 +144,7 @@ public class CassandraDAOFormat implements DAOFormat {
     }
 
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     PreparedStatement prepared = preparedStatements.get("delete");
     if (prepared == null) {

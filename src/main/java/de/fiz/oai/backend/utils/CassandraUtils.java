@@ -17,9 +17,10 @@ package de.fiz.oai.backend.utils;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 
 import de.fiz.oai.backend.dao.impl.CassandraDAOContent;
 import de.fiz.oai.backend.dao.impl.CassandraDAOCrosswalk;
@@ -29,18 +30,19 @@ import de.fiz.oai.backend.dao.impl.CassandraDAOSet;
 
 public class CassandraUtils {
 
-    public static String getClusterTopologyInformation(Session session) {
+    public static String getClusterTopologyInformation(CqlSession  session) {
         StringBuilder resultBuilder = new StringBuilder();
-        String query = "SELECT * FROM system.peers;";
-        ResultSet rs = session.execute(query);
+        SimpleStatement statement =
+            SimpleStatement.newInstance("SELECT * FROM system.peers;");
+        ResultSet rs = session.execute(statement);
         for (Row row : rs.all()) {
-            resultBuilder.append(row.getInet("peer") + " | ");
+            resultBuilder.append(row.getInetAddress("peer") + " | ");
             resultBuilder.append(row.getString("data_center") + "\n");
         }
         return resultBuilder.toString();
     }
 
-    public static void createKeyspace(Session session, String replicationFactor, String keyspace) {
+    public static void createKeyspace(CqlSession session, String replicationFactor, String keyspace) {
         if (StringUtils.isBlank(replicationFactor)) {
             throw new IllegalArgumentException("Cannot create keyspace " + keyspace + " because the property cassandra.replication.factor is not set.");
         }
@@ -50,8 +52,9 @@ public class CassandraUtils {
         createStmt.append(keyspace);
         createStmt.append(" WITH REPLICATION = ");
         createStmt.append(replicationFactor);
-
-        session.execute(createStmt.toString());
+        SimpleStatement statement =
+            SimpleStatement.newInstance(createStmt.toString());
+        session.execute(statement);
 
         // Create tables
         final StringBuilder useStmt = new StringBuilder();
