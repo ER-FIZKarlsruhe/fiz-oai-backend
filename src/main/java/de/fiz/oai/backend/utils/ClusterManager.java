@@ -37,6 +37,7 @@ public class ClusterManager {
 
     private final String keyspace;
     private final String replicationFactor;
+    private final String datacenter;
 
     private CqlSession[] sessions = null;
     private int rrSessionCounter = 0;
@@ -49,14 +50,20 @@ public class ClusterManager {
         LOGGER.info("Init cluster manager");
         Configuration config = Configuration.getInstance();
         keyspace = config.getProperty("cassandra.keyspace");
+        datacenter = config.getProperty("cassandra.datacenter");
         replicationFactor = config.getProperty("cassandra.replication.factor");
         String cassandraNodes = config.getProperty("cassandra.nodes");
         Collection<InetSocketAddress> addresses = parseCassandraHostConfig(cassandraNodes, config);
-
+        LOGGER.info("Found keyspace {}", keyspace);
+        LOGGER.info("Found datacenter {}", datacenter);
+        LOGGER.info("Found replicationFactor {}", replicationFactor);
+        LOGGER.info("Found cassandraNodes {}", cassandraNodes);
+        
         String username = config.getProperty("cassandra.username");
         String password = config.getProperty("cassandra.password");
+        
         LOGGER.info("Found username {}", username);
-        LOGGER.info("Found password {}", password);
+        LOGGER.info("Found password {}", "***");
         oiaBuilder = CqlSession.builder();
         
         for (InetSocketAddress address : addresses) {
@@ -66,7 +73,7 @@ public class ClusterManager {
             
             oiaBuilder.addContactPoint(new InetSocketAddress(address.getHostString(), containerPort));
             oiaBuilder.withKeyspace(keyspace);
-            oiaBuilder.withLocalDatacenter("datacenter1");
+            oiaBuilder.withLocalDatacenter(datacenter);
             
             if (!StringUtils.isBlank(username) && !StringUtils.isBlank(password)) {
               oiaBuilder.withAuthCredentials(username, password);

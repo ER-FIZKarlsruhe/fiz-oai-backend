@@ -129,12 +129,12 @@ public class CassandraDAOSet implements DAOSet {
       insertStmt.append(SET_TAGS);
       insertStmt.append(", ");      
       insertStmt.append(SET_STATUS);
-      insertStmt.append(") VALUES (?, ?, ?, ?, ?)");
+      insertStmt.append(") VALUES (?, ?, ?, ?, ?, ?)");
 
       prepared = session.prepare(insertStmt.toString());
       preparedStatements.put("create", prepared);
     }
-    BoundStatement bound = prepared.bind(set.getName(), set.getSpec(), set.getDescription(), set.getxPaths(),
+    BoundStatement bound = prepared.bind(set.getName(), set.getSpec(), set.getDescription(), set.getxPaths(),set.getTags(),
         set.getStatus());
     session.execute(bound);
 
