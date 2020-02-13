@@ -174,7 +174,7 @@ public class ItemServiceImpl implements ItemService {
     // validate(ingestFormat.getSchemaLocation(), new
     // String(item.getContent().getContent(), "UTF-8"));
 
-    daoContent.delete(item);
+    daoContent.delete(oldItem);
 
     Item updateItem = daoItem.create(item);
     daoContent.create(item.getContent());
