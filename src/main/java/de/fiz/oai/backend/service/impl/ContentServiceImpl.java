@@ -24,6 +24,7 @@ import org.jvnet.hk2.annotations.Service;
 
 import de.fiz.oai.backend.dao.DAOContent;
 import de.fiz.oai.backend.models.Content;
+import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.service.ContentService;
 
 @Service

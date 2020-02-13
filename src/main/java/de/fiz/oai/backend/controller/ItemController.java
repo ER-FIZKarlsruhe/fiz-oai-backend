@@ -196,6 +196,13 @@ public class ItemController extends AbstractController {
       throw new WebApplicationException("Cannot find the identifier in the content!", Status.BAD_REQUEST);
     }
 
+    Content itemContent = new Content();
+    itemContent.setContent(content);
+    itemContent.setFormat(item.getIngestFormat());
+    itemContent.setIdentifier(item.getIdentifier());
+
+    item.setContent(itemContent);
+    
     Item updateItem = null;
     try {
       updateItem = itemService.update(item);

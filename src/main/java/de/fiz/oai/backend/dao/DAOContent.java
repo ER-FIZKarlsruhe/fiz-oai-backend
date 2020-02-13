@@ -21,6 +21,7 @@ import java.util.List;
 import org.jvnet.hk2.annotations.Contract;
 
 import de.fiz.oai.backend.models.Content;
+import de.fiz.oai.backend.models.Item;
 
 @Contract
 public interface DAOContent {
@@ -57,4 +58,11 @@ public interface DAOContent {
    * @param identifier the identifier
    */
   void delete(String identifier, String format) throws IOException;
+  
+  /**
+   * Delete an Content.
+   *
+   * @param item the item
+   */
+  void delete(Item item) throws IOException;
 }

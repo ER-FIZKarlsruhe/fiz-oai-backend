@@ -21,6 +21,7 @@ import java.util.List;
 import org.jvnet.hk2.annotations.Contract;
 
 import de.fiz.oai.backend.models.Content;
+import de.fiz.oai.backend.models.Item;
 
 @Contract
 public interface ContentService {
@@ -65,4 +66,5 @@ public interface ContentService {
    * @param format the format
    */
   void delete(String identifier, String format) throws IOException;
+
 }

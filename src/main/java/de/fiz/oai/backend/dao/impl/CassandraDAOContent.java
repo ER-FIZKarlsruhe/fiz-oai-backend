@@ -35,6 +35,7 @@ import com.datastax.oss.driver.api.core.session.Session;
 import de.fiz.oai.backend.dao.DAOContent;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Content;
+import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.utils.ClusterManager;
 
 @Service
@@ -190,5 +191,14 @@ public class CassandraDAOContent implements DAOContent {
       throw new NotFoundException("The deletion was not applied for the given identifier and format.");
     }
   }
+  
+  @Override
+  public void delete(Item item) throws IOException {
+	for (String format : item.getFormats()) {
+	    delete(item.getIdentifier(), format);
+	}
+  }
+  
+  
 
 }
