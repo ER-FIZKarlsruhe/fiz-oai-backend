@@ -43,6 +43,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.fiz.oai.backend.exceptions.AlreadyExistsException;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.models.Item;
@@ -169,6 +170,8 @@ public class ItemController extends AbstractController {
       newItem = itemService.create(item);
     } catch (NotFoundException e) {
       throw new WebApplicationException(Status.NOT_FOUND);
+    } catch (AlreadyExistsException e) {
+        throw new WebApplicationException(Status.CONFLICT);
     } catch (Exception e) {
       LOGGER.error("An unexpected exception occured", e);
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);

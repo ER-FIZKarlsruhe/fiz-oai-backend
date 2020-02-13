@@ -46,6 +46,7 @@ import de.fiz.oai.backend.dao.DAOCrosswalk;
 import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.dao.DAOSet;
+import de.fiz.oai.backend.exceptions.AlreadyExistsException;
 import de.fiz.oai.backend.exceptions.FormatValidationException;
 import de.fiz.oai.backend.exceptions.UnknownFormatException;
 import de.fiz.oai.backend.models.Content;
@@ -113,6 +114,12 @@ public class ItemServiceImpl implements ItemService {
 
   @Override
   public Item create(Item item) throws IOException {
+	  
+	// Check for existing item
+	Item oldItem = daoItem.read(item.getIdentifier());
+	if (oldItem != null) {
+		throw new AlreadyExistsException("item " + oldItem.getIdentifier() + " already exists");
+	}
 
     // Overwrite datestamp!
     item.setDatestamp(StringUtils.isNotEmpty(item.getDatestamp()) ? item.getDatestamp() : Configuration.getDateformat().format(new Date()));
