@@ -153,7 +153,7 @@ public class ItemServiceImpl implements ItemService {
 
   @Override
   public Item update(Item item) throws IOException {
-    Item oldItem = daoItem.read(item.getIdentifier());
+    Item oldItem = read(item.getIdentifier(), null, false);
     List<String> itemFormats = new ArrayList<>();
 
     if (oldItem == null) {
