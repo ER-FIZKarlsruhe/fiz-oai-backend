@@ -98,10 +98,14 @@ public class ItemServiceImpl implements ItemService {
     if (item != null) {
       // Retrieve sets and formats from elasticsearch
       Map<String, Object> esResponse = searchService.readDocument(item);
-      List<String> sets = esResponse.get("sets") instanceof List<?> ? (List<String>)esResponse.get("sets") : List.of((String)esResponse.get("sets"));
-      List<String> formats = esResponse.get("formats") instanceof List<?> ? (List<String>)esResponse.get("formats") : List.of((String)esResponse.get("formats"));
-      item.setSets(sets);
-      item.setFormats(formats);
+      if (esResponse.get("sets") != null) {
+          List<String> sets = esResponse.get("sets") instanceof List<?> ? (List<String>)esResponse.get("sets") : List.of((String)esResponse.get("sets"));
+          item.setSets(sets);
+      }
+      if (esResponse.get("formats") != null) {
+          List<String> formats = esResponse.get("formats") instanceof List<?> ? (List<String>)esResponse.get("formats") : List.of((String)esResponse.get("formats"));
+          item.setFormats(formats);
+      }
     }
 
     return item;
