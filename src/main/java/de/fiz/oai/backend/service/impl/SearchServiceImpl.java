@@ -37,8 +37,6 @@ import org.apache.http.HttpHost;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.get.GetRequest;
@@ -353,28 +351,29 @@ public class SearchServiceImpl implements SearchService {
 
   }
 
-  @SuppressWarnings("deprecation")
+//  @SuppressWarnings("deprecation")
   @Override
   public boolean createIndex(final String indexName, final String mapping) throws IOException {
     if (StringUtils.isNotBlank(indexName) && StringUtils.isNotBlank(mapping)) {
       try (RestHighLevelClient client = new RestHighLevelClient(
           RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
-        CreateIndexRequest request = new CreateIndexRequest(indexName);
-        CreateIndexResponse createIndexResponse = client.indices().create(request, RequestOptions.DEFAULT);
-        if (createIndexResponse.isAcknowledged()) {
-          RestClient lowLevelClient = client.getLowLevelClient();
-
-          Request requestMapping = new Request("PUT", "/" + indexName + "/_mapping");
-          requestMapping.setJsonEntity(mapping);
-          Response responseMapping = lowLevelClient.performRequest(requestMapping);
-          if (responseMapping.getStatusLine().getStatusCode() == 200
-              || responseMapping.getStatusLine().getStatusCode() == 204) {
-            return true;
-          }
+//        CreateIndexRequest request = new CreateIndexRequest(indexName);
+//        CreateIndexResponse createIndexResponse = client.indices().create(request, RequestOptions.DEFAULT);
+//        if (createIndexResponse.isAcknowledged()) {
+        RestClient lowLevelClient = client.getLowLevelClient();
+//        Request requestMapping = new Request("PUT", "/" + indexName + "/_mapping");
+        Request requestMapping = new Request("PUT", "/" + indexName);
+        requestMapping.setJsonEntity(mapping);
+        Response responseMapping = lowLevelClient.performRequest(requestMapping);
+        if (responseMapping.getStatusLine().getStatusCode() == 200
+            || responseMapping.getStatusLine().getStatusCode() == 204) {
+          return true;
         }
+//        }
       }
     }
-    LOGGER.info("CREATE status: something went wrong, return false");
+    LOGGER.error("CREATE status: something went wrongduring creation of index " + indexName + " and mapping: "
+        + mapping.substring(0, 30) + "...");
     return false;
   }
 
@@ -605,7 +604,7 @@ public class SearchServiceImpl implements SearchService {
           dropIndex(reindexStatus.getNewIndexName());
         }
 
-      } catch (IOException e) {
+      } catch (Exception e) {
         LOGGER.error(
             "REINDEX status: Something went wrong while processing the new index " + reindexStatus.getNewIndexName(),
             e);
