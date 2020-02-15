@@ -44,7 +44,6 @@ public class CassandraDAOSet implements DAOSet {
   public static final String SET_DESCRIPTION = "description";
   public static final String SET_XPATHS = "xpaths";
   public static final String SET_TAGS = "tags";
-  public static final String SET_STATUS = "status";
 
   public static final String TABLENAME_SET = "oai_set";
 
@@ -83,7 +82,6 @@ public class CassandraDAOSet implements DAOSet {
     set.setDescription(resultRow.getString(SET_DESCRIPTION));
     set.setxPaths(resultRow.getMap(SET_XPATHS, String.class, String.class));
     set.setTags(resultRow.getList(SET_TAGS, String.class));
-    set.setStatus(resultRow.getString(SET_STATUS));
     return set;
   }
 
@@ -127,15 +125,12 @@ public class CassandraDAOSet implements DAOSet {
       insertStmt.append(SET_XPATHS);
       insertStmt.append(", ");
       insertStmt.append(SET_TAGS);
-      insertStmt.append(", ");      
-      insertStmt.append(SET_STATUS);
-      insertStmt.append(") VALUES (?, ?, ?, ?, ?, ?)");
+      insertStmt.append(") VALUES (?, ?, ?, ?, ?)");
 
       prepared = session.prepare(insertStmt.toString());
       preparedStatements.put("create", prepared);
     }
-    BoundStatement bound = prepared.bind(set.getName(), set.getSpec(), set.getDescription(), set.getxPaths(),set.getTags(),
-        set.getStatus());
+    BoundStatement bound = prepared.bind(set.getName(), set.getSpec(), set.getDescription(), set.getxPaths(),set.getTags());
     session.execute(bound);
 
     return set;

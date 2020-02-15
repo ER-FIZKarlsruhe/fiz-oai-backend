@@ -31,7 +31,7 @@ public class Item {
   
   private List<String> formats;
   
-  private java.util.Set<String> tags;
+  private List<String> tags;
 
   private String ingestFormat;
 
@@ -77,11 +77,11 @@ public class Item {
     this.formats = formats;
   }
 
-  public java.util.Set<String> getTags() {
+  public List<String> getTags() {
     return tags;
   }
 
-  public void setTags(java.util.Set<String> tags) {
+  public void setTags(List<String> tags) {
     this.tags = tags;
   }
 

@@ -73,7 +73,7 @@ public class CassandraUtils {
         createTableItemStmt.append(CassandraDAOItem.ITEM_DELETEFLAG);
         createTableItemStmt.append(" boolean, ");
         createTableItemStmt.append(CassandraDAOItem.ITEM_TAGS);
-        createTableItemStmt.append(" set<text>, ");
+        createTableItemStmt.append(" list<text>, ");
         createTableItemStmt.append(CassandraDAOItem.ITEM_INGESTFORMAT);
         createTableItemStmt.append(" text, PRIMARY KEY (");
         createTableItemStmt.append(CassandraDAOItem.ITEM_IDENTIFIER);
@@ -94,9 +94,7 @@ public class CassandraUtils {
         createTableSetStmt.append(CassandraDAOSet.SET_XPATHS);
         createTableSetStmt.append(" map<text, text>, ");
         createTableSetStmt.append(CassandraDAOSet.SET_TAGS);
-        createTableSetStmt.append(" list<text>, ");
-        createTableSetStmt.append(CassandraDAOSet.SET_STATUS);
-        createTableSetStmt.append(" text, PRIMARY KEY (");
+        createTableSetStmt.append(" list<text>, PRIMARY KEY (");
         createTableSetStmt.append(CassandraDAOSet.SET_NAME);
         createTableSetStmt.append("));");
         session.execute(createTableSetStmt.toString());
@@ -112,8 +110,6 @@ public class CassandraUtils {
         createTableFormatStmt.append(CassandraDAOFormat.FORMAT_SCHEMANAMESPACE);
         createTableFormatStmt.append(" text, ");
         createTableFormatStmt.append(CassandraDAOFormat.FORMAT_IDENTIFIERXPATH);
-        createTableFormatStmt.append(" text, ");
-        createTableFormatStmt.append(CassandraDAOFormat.FORMAT_STATUS);
         createTableFormatStmt.append(" text, PRIMARY KEY (");
         createTableFormatStmt.append(CassandraDAOFormat.FORMAT_METADATAPREFIX);
         createTableFormatStmt.append("));");

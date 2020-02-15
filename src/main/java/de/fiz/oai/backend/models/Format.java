@@ -21,7 +21,6 @@ public class Format {
   private String schemaLocation;
   private String schemaNamespace;
   private String identifierXpath;
-  private String status;
 
   public String getMetadataPrefix() {
     return metadataPrefix;
@@ -53,13 +52,5 @@ public class Format {
 
   public void setIdentifierXpath(String identifierXpath) {
     this.identifierXpath = identifierXpath;
-  }
-
-  public String getStatus() {
-    return status;
-  }
-
-  public void setStatus(String status) {
-    this.status = status;
   }
 }

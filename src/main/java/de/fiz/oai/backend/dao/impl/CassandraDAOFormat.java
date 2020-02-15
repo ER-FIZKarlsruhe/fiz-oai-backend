@@ -43,7 +43,6 @@ public class CassandraDAOFormat implements DAOFormat {
   public static final String FORMAT_SCHEMALOCATION = "schemalocation";
   public static final String FORMAT_SCHEMANAMESPACE = "schemanamespace";
   public static final String FORMAT_IDENTIFIERXPATH = "identifierxpath";
-  public static final String FORMAT_STATUS = "status";
 
   public static final String TABLENAME_FORMAT = "oai_format";
 
@@ -98,7 +97,6 @@ public class CassandraDAOFormat implements DAOFormat {
     format.setMetadataPrefix(row.getString(FORMAT_METADATAPREFIX));
     format.setSchemaLocation(row.getString(FORMAT_SCHEMALOCATION));
     format.setSchemaNamespace(row.getString(FORMAT_SCHEMANAMESPACE));
-    format.setStatus(row.getString(FORMAT_STATUS));
     return format;
   }
 
@@ -123,9 +121,7 @@ public class CassandraDAOFormat implements DAOFormat {
       insertStmt.append(FORMAT_SCHEMALOCATION);
       insertStmt.append(", ");
       insertStmt.append(FORMAT_SCHEMANAMESPACE);
-      insertStmt.append(", ");
-      insertStmt.append(FORMAT_STATUS);
-      insertStmt.append(") VALUES (?, ?, ?, ?, ?)");
+      insertStmt.append(") VALUES (?, ?, ?, ?)");
 
       prepared = session.prepare(insertStmt.toString());
       preparedStatements.put("create", prepared);

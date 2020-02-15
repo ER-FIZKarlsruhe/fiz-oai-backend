@@ -30,8 +30,6 @@ public class Set {
   
   private List<String> tags;
 
-  private String status;
-
   public String getName() {
     return name;
   }
@@ -70,14 +68,6 @@ public class Set {
 
   public void setTags(List<String> tags) {
     this.tags = tags;
-  }
-
-  public String getStatus() {
-    return status;
-  }
-
-  public void setStatus(String status) {
-    this.status = status;
   }
 
 }
