@@ -108,6 +108,7 @@ public class Item {
     itemMap.put("deleteFlag", deleteFlag);
     itemMap.put("ingestFormat", ingestFormat);
     itemMap.put("sets", sets);
+    itemMap.put("tags", tags);
     return itemMap;
   }
 
