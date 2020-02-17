@@ -297,6 +297,8 @@ public class SearchServiceImpl implements SearchService {
 
       SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
 
+      LOGGER.info("DEBUG: searchResponse: {}", searchResponse.toString());
+      
       SearchHits searchHits = searchResponse.getHits();
       Iterator<SearchHit> iterator = searchHits.iterator();
       List<String> idsRetrieved = new ArrayList<>();
