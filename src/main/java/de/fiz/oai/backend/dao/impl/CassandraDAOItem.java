@@ -82,7 +82,8 @@ public class CassandraDAOItem implements DAOItem {
     item.setDatestamp(resultRow.getString(ITEM_DATESTAMP));
     item.setDeleteFlag(resultRow.getBoolean(ITEM_DELETEFLAG));
     item.setIngestFormat(resultRow.getString(ITEM_INGESTFORMAT));
-
+    item.setTags(resultRow.getList(ITEM_TAGS, String.class));
+    
     return item;
   }
 
