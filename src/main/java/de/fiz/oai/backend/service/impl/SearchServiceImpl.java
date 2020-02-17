@@ -308,7 +308,7 @@ public class SearchServiceImpl implements SearchService {
 
       SearchResult<String> idResult = new SearchResult<>();
       idResult.setSize(idsRetrieved.size());
-      idResult.setTotal(searchResponse.getHits().getTotalHits().value);
+      idResult.setTotal(searchResponse.getHits().totalHits);
       idResult.setData(idsRetrieved);
 
       // Send the lastItemId if there are elements after it
