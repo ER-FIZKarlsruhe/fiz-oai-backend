@@ -263,10 +263,10 @@ public class SearchServiceImpl implements SearchService {
       queryBuilder
           .filter(QueryBuilders.rangeQuery("datestamp").from(Configuration.getDateformat().format(finalFromDate))
               .to(Configuration.getDateformat().format(finalUntilDate)));
-      queryBuilder.filter(QueryBuilders.termQuery("formats.keyword", format));
+      queryBuilder.filter(QueryBuilders.termQuery("formats", format));
 
       if (StringUtils.isNotBlank(set)) {
-        queryBuilder.filter(QueryBuilders.termQuery("sets.keyword", set));
+        queryBuilder.filter(QueryBuilders.termQuery("sets", set));
       }
 
       final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
