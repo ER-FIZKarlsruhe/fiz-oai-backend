@@ -169,6 +169,7 @@ public class ItemController extends AbstractController {
 
     try {
       newItem = itemService.create(item);
+      response.setStatus(HttpServletResponse.SC_CREATED);
     } catch (NotFoundException e) {
       throw new WebApplicationException(Status.NOT_FOUND);
     } catch (AlreadyExistsException e) {
