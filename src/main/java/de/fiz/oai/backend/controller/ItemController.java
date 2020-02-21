@@ -152,7 +152,7 @@ public class ItemController extends AbstractController {
   public Item createItem(@FormDataParam("content") String content, @FormDataParam("item") Item item,
       @Context HttpServletRequest request, @Context HttpServletResponse response) {
     LOGGER.info("createItem item: {}", item.toString());
-    LOGGER.info("content: {}", content);
+    LOGGER.debug("content: {}", content);
     
     if (!content.contains(item.getIdentifier())) {
       throw new WebApplicationException("Cannot find the identifier in the content!", Status.BAD_REQUEST);
