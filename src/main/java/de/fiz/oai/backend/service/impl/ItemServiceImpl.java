@@ -20,10 +20,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -84,31 +83,35 @@ public class ItemServiceImpl implements ItemService {
 
   @Override
   public Item read(String identifier, String format, Boolean readContent) throws IOException {
-    final Item item = daoItem.read(identifier);
+    Item item = daoItem.read(identifier);
     LOGGER.debug("getItem: {}", item);
 
-    if (item != null && format == null) {
-      format = item.getIngestFormat();
-    }
-
-    if (item != null && readContent) {
-      Content content = daoContent.read(identifier, format);
-      item.setContent(content);
-    }
-
     if (item != null) {
+      if (format == null) {
+        format = item.getIngestFormat();
+      }
+
+      if (readContent) {
+        Content content = daoContent.read(identifier, format);
+        item.setContent(content);
+      }
+
       // Retrieve sets and formats from elasticsearch
       Map<String, Object> esResponse = searchService.readDocument(item);
-      if (esResponse.get("sets") != null) {
-          List<String> sets = esResponse.get("sets") instanceof List<?> ? (List<String>)esResponse.get("sets") : List.of((String)esResponse.get("sets"));
+      if (esResponse != null) {
+        if (esResponse.get("sets") != null) {
+          List<String> sets = esResponse.get("sets") instanceof List<?> ? (List<String>) esResponse.get("sets") : List.of((String) esResponse.get("sets"));
           item.setSets(sets);
-      }
-      if (esResponse.get("formats") != null) {
-          List<String> formats = esResponse.get("formats") instanceof List<?> ? (List<String>)esResponse.get("formats") : List.of((String)esResponse.get("formats"));
+        }
+        if (esResponse.get("formats") != null) {
+          List<String> formats = esResponse.get("formats") instanceof List<?> ? (List<String>) esResponse.get("formats") : List.of((String) esResponse.get("formats"));
           item.setFormats(formats);
+        }
+      } else {
+        LOGGER.warn("Couldn't find item ${item} in index.");
+        item = null;
       }
     }
-
     return item;
   }
 
@@ -116,13 +119,10 @@ public class ItemServiceImpl implements ItemService {
   public Item create(Item item) throws IOException {
 	  
 	// Check for existing item
-	Item oldItem = daoItem.read(item.getIdentifier());
+	Item oldItem = read(item.getIdentifier(), item.getIngestFormat(), false);
 	if (oldItem != null) {
 		throw new AlreadyExistsException("item " + oldItem.getIdentifier() + " already exists");
 	}
-
-    // Overwrite datestamp!
-    item.setDatestamp(StringUtils.isNotEmpty(item.getDatestamp()) ? item.getDatestamp() : Configuration.getDateformat().format(new Date()));
 
     // IngestFormat exists?
     Format ingestFormat = daoFormat.read(item.getIngestFormat());
@@ -130,18 +130,20 @@ public class ItemServiceImpl implements ItemService {
       throw new UnknownFormatException("Cannot find a Format for the given ingestFormat: " + item.getIngestFormat());
     }
 
-    List<String> itemFormats = new ArrayList<>();
-    itemFormats.add(item.getIngestFormat());
-
     // Validate xml against xsd
     // validate(ingestFormat.getSchemaLocation(), new
     // String(item.getContent().getContent(), "UTF-8"));
+
+    // Overwrite datestamp!
+    item.setDatestamp(StringUtils.isNotEmpty(item.getDatestamp()) ? item.getDatestamp() : Configuration.getDateformat().format(new Date()));
 
     // Create Item
     Item newItem = daoItem.create(item);
 
     // Create Content
     daoContent.create(item.getContent());
+
+    Set<String> itemFormats = Stream.of(item.getIngestFormat()).collect(Collectors.toCollection(HashSet::new));
 
     // Create Crosswalk content
     createCrosswalks(item, itemFormats);
@@ -154,21 +156,16 @@ public class ItemServiceImpl implements ItemService {
   @Override
   public Item update(Item item) throws IOException {
     Item oldItem = read(item.getIdentifier(), null, false);
-    List<String> itemFormats = new ArrayList<>();
 
     if (oldItem == null) {
       throw new WebApplicationException(Status.NOT_FOUND);
     }
-
-    // Overwrite datestamp!
-    item.setDatestamp(StringUtils.isNotEmpty(item.getDatestamp()) ? item.getDatestamp() : Configuration.getDateformat().format(new Date()));
 
     // Format exists?
     Format ingestFormat = daoFormat.read(item.getIngestFormat());
     if (ingestFormat == null) {
       throw new UnknownFormatException("Cannot find a Fomat for the given ingestFormat: " + item.getIngestFormat());
     }
-    itemFormats.add(item.getIngestFormat());
 
     // Validate xml against xsd
     // validate(ingestFormat.getSchemaLocation(), new
@@ -176,9 +173,13 @@ public class ItemServiceImpl implements ItemService {
 
     daoContent.delete(oldItem);
 
+    // Overwrite datestamp!
+    item.setDatestamp(StringUtils.isNotEmpty(item.getDatestamp()) ? item.getDatestamp() : Configuration.getDateformat().format(new Date()));
+
     Item updateItem = daoItem.create(item);
     daoContent.create(item.getContent());
 
+    Set<String> itemFormats = Stream.of(item.getIngestFormat()).collect(Collectors.toCollection(HashSet::new));
     createCrosswalks(item, itemFormats);
 //    updateItem.setFormats(itemFormats);
 
@@ -264,7 +265,7 @@ public class ItemServiceImpl implements ItemService {
     }
   }
 
-  private void createCrosswalks(Item item, List<String> itemFormats) throws IOException {
+  private void createCrosswalks(Item item, Set<String> itemFormats) throws IOException {
     List<Crosswalk> crosswalks = daoCrosswalk.readAll();
     for (Crosswalk currentWalk : crosswalks) {
       if (currentWalk.getFormatFrom().equals(item.getIngestFormat())) {
