@@ -80,7 +80,7 @@ import de.fiz.oai.backend.utils.XPathHelper;
 @Service
 public class SearchServiceImpl implements SearchService {
 
-  private Logger LOGGER = LoggerFactory.getLogger(SearchServiceImpl.class);
+  private static Logger LOGGER = LoggerFactory.getLogger(SearchServiceImpl.class);
 
   String elastisearchHost = Configuration.getInstance().getProperty("elasticsearch.host");
 

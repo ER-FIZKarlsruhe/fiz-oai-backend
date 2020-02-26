@@ -33,7 +33,7 @@ import de.fiz.oai.backend.service.SetService;
 @Service
 public class SetServiceImpl implements SetService {
 
-  private Logger LOGGER = LoggerFactory.getLogger(SetServiceImpl.class);
+  private static Logger LOGGER = LoggerFactory.getLogger(SetServiceImpl.class);
   
   @Inject
   DAOSet daoSet;

@@ -31,7 +31,7 @@ import de.fiz.oai.backend.utils.Configuration;
 @Path("/info")
 public class InfoController extends AbstractController{
 
-    private Logger LOGGER = LoggerFactory.getLogger(InfoController.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(InfoController.class);
 
     @GET
     @Path("/version")

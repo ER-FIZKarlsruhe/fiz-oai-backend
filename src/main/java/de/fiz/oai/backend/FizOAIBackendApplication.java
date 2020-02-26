@@ -30,11 +30,11 @@ public class FizOAIBackendApplication extends ResourceConfig {
 
     private static final long serialVersionUID = -1156196714908290948L;
 
-    private Logger LOGGER = LoggerFactory.getLogger(FizOAIBackendApplication.class);
-
-    private boolean applicationReady = false;
+    private static Logger LOGGER = LoggerFactory.getLogger(FizOAIBackendApplication.class);
 
     private static FizOAIBackendApplication instance;
+
+    private boolean applicationReady = false;
 
     public FizOAIBackendApplication() {
         instance = this;

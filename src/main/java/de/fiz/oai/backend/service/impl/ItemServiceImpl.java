@@ -61,7 +61,7 @@ import de.fiz.oai.backend.utils.XsltHelper;
 @Service
 public class ItemServiceImpl implements ItemService {
 
-  private Logger LOGGER = LoggerFactory.getLogger(ItemServiceImpl.class);
+  private static Logger LOGGER = LoggerFactory.getLogger(ItemServiceImpl.class);
 
   @Inject
   DAOItem daoItem;
@@ -84,14 +84,17 @@ public class ItemServiceImpl implements ItemService {
   @Override
   public Item read(String identifier, String format, Boolean readContent) throws IOException {
     Item item = daoItem.read(identifier);
-    LOGGER.debug("getItem: {}", item);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("getItem: {}", item);
+    }
 
     if (item != null) {
-      if (format == null) {
-        format = item.getIngestFormat();
-      }
 
       if (readContent) {
+        if (format == null) {
+          format = item.getIngestFormat();
+        }
+
         Content content = daoContent.read(identifier, format);
         item.setContent(content);
       }
