@@ -15,62 +15,66 @@
  */
 package de.fiz.oai.backend.utils;
 
+import org.xml.sax.InputSource;
+
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 
 import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.*;
+import javax.xml.transform.sax.SAXSource;
+import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
-import org.w3c.dom.Document;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.InputSource;
-
 public class XsltHelper {
 
-  public static String transform(InputStream xml, InputStream xslt) throws IOException {
+  /** TransformerFactory for XSLT transforming. */
+  private static SAXTransformerFactory saxTransformerFactory;
+
+  public static String transform(StringReader xml, StringReader xslt) throws IOException {
     try {
-      DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-      dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+      final SAXSource xsltSource = new SAXSource(new InputSource(xslt));
 
-      final DocumentBuilder db = dbf.newDocumentBuilder();
-
-      db.setEntityResolver(new EntityResolver() {
-
-        @Override
-        public InputSource resolveEntity(String publicId, String systemId) {
-          return new InputSource(new StringReader(""));
-        }
-      });
-      final Document doc = db.parse(xml);
-      final Source xsltSource = new StreamSource(xslt);
-
-      TransformerFactory factory = TransformerFactory.newInstance("com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl", null);
-      factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "all");
-      factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "all");
-      factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-      
-      final Transformer transformer = factory.newTransformer(xsltSource);
+      final Transformer transformer = getTransformerFactory().newTransformer(xsltSource);
       transformer.setOutputProperty(OutputKeys.METHOD, "xml");
       transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+      transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
       final StreamResult result = new StreamResult(new StringWriter());
-      final Source source = new DOMSource(doc);
+      final StreamSource source = new StreamSource(xml);
+      // do the transformation
       transformer.transform(source, result);
-      String resultString = result.getWriter().toString();
 
+      String resultString = result.getWriter().toString();
       return resultString;
     } catch (Exception e) {
       throw new IOException(e.getMessage());
     }
   }
+
+
+  /**
+   * Create transformerFactory as singleton.
+   *
+   * @return TransformerFactory
+   * @throws TransformerFactoryConfigurationError
+   * @throws TransformerConfigurationException
+   */
+  private static SAXTransformerFactory getTransformerFactory() throws TransformerFactoryConfigurationError, TransformerConfigurationException {
+    if (saxTransformerFactory == null) {
+      TransformerFactory tf = TransformerFactory.newInstance("com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl", null);
+      if (tf.getFeature(SAXTransformerFactory.FEATURE)) {
+        tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "all");
+        tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "all");
+        tf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        saxTransformerFactory = (SAXTransformerFactory) tf;
+      } else {
+        throw new RuntimeException("Couldn't instantiate a SAXTransformerFactory.");
+      }
+    }
+    return saxTransformerFactory;
+  }
+
 }

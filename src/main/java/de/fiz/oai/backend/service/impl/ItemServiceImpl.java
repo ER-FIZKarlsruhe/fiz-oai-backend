@@ -272,9 +272,9 @@ public class ItemServiceImpl implements ItemService {
     List<Crosswalk> crosswalks = daoCrosswalk.readAll();
     for (Crosswalk currentWalk : crosswalks) {
       if (currentWalk.getFormatFrom().equals(item.getIngestFormat())) {
-        try (ByteArrayInputStream contentStream = new ByteArrayInputStream(item.getContent().getContent().getBytes());
-            ByteArrayInputStream xsltStream = new ByteArrayInputStream(currentWalk.getXsltStylesheet().getBytes())) {
-          String newXml = XsltHelper.transform(contentStream, xsltStream);
+        try (StringReader contentReader = new StringReader(item.getContent().getContent());
+            StringReader xsltReader = new StringReader(currentWalk.getXsltStylesheet())) {
+          String newXml = XsltHelper.transform(contentReader, xsltReader);
           Content crosswalkConten = new Content();
           crosswalkConten.setContent(newXml);
           crosswalkConten.setIdentifier(item.getIdentifier());

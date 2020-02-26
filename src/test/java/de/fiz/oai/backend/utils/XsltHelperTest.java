@@ -16,9 +16,11 @@
 package de.fiz.oai.backend.utils;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.StringReader;
 
 import org.junit.Test;
 
@@ -64,12 +66,12 @@ public class XsltHelperTest {
     
     
     try {
-      String newXml = XsltHelper.transform(new ByteArrayInputStream(xml.getBytes()), new ByteArrayInputStream(xslt.getBytes()));
+      String newXml = XsltHelper.transform(new StringReader(xml), new StringReader(xslt));
       System.out.println("newXml " + newXml);
       assertTrue(newXml.contains("John"));
       assertTrue(newXml.contains("Morka"));
     } catch (IOException e) {
-      Assert.fail();
+      fail();
     }
   }
 }
