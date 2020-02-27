@@ -131,7 +131,7 @@
   </dependencies>
 
   <build>
-    <finalName>fiz-oai-backend</finalName>
+    <finalName>oai-backend</finalName>
     <plugins>
 
       <plugin>
