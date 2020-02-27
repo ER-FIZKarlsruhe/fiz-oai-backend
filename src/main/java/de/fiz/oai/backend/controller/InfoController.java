@@ -18,11 +18,13 @@ package de.fiz.oai.backend.controller;
 import java.io.IOException;
 import java.util.Map;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import de.fiz.oai.backend.service.TransformerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +35,9 @@ public class InfoController extends AbstractController{
 
     private static Logger LOGGER = LoggerFactory.getLogger(InfoController.class);
 
+    @Inject
+    TransformerService transformerService;
+
     @GET
     @Path("/version")
     @Produces(MediaType.TEXT_PLAIN)
@@ -42,7 +47,7 @@ public class InfoController extends AbstractController{
         Configuration.getInstance().getProperty("name");
         return "0.1.0";
     }
-    
+
     @GET
     @Path("/configuration")
     @Produces(MediaType.TEXT_PLAIN)
@@ -56,9 +61,15 @@ public class InfoController extends AbstractController{
               builder.append(entry.getKey() + " : " + entry.getValue() + "\n");
           }
       }
-      
+
       return builder.toString();
     }
-    
+
+    @GET
+    @Path("/pool")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getPoolInfo() {
+        return transformerService.info();
+    }
 
 }

@@ -15,7 +15,6 @@
  */
 package de.fiz.oai.backend.service.impl;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
@@ -34,6 +33,7 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
+import de.fiz.oai.backend.service.TransformerService;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -56,7 +56,6 @@ import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.service.ItemService;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.utils.Configuration;
-import de.fiz.oai.backend.utils.XsltHelper;
 
 @Service
 public class ItemServiceImpl implements ItemService {
@@ -80,6 +79,9 @@ public class ItemServiceImpl implements ItemService {
 
   @Inject
   SearchService searchService;
+
+  @Inject
+  TransformerService transformerService;
 
   @Override
   public Item read(String identifier, String format, Boolean readContent) throws IOException {
@@ -272,16 +274,13 @@ public class ItemServiceImpl implements ItemService {
     List<Crosswalk> crosswalks = daoCrosswalk.readAll();
     for (Crosswalk currentWalk : crosswalks) {
       if (currentWalk.getFormatFrom().equals(item.getIngestFormat())) {
-        try (StringReader contentReader = new StringReader(item.getContent().getContent());
-            StringReader xsltReader = new StringReader(currentWalk.getXsltStylesheet())) {
-          String newXml = XsltHelper.transform(contentReader, xsltReader);
-          Content crosswalkConten = new Content();
-          crosswalkConten.setContent(newXml);
-          crosswalkConten.setIdentifier(item.getIdentifier());
-          crosswalkConten.setFormat(currentWalk.getFormatTo());
-          daoContent.create(crosswalkConten);
-          itemFormats.add(currentWalk.getFormatTo());
-        }
+        String newXml = transformerService.transform(item.getContent().getContent(), currentWalk.getName());
+        Content crosswalkConten = new Content();
+        crosswalkConten.setContent(newXml);
+        crosswalkConten.setIdentifier(item.getIdentifier());
+        crosswalkConten.setFormat(currentWalk.getFormatTo());
+        daoContent.create(crosswalkConten);
+        itemFormats.add(currentWalk.getFormatTo());
       }
     }
   }

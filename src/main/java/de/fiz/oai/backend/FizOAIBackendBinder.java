@@ -17,6 +17,8 @@ package de.fiz.oai.backend;
 
 import javax.inject.Singleton;
 
+import de.fiz.oai.backend.service.*;
+import de.fiz.oai.backend.utils.TransformerServiceImpl;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import de.fiz.oai.backend.dao.DAOContent;
@@ -29,12 +31,6 @@ import de.fiz.oai.backend.dao.impl.CassandraDAOCrosswalk;
 import de.fiz.oai.backend.dao.impl.CassandraDAOFormat;
 import de.fiz.oai.backend.dao.impl.CassandraDAOItem;
 import de.fiz.oai.backend.dao.impl.CassandraDAOSet;
-import de.fiz.oai.backend.service.ContentService;
-import de.fiz.oai.backend.service.CrosswalkService;
-import de.fiz.oai.backend.service.FormatService;
-import de.fiz.oai.backend.service.ItemService;
-import de.fiz.oai.backend.service.SearchService;
-import de.fiz.oai.backend.service.SetService;
 import de.fiz.oai.backend.service.impl.ContentServiceImpl;
 import de.fiz.oai.backend.service.impl.CrosswalkServiceImpl;
 import de.fiz.oai.backend.service.impl.FormatServiceImpl;
@@ -57,5 +53,6 @@ public class FizOAIBackendBinder extends AbstractBinder {
       bind(ItemServiceImpl.class).to(ItemService.class).in(Singleton.class);
       bind(SearchServiceImpl.class).to(SearchService.class).in(Singleton.class);
       bind(SetServiceImpl.class).to(SetService.class).in(Singleton.class);
+      bind(TransformerServiceImpl.class).to(TransformerService.class).in(Singleton.class);
   }
 }

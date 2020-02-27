@@ -78,7 +78,6 @@ public interface SearchService {
   
   /**
    * 
-   * @param offset
    * @param rows
    * @param set
    * @param format
@@ -90,7 +89,5 @@ public interface SearchService {
    */
   SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate, Item lastItem)
       throws IOException;
-
-  
 
 }
