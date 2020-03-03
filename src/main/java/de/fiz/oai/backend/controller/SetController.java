@@ -1,3 +1,18 @@
+/*
+ * Copyright 2019 FIZ Karlsruhe - Leibniz-Institut fuer Informationsinfrastruktur GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.fiz.oai.backend.controller;
 
 import java.io.IOException;
@@ -39,14 +54,11 @@ public class SetController extends AbstractController {
   @Inject
   SetService setService;
 
-  private Logger LOGGER = LoggerFactory.getLogger(SetController.class);
-  
-  
   @GET
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
   public Set getSet(@PathParam("name") String name ,  @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws WebApplicationException, IOException {
 
     if (name == null || StringUtils.isBlank(name)) {
       throw new BadRequestException("name QueryParam cannot be empty!");
@@ -64,7 +76,7 @@ public class SetController extends AbstractController {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   public List<Set> getAllSets( @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws WebApplicationException, IOException {
     final List<Set> setList = setService.readAll();
     
     return setList;
@@ -73,7 +85,7 @@ public class SetController extends AbstractController {
   @DELETE
   @Path("/{name}")
   public void deleteSet(@PathParam("name") String name, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws WebApplicationException, IOException {
 
     if (StringUtils.isBlank(name)) {
       throw new BadRequestException("name to delete cannot be empty!");

@@ -1,13 +1,27 @@
+/*
+ * Copyright 2019 FIZ Karlsruhe - Leibniz-Institut fuer Informationsinfrastruktur GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.fiz.oai.backend.service.impl;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -19,6 +33,7 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
+import de.fiz.oai.backend.service.TransformerService;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -30,6 +45,7 @@ import de.fiz.oai.backend.dao.DAOCrosswalk;
 import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.dao.DAOSet;
+import de.fiz.oai.backend.exceptions.AlreadyExistsException;
 import de.fiz.oai.backend.exceptions.FormatValidationException;
 import de.fiz.oai.backend.exceptions.UnknownFormatException;
 import de.fiz.oai.backend.models.Content;
@@ -40,12 +56,11 @@ import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.service.ItemService;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.utils.Configuration;
-import de.fiz.oai.backend.utils.XsltHelper;
 
 @Service
 public class ItemServiceImpl implements ItemService {
 
-  private Logger LOGGER = LoggerFactory.getLogger(ItemServiceImpl.class);
+  private static Logger LOGGER = LoggerFactory.getLogger(ItemServiceImpl.class);
 
   @Inject
   DAOItem daoItem;
@@ -65,52 +80,79 @@ public class ItemServiceImpl implements ItemService {
   @Inject
   SearchService searchService;
 
+  @Inject
+  TransformerService transformerService;
+
   @Override
   public Item read(String identifier, String format, Boolean readContent) throws IOException {
-    final Item item = daoItem.read(identifier);
-    LOGGER.debug("getItem: " + item);
-
-    if (item != null && format == null) {
-      format = item.getIngestFormat();
+    Item item = daoItem.read(identifier);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("getItem: {}", item);
     }
 
-    if (item != null && readContent) {
-      Content content = daoContent.read(identifier, format);
-      item.setContent(content);
-    }
+    if (item != null) {
 
+      if (readContent) {
+        if (format == null) {
+          format = item.getIngestFormat();
+        }
+
+        Content content = daoContent.read(identifier, format);
+        item.setContent(content);
+      }
+
+      // Retrieve sets and formats from elasticsearch
+      Map<String, Object> esResponse = searchService.readDocument(item);
+      if (esResponse != null) {
+        if (esResponse.get("sets") != null) {
+          List<String> sets = esResponse.get("sets") instanceof List<?> ? (List<String>) esResponse.get("sets") : List.of((String) esResponse.get("sets"));
+          item.setSets(sets);
+        }
+        if (esResponse.get("formats") != null) {
+          List<String> formats = esResponse.get("formats") instanceof List<?> ? (List<String>) esResponse.get("formats") : List.of((String) esResponse.get("formats"));
+          item.setFormats(formats);
+        }
+      } else {
+        LOGGER.warn("Couldn't find item ${item} in index.");
+        item = null;
+      }
+    }
     return item;
   }
 
   @Override
   public Item create(Item item) throws IOException {
-    Item newItem = null;
-    List<String> itemFormats = new ArrayList<String>();
-
-    // Overwrite datestamp!
-    item.setDatestamp(Configuration.getDateformat().format(new Date()));
+	  
+	// Check for existing item
+	Item oldItem = read(item.getIdentifier(), item.getIngestFormat(), false);
+	if (oldItem != null) {
+		throw new AlreadyExistsException("item " + oldItem.getIdentifier() + " already exists");
+	}
 
     // IngestFormat exists?
     Format ingestFormat = daoFormat.read(item.getIngestFormat());
     if (ingestFormat == null) {
       throw new UnknownFormatException("Cannot find a Format for the given ingestFormat: " + item.getIngestFormat());
     }
-    itemFormats.add(item.getIngestFormat());
 
     // Validate xml against xsd
     // validate(ingestFormat.getSchemaLocation(), new
     // String(item.getContent().getContent(), "UTF-8"));
 
+    // Overwrite datestamp!
+    item.setDatestamp(StringUtils.isNotEmpty(item.getDatestamp()) ? item.getDatestamp() : Configuration.getDateformat().format(new Date()));
+
     // Create Item
-    newItem = daoItem.create(item);
+    Item newItem = daoItem.create(item);
 
     // Create Content
     daoContent.create(item.getContent());
 
+    Set<String> itemFormats = Stream.of(item.getIngestFormat()).collect(Collectors.toCollection(HashSet::new));
+
     // Create Crosswalk content
     createCrosswalks(item, itemFormats);
 
-    // TODO For indexing its important that oai_dc content exits!
     searchService.createDocument(newItem);
 
     return newItem;
@@ -118,32 +160,31 @@ public class ItemServiceImpl implements ItemService {
 
   @Override
   public Item update(Item item) throws IOException {
-    Item oldItem = daoItem.read(item.getIdentifier());
-    List<String> itemFormats = new ArrayList<String>();
+    Item oldItem = read(item.getIdentifier(), null, false);
 
     if (oldItem == null) {
       throw new WebApplicationException(Status.NOT_FOUND);
     }
-
-    // Overwrite datestamp!
-    item.setDatestamp(Configuration.getDateformat().format(new Date()));
 
     // Format exists?
     Format ingestFormat = daoFormat.read(item.getIngestFormat());
     if (ingestFormat == null) {
       throw new UnknownFormatException("Cannot find a Fomat for the given ingestFormat: " + item.getIngestFormat());
     }
-    itemFormats.add(item.getIngestFormat());
 
     // Validate xml against xsd
     // validate(ingestFormat.getSchemaLocation(), new
     // String(item.getContent().getContent(), "UTF-8"));
 
-    // TODO delete all old content with item identifier
+    daoContent.delete(oldItem);
+
+    // Overwrite datestamp!
+    item.setDatestamp(StringUtils.isNotEmpty(item.getDatestamp()) ? item.getDatestamp() : Configuration.getDateformat().format(new Date()));
 
     Item updateItem = daoItem.create(item);
     daoContent.create(item.getContent());
 
+    Set<String> itemFormats = Stream.of(item.getIngestFormat()).collect(Collectors.toCollection(HashSet::new));
     createCrosswalks(item, itemFormats);
 //    updateItem.setFormats(itemFormats);
 
@@ -171,14 +212,14 @@ public class ItemServiceImpl implements ItemService {
 
     final SearchResult<String> idResult = searchService.search(rows, setName, format, from, until, lastItem);
 
-    List<Item> itemList = new ArrayList<Item>();
+    List<Item> itemList = new ArrayList<>();
 
     for (String s : idResult.getData()) {
       Item item = read(s, format, readContent);
       itemList.add(item);
     }
 
-    SearchResult<Item> itemResult = new SearchResult<Item>();
+    SearchResult<Item> itemResult = new SearchResult<>();
     itemResult.setData(itemList);
     itemResult.setSize(itemList.size());
     itemResult.setTotal(idResult.getTotal());
@@ -190,9 +231,16 @@ public class ItemServiceImpl implements ItemService {
   @Override
   public void delete(String identifier) throws IOException {
 
-    // TODO read item and set delete flag, save to cassandra
+    Item itemToDelete = daoItem.read(identifier);
 
-    // TODO update index
+    itemToDelete.setDeleteFlag(true);
+    itemToDelete.setDatestamp(Configuration.getDateformat().format(new Date()));
+
+    daoItem.create(itemToDelete);
+
+    searchService.updateDocument(itemToDelete);
+    
+    // DELETE Content in all formats? Or keep it?
   }
 
   /**
@@ -204,12 +252,17 @@ public class ItemServiceImpl implements ItemService {
    */
   private void validate(String schemaLocation, String xml) throws IOException {
     URL schemaLocationUrl = new URL(schemaLocation);
-    Source xsdSource = new StreamSource(new InputStreamReader(schemaLocationUrl.openStream()));
-    SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-    Schema schema;
     try {
-      schema = schemaFactory.newSchema(xsdSource);
+      Source xsdSource = new StreamSource(new InputStreamReader(schemaLocationUrl.openStream()));
+      SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+      schemaFactory.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+      schemaFactory.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+      
+      Schema schema = schemaFactory.newSchema(xsdSource);
       Validator validator = schema.newValidator();
+      validator.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+      validator.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+      
       Source xmlSource = new StreamSource(new StringReader(xml));
       validator.validate(xmlSource);
     } catch (SAXException e) {
@@ -217,20 +270,17 @@ public class ItemServiceImpl implements ItemService {
     }
   }
 
-  private void createCrosswalks(Item item, List<String> itemFormats) throws IOException {
+  private void createCrosswalks(Item item, Set<String> itemFormats) throws IOException {
     List<Crosswalk> crosswalks = daoCrosswalk.readAll();
     for (Crosswalk currentWalk : crosswalks) {
       if (currentWalk.getFormatFrom().equals(item.getIngestFormat())) {
-        try (ByteArrayInputStream contentStream = new ByteArrayInputStream(item.getContent().getContent().getBytes());
-            ByteArrayInputStream xsltStream = new ByteArrayInputStream(currentWalk.getXsltStylesheet().getBytes())) {
-          String newXml = XsltHelper.transform(contentStream, xsltStream);
-          Content crosswalkConten = new Content();
-          crosswalkConten.setContent(newXml);
-          crosswalkConten.setIdentifier(item.getIdentifier());
-          crosswalkConten.setFormat(currentWalk.getFormatTo());
-          daoContent.create(crosswalkConten);
-          itemFormats.add(currentWalk.getFormatTo());
-        }
+        String newXml = transformerService.transform(item.getContent().getContent(), currentWalk.getName());
+        Content crosswalkConten = new Content();
+        crosswalkConten.setContent(newXml);
+        crosswalkConten.setIdentifier(item.getIdentifier());
+        crosswalkConten.setFormat(currentWalk.getFormatTo());
+        daoContent.create(crosswalkConten);
+        itemFormats.add(currentWalk.getFormatTo());
       }
     }
   }

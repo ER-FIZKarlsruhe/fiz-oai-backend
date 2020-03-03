@@ -1,3 +1,18 @@
+/*
+ * Copyright 2019 FIZ Karlsruhe - Leibniz-Institut fuer Informationsinfrastruktur GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.fiz.oai.backend.dao.impl;
 
 import java.io.IOException;
@@ -9,11 +24,12 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.session.Session;
 
 import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.exceptions.NotFoundException;
@@ -27,7 +43,7 @@ public class CassandraDAOSet implements DAOSet {
   public static final String SET_SPEC = "spec";
   public static final String SET_DESCRIPTION = "description";
   public static final String SET_XPATHS = "xpaths";
-  public static final String SET_STATUS = "status";
+  public static final String SET_TAGS = "tags";
 
   public static final String TABLENAME_SET = "oai_set";
 
@@ -35,7 +51,7 @@ public class CassandraDAOSet implements DAOSet {
 
   public Set read(String name) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     PreparedStatement prepared = preparedStatements.get("read");
     if (prepared == null) {
@@ -65,13 +81,13 @@ public class CassandraDAOSet implements DAOSet {
     set.setName(resultRow.getString(SET_NAME));
     set.setDescription(resultRow.getString(SET_DESCRIPTION));
     set.setxPaths(resultRow.getMap(SET_XPATHS, String.class, String.class));
-    set.setStatus(resultRow.getString(SET_STATUS));
+    set.setTags(resultRow.getList(SET_TAGS, String.class));
     return set;
   }
 
   public List<Set> readAll() throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     final List<Set> allSets = new ArrayList<Set>();
 
@@ -88,7 +104,7 @@ public class CassandraDAOSet implements DAOSet {
 
   public Set create(Set set) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     if (StringUtils.isBlank(set.getName())) {
       throw new IOException("Set's name cannot be empty!");
@@ -108,14 +124,13 @@ public class CassandraDAOSet implements DAOSet {
       insertStmt.append(", ");
       insertStmt.append(SET_XPATHS);
       insertStmt.append(", ");
-      insertStmt.append(SET_STATUS);
+      insertStmt.append(SET_TAGS);
       insertStmt.append(") VALUES (?, ?, ?, ?, ?)");
 
       prepared = session.prepare(insertStmt.toString());
       preparedStatements.put("create", prepared);
     }
-    BoundStatement bound = prepared.bind(set.getName(), set.getSpec(), set.getDescription(), set.getxPaths(),
-        set.getStatus());
+    BoundStatement bound = prepared.bind(set.getName(), set.getSpec(), set.getDescription(), set.getxPaths(),set.getTags());
     session.execute(bound);
 
     return set;
@@ -128,7 +143,7 @@ public class CassandraDAOSet implements DAOSet {
     }
 
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     PreparedStatement prepared = preparedStatements.get("delete");
     if (prepared == null) {

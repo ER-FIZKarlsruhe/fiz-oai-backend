@@ -1,3 +1,18 @@
+/*
+ * Copyright 2019 FIZ Karlsruhe - Leibniz-Institut fuer Informationsinfrastruktur GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.fiz.oai.backend.dao.impl;
 
 import java.io.IOException;
@@ -9,11 +24,12 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.session.Session;
 
 import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.exceptions.NotFoundException;
@@ -27,7 +43,6 @@ public class CassandraDAOFormat implements DAOFormat {
   public static final String FORMAT_SCHEMALOCATION = "schemalocation";
   public static final String FORMAT_SCHEMANAMESPACE = "schemanamespace";
   public static final String FORMAT_IDENTIFIERXPATH = "identifierxpath";
-  public static final String FORMAT_STATUS = "status";
 
   public static final String TABLENAME_FORMAT = "oai_format";
 
@@ -35,7 +50,7 @@ public class CassandraDAOFormat implements DAOFormat {
 
   public Format read(String metadataPrefix) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     PreparedStatement prepared = preparedStatements.get("read");
     if (prepared == null) {
@@ -61,7 +76,7 @@ public class CassandraDAOFormat implements DAOFormat {
 
   public List<Format> readAll() throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     final List<Format> allFormats = new ArrayList<Format>();
 
@@ -82,13 +97,12 @@ public class CassandraDAOFormat implements DAOFormat {
     format.setMetadataPrefix(row.getString(FORMAT_METADATAPREFIX));
     format.setSchemaLocation(row.getString(FORMAT_SCHEMALOCATION));
     format.setSchemaNamespace(row.getString(FORMAT_SCHEMANAMESPACE));
-    format.setStatus(row.getString(FORMAT_STATUS));
     return format;
   }
 
   public Format create(Format format) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     if (StringUtils.isBlank(format.getMetadataPrefix())) {
       throw new IOException("Format's MetadataPrefix cannot be empty!");
@@ -107,9 +121,7 @@ public class CassandraDAOFormat implements DAOFormat {
       insertStmt.append(FORMAT_SCHEMALOCATION);
       insertStmt.append(", ");
       insertStmt.append(FORMAT_SCHEMANAMESPACE);
-      insertStmt.append(", ");
-      insertStmt.append(FORMAT_STATUS);
-      insertStmt.append(") VALUES (?, ?, ?, ?, ?)");
+      insertStmt.append(") VALUES (?, ?, ?, ?)");
 
       prepared = session.prepare(insertStmt.toString());
       preparedStatements.put("create", prepared);
@@ -128,7 +140,7 @@ public class CassandraDAOFormat implements DAOFormat {
     }
 
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     PreparedStatement prepared = preparedStatements.get("delete");
     if (prepared == null) {

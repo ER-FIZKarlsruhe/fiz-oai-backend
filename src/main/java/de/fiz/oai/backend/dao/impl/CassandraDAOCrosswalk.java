@@ -1,3 +1,18 @@
+/*
+ * Copyright 2019 FIZ Karlsruhe - Leibniz-Institut fuer Informationsinfrastruktur GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.fiz.oai.backend.dao.impl;
 
 import java.io.IOException;
@@ -10,11 +25,12 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.session.Session;
 
 import de.fiz.oai.backend.dao.DAOCrosswalk;
 import de.fiz.oai.backend.exceptions.NotFoundException;
@@ -36,7 +52,7 @@ public class CassandraDAOCrosswalk implements DAOCrosswalk {
   @Override
   public Crosswalk read(String metadataPrefix) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     PreparedStatement prepared = preparedStatements.get("read");
     if (prepared == null) {
@@ -63,7 +79,7 @@ public class CassandraDAOCrosswalk implements DAOCrosswalk {
   @Override
   public List<Crosswalk> readAll() throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     final List<Crosswalk> allCrosswalks = new ArrayList<Crosswalk>();
 
@@ -84,14 +100,14 @@ public class CassandraDAOCrosswalk implements DAOCrosswalk {
     crosswalk.setName(row.getString(CROSSWALK_NAME));
     crosswalk.setFormatFrom(row.getString(CROSSWALK_FORMAT_FROM));
     crosswalk.setFormatTo(row.getString(CROSSWALK_FORMAT_TO));
-    crosswalk.setXsltStylesheet(new String(row.getBytes(CROSSWALK_XSLT_STYLESHEET).array()));
+    crosswalk.setXsltStylesheet(new String(row.getByteBuffer(CROSSWALK_XSLT_STYLESHEET).array()));
     return crosswalk;
   }
 
   @Override
   public Crosswalk create(Crosswalk crosswalk) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     if (StringUtils.isBlank(crosswalk.getName())) {
       throw new IOException("Crosswalk name cannot be empty!");
@@ -132,7 +148,7 @@ public class CassandraDAOCrosswalk implements DAOCrosswalk {
     }
 
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     PreparedStatement prepared = preparedStatements.get("delete");
     if (prepared == null) {

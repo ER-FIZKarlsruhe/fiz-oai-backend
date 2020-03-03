@@ -8,35 +8,17 @@
             "type": "boolean"
         },
         "formats": {
-            "type": "text",
-            "fields": {
-                "keyword": {
-                    "type": "keyword",
-                    "ignore_above": 256
-                }
-            }
+            "type": "keyword"
         },
         "sets": {
-            "type": "text",
-            "fields": {
-                "keyword": {
-                    "type": "keyword",
-                    "ignore_above": 256
-                }
-            }
+            "type": "keyword"
         },
         "identifier": {
             "type": "keyword",
             "doc_values": true
         },
         "ingestFormat": {
-            "type": "text",
-            "fields": {
-                "keyword": {
-                    "type": "keyword",
-                    "ignore_above": 256
-                }
-            }
+            "type": "keyword"
         }
     }
 }

@@ -17,9 +17,9 @@ package de.fiz.oai.backend.exceptions;
 
 import java.io.IOException;
 
-public class FormatValidationException extends IOException{
+public class AlreadyExistsException extends IOException{
 
-  public FormatValidationException(String msg) {
+  public AlreadyExistsException(String msg) {
     super(msg);
   }
   

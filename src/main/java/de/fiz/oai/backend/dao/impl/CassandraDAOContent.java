@@ -1,3 +1,18 @@
+/*
+ * Copyright 2019 FIZ Karlsruhe - Leibniz-Institut fuer Informationsinfrastruktur GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.fiz.oai.backend.dao.impl;
 
 import java.io.IOException;
@@ -10,15 +25,17 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.session.Session;
 
 import de.fiz.oai.backend.dao.DAOContent;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Content;
+import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.utils.ClusterManager;
 
 @Service
@@ -34,7 +51,7 @@ public class CassandraDAOContent implements DAOContent {
 
   public Content read(String identifier, String format) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     PreparedStatement prepared = preparedStatements.get("read");
     if (prepared == null) {
@@ -61,7 +78,7 @@ public class CassandraDAOContent implements DAOContent {
   @Override
   public List<Content> readFormats(String identifier) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     PreparedStatement prepared = preparedStatements.get("readFormats");
     if (prepared == null) {
@@ -93,14 +110,14 @@ public class CassandraDAOContent implements DAOContent {
     final Content content = new Content();
     content.setIdentifier(resultRow.getString(CONTENT_IDENTIFIER));
     content.setFormat(resultRow.getString(CONTENT_FORMAT));
-    content.setContent(new String(resultRow.getBytes(CONTENT_CONTENT).array()));
+    content.setContent(new String(resultRow.getByteBuffer(CONTENT_CONTENT).array()));
 
     return content;
   }
 
   public Content create(Content content) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     if (StringUtils.isBlank(content.getIdentifier())) {
       throw new IOException("Contents name cannot be empty!");
@@ -149,7 +166,7 @@ public class CassandraDAOContent implements DAOContent {
     }
 
     ClusterManager manager = ClusterManager.getInstance();
-    Session session = manager.getCassandraSession();
+    CqlSession session = manager.getCassandraSession();
 
     PreparedStatement prepared = preparedStatements.get("delete");
     if (prepared == null) {
@@ -174,5 +191,14 @@ public class CassandraDAOContent implements DAOContent {
       throw new NotFoundException("The deletion was not applied for the given identifier and format.");
     }
   }
+  
+  @Override
+  public void delete(Item item) throws IOException {
+	for (String format : item.getFormats()) {
+	    delete(item.getIdentifier(), format);
+	}
+  }
+  
+  
 
 }
