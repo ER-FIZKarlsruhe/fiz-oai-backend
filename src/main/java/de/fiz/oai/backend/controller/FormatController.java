@@ -113,6 +113,7 @@ public class FormatController extends AbstractController {
   @Produces(MediaType.APPLICATION_JSON)
   public Format createFormat(Format format, @Context HttpServletRequest request,
       @Context HttpServletResponse response) {
+    LOGGER.info("createFormat format: {}", format.toString());
 
     if (StringUtils.isBlank(format.getMetadataPrefix())) {
       throw new WebApplicationException("Format metadataPrefix cannot be empty!", Status.BAD_REQUEST);
@@ -154,7 +155,8 @@ public class FormatController extends AbstractController {
   @Produces(MediaType.APPLICATION_JSON)
   public Format updateFormat(@PathParam("metadataPrefix") String metadataPrefix, Format format,
       @Context HttpServletRequest request, @Context HttpServletResponse response) {
-
+  
+	LOGGER.info("updateFormat format: {}", format.toString());
     if (StringUtils.isBlank(format.getMetadataPrefix())) {
       throw new WebApplicationException("Format metadataPrefix cannot be empty!", Status.BAD_REQUEST);
     }
