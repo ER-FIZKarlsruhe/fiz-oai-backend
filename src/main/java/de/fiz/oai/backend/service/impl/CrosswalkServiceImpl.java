@@ -23,47 +23,87 @@ import javax.inject.Inject;
 import org.jvnet.hk2.annotations.Service;
 
 import de.fiz.oai.backend.dao.DAOCrosswalk;
+import de.fiz.oai.backend.exceptions.AlreadyExistsException;
+import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Crosswalk;
+import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.service.CrosswalkService;
+import de.fiz.oai.backend.service.FormatService;
 
 @Service
 public class CrosswalkServiceImpl implements CrosswalkService {
 
-  @Inject
-  DAOCrosswalk daoCrosswalk; 
-  
-  @Override
-  public Crosswalk read(String name) throws IOException {
-    Crosswalk crosswalk = daoCrosswalk.read(name);
-    return crosswalk;
-  }
+	@Inject
+	DAOCrosswalk daoCrosswalk;
 
-  @Override
-  public Crosswalk create(Crosswalk content) throws IOException {
-    // TODO add more validations
-    // Does the format (referenced by formatFrom) exists?
-    // Does the format (referenced by formatTo) exists?
-    
-    Crosswalk newCrosswalk = daoCrosswalk.create(content);
-    return newCrosswalk;
-  }
+	@Inject
+	FormatService formatService;
 
-  @Override
-  public Crosswalk update(Crosswalk content) throws IOException {
-    // TODO Auto-generated method stub
-    return null;
-  }
+	@Override
+	public Crosswalk read(String name) throws IOException {
+		Crosswalk crosswalk = daoCrosswalk.read(name);
+		return crosswalk;
+	}
 
-  @Override
-  public List<Crosswalk> readAll() throws IOException {
-    List<Crosswalk> crosswalks = daoCrosswalk.readAll();
-    
-    return crosswalks;
-  }
+	@Override
+	public Crosswalk create(Crosswalk crosswalk) throws IOException {
+		// Does the crosswalk already exists?
+		Crosswalk oldCrosswalk = daoCrosswalk.read(crosswalk.getName());
+		if (oldCrosswalk != null) {
+			throw new AlreadyExistsException("Crosswalk with name " + crosswalk.getName() + " already exist.");
+		}
 
-  @Override
-  public void delete(String name) throws IOException {
-    daoCrosswalk.delete(name);
-  }
+		// Does the from format (referenced by crosswalk) exists?
+		Format from = formatService.read(crosswalk.getFormatFrom());
+		if (from == null) {
+			throw new NotFoundException("Format from " + crosswalk.getFormatFrom() + " not found.");
+		}
+
+		// Does the to format (referenced by crosswalk) exists?
+		Format to = formatService.read(crosswalk.getFormatTo());
+		if (to == null) {
+			throw new NotFoundException("Forma to " + crosswalk.getFormatTo() + " not found.");
+		}
+
+		Crosswalk newCrosswalk = daoCrosswalk.create(crosswalk);
+		return newCrosswalk;
+	}
+
+	@Override
+	public Crosswalk update(Crosswalk crosswalk) throws IOException {
+		// Does the format (referenced by crosswalk) exists?
+		Crosswalk oldCrosswalk = daoCrosswalk.read(crosswalk.getName());
+		if (oldCrosswalk == null) {
+			throw new NotFoundException("Crosswalk with name " + crosswalk.getName() + " not found.");
+		}
+
+		// Does the format (referenced by crosswalk) exists?
+		Format from = formatService.read(crosswalk.getFormatFrom());
+		if (from == null) {
+			throw new NotFoundException("Format from " + crosswalk.getFormatFrom() + " not found.");
+		}
+
+		// Does the format (referenced by crosswalk) exists?
+		Format to = formatService.read(crosswalk.getFormatTo());
+		if (to == null) {
+			throw new NotFoundException("Forma to " + crosswalk.getFormatTo() + " not found.");
+		}
+
+		daoCrosswalk.delete(crosswalk.getName());
+		Crosswalk newCrosswalk = daoCrosswalk.create(crosswalk);
+		return newCrosswalk;
+	}
+
+	@Override
+	public List<Crosswalk> readAll() throws IOException {
+		List<Crosswalk> crosswalks = daoCrosswalk.readAll();
+
+		return crosswalks;
+	}
+
+	@Override
+	public void delete(String name) throws IOException {
+		daoCrosswalk.delete(name);
+	}
 
 }

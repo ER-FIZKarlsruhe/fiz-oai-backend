@@ -30,7 +30,6 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
-import com.datastax.oss.driver.api.core.session.Session;
 
 import de.fiz.oai.backend.dao.DAOCrosswalk;
 import de.fiz.oai.backend.exceptions.NotFoundException;
