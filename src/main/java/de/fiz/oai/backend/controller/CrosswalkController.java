@@ -27,6 +27,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -36,8 +37,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Crosswalk;
@@ -110,29 +109,7 @@ public class CrosswalkController extends AbstractController {
   public Crosswalk createCrosswalk(Crosswalk crosswalk, @Context HttpServletRequest request,
       @Context HttpServletResponse response) {
 
-    if (StringUtils.isBlank(crosswalk.getName())) {
-      throw new WebApplicationException("Crosswalk identifier cannot be empty!", Status.BAD_REQUEST);
-    }
-
-    if (StringUtils.isBlank(crosswalk.getFormatFrom())) {
-      throw new WebApplicationException("Crosswalk format cannot be empty!", Status.BAD_REQUEST);
-    }
-
-    if (StringUtils.isBlank(crosswalk.getFormatTo())) {
-      throw new WebApplicationException("Crosswalk format cannot be empty!", Status.BAD_REQUEST);
-    }
-    
-    if (crosswalk.getXsltStylesheet() == null || crosswalk.getXsltStylesheet().isEmpty()) {
-      throw new WebApplicationException("Crosswalk crosswalk cannot be empty!", Status.BAD_REQUEST);
-    }
-
-    if (!Pattern.matches("[A-Za-z0-9\\-_\\.!~\\*'\\(\\)]+", crosswalk.getFormatFrom())) {
-      throw new WebApplicationException("Crosswalk formatFrom does not match regex!", Status.BAD_REQUEST);
-    }
-    
-    if (!Pattern.matches("[A-Za-z0-9\\-_\\.!~\\*'\\(\\)]+", crosswalk.getFormatTo())) {
-      throw new WebApplicationException("Crosswalk formatTo does not match regex!", Status.BAD_REQUEST);
-    }
+    validate(crosswalk);
     
     Crosswalk newCrosswalk = null;
 
@@ -145,4 +122,50 @@ public class CrosswalkController extends AbstractController {
     return newCrosswalk;
   }
 
+  
+  @PUT
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Crosswalk updateCrosswalk(Crosswalk crosswalk, @Context HttpServletRequest request,
+      @Context HttpServletResponse response) {
+
+    validate(crosswalk);
+    
+    Crosswalk newCrosswalk = null;
+
+    try {
+      newCrosswalk = crosswalkService.update(crosswalk);
+    } catch (IOException e) {
+      throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+    }
+
+    return newCrosswalk;
+  }
+  
+  private void validate(Crosswalk crosswalk) throws WebApplicationException {
+    if (StringUtils.isBlank(crosswalk.getName())) {
+        throw new WebApplicationException("Crosswalk identifier cannot be empty!", Status.BAD_REQUEST);
+      }
+
+      if (StringUtils.isBlank(crosswalk.getFormatFrom())) {
+        throw new WebApplicationException("Crosswalk format cannot be empty!", Status.BAD_REQUEST);
+      }
+
+      if (StringUtils.isBlank(crosswalk.getFormatTo())) {
+        throw new WebApplicationException("Crosswalk format cannot be empty!", Status.BAD_REQUEST);
+      }
+      
+      if (crosswalk.getXsltStylesheet() == null || crosswalk.getXsltStylesheet().isEmpty()) {
+        throw new WebApplicationException("Crosswalk crosswalk cannot be empty!", Status.BAD_REQUEST);
+      }
+
+      if (!Pattern.matches("[A-Za-z0-9\\-_\\.!~\\*'\\(\\)]+", crosswalk.getFormatFrom())) {
+        throw new WebApplicationException("Crosswalk formatFrom does not match regex!", Status.BAD_REQUEST);
+      }
+      
+      if (!Pattern.matches("[A-Za-z0-9\\-_\\.!~\\*'\\(\\)]+", crosswalk.getFormatTo())) {
+        throw new WebApplicationException("Crosswalk formatTo does not match regex!", Status.BAD_REQUEST);
+      }
+  }
+  
 }

@@ -27,6 +27,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -50,7 +51,7 @@ public class ContentController extends AbstractController {
   @GET
   @Path("/{identifier}/{format}")
   @Produces(MediaType.APPLICATION_JSON)
-  public Content getFormat(@PathParam("identifier") String identifier, @PathParam("format") String format , @Context HttpServletRequest request,
+  public Content getContent(@PathParam("identifier") String identifier, @PathParam("format") String format , @Context HttpServletRequest request,
       @Context HttpServletResponse response) {
 
     if (StringUtils.isBlank(identifier)) {
@@ -129,26 +130,7 @@ public class ContentController extends AbstractController {
   public Content createContent(Content content, @Context HttpServletRequest request,
       @Context HttpServletResponse response) {
 
-    if (StringUtils.isBlank(content.getIdentifier())) {
-      throw new WebApplicationException("Content identifier cannot be empty!", Status.BAD_REQUEST);
-    }
-
-    if (StringUtils.isBlank(content.getFormat())) {
-      throw new WebApplicationException("Content format cannot be empty!", Status.BAD_REQUEST);
-    }
-    
-    if (StringUtils.isBlank(content.getContent())) {
-      throw new WebApplicationException("Content content cannot be empty!", Status.BAD_REQUEST);
-    }
-    
-    if (!Pattern.matches( "[A-Za-z0-9\\-_\\.!~\\*'\\(\\)]+", content.getFormat()) ) {
-      throw new WebApplicationException("Content format does not match regex!", Status.BAD_REQUEST);
-    }
-    
-    // TODO add more validations
-    //Does the item (referenced by identifier) exists?
-    //Does the format (referenced by format) exists?
-    
+    validate(content);
     
     Content newContent = null;
 
@@ -162,5 +144,41 @@ public class ContentController extends AbstractController {
   }
 
 
+  @PUT
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Content updateContent(Content content, @Context HttpServletRequest request,
+      @Context HttpServletResponse response) {
+
+	  validate(content);
+	  Content newContent = null;
+
+    try {
+      newContent = contentService.update(newContent);
+    } catch (IOException e) {
+      throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+    }
+
+    return newContent;
+  }
+  
+  
+  private void validate(Content content) throws WebApplicationException {
+    if (StringUtils.isBlank(content.getIdentifier())) {
+        throw new WebApplicationException("Content identifier cannot be empty!", Status.BAD_REQUEST);
+      }
+
+      if (StringUtils.isBlank(content.getFormat())) {
+        throw new WebApplicationException("Content format cannot be empty!", Status.BAD_REQUEST);
+      }
+      
+      if (StringUtils.isBlank(content.getContent())) {
+        throw new WebApplicationException("Content content cannot be empty!", Status.BAD_REQUEST);
+      }
+      
+      if (!Pattern.matches( "[A-Za-z0-9\\-_\\.!~\\*'\\(\\)]+", content.getFormat()) ) {
+        throw new WebApplicationException("Content format does not match regex!", Status.BAD_REQUEST);
+      }
+  }
 
 }

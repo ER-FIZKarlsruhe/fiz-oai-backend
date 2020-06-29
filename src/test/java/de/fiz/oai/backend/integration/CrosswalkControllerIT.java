@@ -178,7 +178,7 @@ public class CrosswalkControllerIT extends JerseyTest {
 
 
   @Test
-  public void testCreateFormat() throws Exception {
+  public void testCreateCrosswalk() throws Exception {
     Crosswalk crosswalk = new Crosswalk();
     crosswalk.setName("Oai2Marc");
     crosswalk.setFormatFrom("oai_dc");
@@ -194,7 +194,7 @@ public class CrosswalkControllerIT extends JerseyTest {
   }
 
   @Test
-  public void testCreateFormatNoName() throws Exception {
+  public void testCreateCrosswalkNoName() throws Exception {
    
     Response response = target("crosswalk").request().post(Entity.json(
         "{\"formatFrom\":\"oai_dc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
@@ -203,7 +203,7 @@ public class CrosswalkControllerIT extends JerseyTest {
   }
 
   @Test
-  public void testCreateFormatNoFormatFrom() throws Exception {
+  public void testCreateCrosswalkNoFormatFrom() throws Exception {
    
     Response response = target("crosswalk").request().post(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
@@ -212,7 +212,7 @@ public class CrosswalkControllerIT extends JerseyTest {
   }
   
   @Test
-  public void testCreateFormatNoFormatTo() throws Exception {
+  public void testCreateCrosswalkNoFormatTo() throws Exception {
    
     Response response = target("crosswalk").request().post(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
@@ -221,7 +221,7 @@ public class CrosswalkControllerIT extends JerseyTest {
   }
 
   @Test
-  public void testCreateFormatNoXslt() throws Exception {
+  public void testCreateCrosswalkNoXslt() throws Exception {
    
     Response response = target("crosswalk").request().post(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"formatTo\":\"oai_dc\"}"));
@@ -231,7 +231,7 @@ public class CrosswalkControllerIT extends JerseyTest {
   
   
   @Test
-  public void testCreateFormatWrongFormatFrom() throws Exception {
+  public void testCreateCrosswalkWrongFormatFrom() throws Exception {
    
     Response response = target("crosswalk").request().post(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai dc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
@@ -240,7 +240,7 @@ public class CrosswalkControllerIT extends JerseyTest {
   }
  
   @Test
-  public void testCreateFormatWrongFormatTo() throws Exception {
+  public void testCreateCrosswalkWrongFormatTo() throws Exception {
    
     Response response = target("crosswalk").request().post(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"formatTo\":\"o a i\",\"xsltStylesheet\":\"xslt syntax\"}"));
@@ -248,6 +248,80 @@ public class CrosswalkControllerIT extends JerseyTest {
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
+  
+  
+  @Test
+  public void testUpdateCrosswalk() throws Exception {
+    Crosswalk crosswalk = new Crosswalk();
+    crosswalk.setName("Oai2Marc");
+    crosswalk.setFormatFrom("oai_dc");
+    crosswalk.setFormatTo("oai_dc");
+    crosswalk.setXsltStylesheet("Please use an Xslt stylesheet here!");
+
+    when(crosswalkService.create(any())).thenReturn(crosswalk);
+
+    Response response = target("crosswalk").request().post(Entity.json(
+        "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
+
+    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testUpdateCrosswalkNoName() throws Exception {
+   
+    Response response = target("crosswalk").request().put(Entity.json(
+        "{\"formatFrom\":\"oai_dc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
+
+    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testUpdateCrosswalkNoFormatFrom() throws Exception {
+   
+    Response response = target("crosswalk").request().put(Entity.json(
+        "{\"name\":\"Oai2Marc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
+
+    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+  
+  @Test
+  public void testUpdateCrosswalkNoFormatTo() throws Exception {
+   
+    Response response = target("crosswalk").request().put(Entity.json(
+        "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
+
+    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testUpdateCrosswalkNoXslt() throws Exception {
+   
+    Response response = target("crosswalk").request().put(Entity.json(
+        "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"formatTo\":\"oai_dc\"}"));
+
+    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+  
+  
+  @Test
+  public void testUpdateCrosswalkWrongFormatFrom() throws Exception {
+   
+    Response response = target("crosswalk").request().put(Entity.json(
+        "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai dc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
+
+    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+ 
+  @Test
+  public void testUpdateCrosswalkWrongFormatTo() throws Exception {
+   
+    Response response = target("crosswalk").request().put(Entity.json(
+        "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"formatTo\":\"o a i\",\"xsltStylesheet\":\"xslt syntax\"}"));
+
+    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+  
+  
   
   private List<Crosswalk> getTestCrosswalkList() {
     List<Crosswalk> formatList = new ArrayList<Crosswalk>();

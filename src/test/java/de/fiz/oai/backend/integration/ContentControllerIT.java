@@ -269,5 +269,56 @@ public class ContentControllerIT extends JerseyTest {
   }
   
   
+  
+  @Test
+  public void testUpdateContent() throws Exception {
+    Content content = new Content();
+    content.setIdentifier("123456");
+    content.setFormat("oai_dc");
+    content.setContent("Wann wirds endlich wieder Sommer");
+
+    when(contentService.update(any())).thenReturn(content);
+
+    Response response = target("content").request().put(Entity.json(
+        "{\"identifier\":\"123456\",\"format\":\"oai_dc\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
+
+    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testUpdateContentNoIdentifier() throws Exception {
+   
+    Response response = target("content").request().put(Entity.json(
+        "{\"identifier\":\"\",\"format\":\"oai_dc\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
+
+    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testUpdateContentNoFormat() throws Exception {
+   
+    Response response = target("content").request().put(Entity.json(
+        "{\"identifier\":\"123456\",\"format\":\"\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
+
+    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+  
+  @Test
+  public void testUpdateContentWrongFormat() throws Exception {
+   
+    Response response = target("content").request().put(Entity.json(
+        "{\"identifier\":\"123456\",\"format\":\"oai dc\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
+
+    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+  
+  @Test
+  public void testUpdateContentNoContent() throws Exception {
+   
+    Response response = target("content").request().put(Entity.json(
+        "{\"identifier\":\"123456\",\"format\":\"oai_dc\",\"content\":\"\"}"));
+
+    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
 
 }
