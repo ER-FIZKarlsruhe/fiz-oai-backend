@@ -37,6 +37,8 @@ public class FormatServiceImpl implements FormatService {
   @Override
   public Format read(String metadataPrefix) throws IOException {
     Format format = daoFormat.read(metadataPrefix);
+    
+    
     return format;
   }
 

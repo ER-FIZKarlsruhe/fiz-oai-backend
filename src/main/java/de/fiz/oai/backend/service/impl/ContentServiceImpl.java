@@ -23,15 +23,29 @@ import javax.inject.Inject;
 import org.jvnet.hk2.annotations.Service;
 
 import de.fiz.oai.backend.dao.DAOContent;
+import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Content;
+import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.service.ContentService;
+import de.fiz.oai.backend.service.FormatService;
+import de.fiz.oai.backend.service.ItemService;
+import de.fiz.oai.backend.service.SearchService;
 
 @Service
 public class ContentServiceImpl implements ContentService {
 
   @Inject
   DAOContent daoContent;
+  
+  @Inject
+  ItemService itemService;
+  
+  @Inject
+  FormatService formatService;
+  
+  @Inject
+  SearchService searchService;
   
   @Override
   public Content read(String identifier, String format) throws IOException {
@@ -41,19 +55,45 @@ public class ContentServiceImpl implements ContentService {
 
   @Override
   public Content create(Content content) throws IOException {
-    // TODO add more validations
-    //Does the item (referenced by identifier) exists?
-    //Does the format (referenced by format) exists?
-   
+	//Does the item (referenced by identifier) exists?
+	Item item = itemService.read(content.getIdentifier(), null, null);
+	if (item == null) {
+		throw new NotFoundException("item " + content.getIdentifier() + " not found.");
+	}
+	  
+	//Does the format (referenced by format) exists?
+	Format format = formatService.read(content.getFormat());
+	if (format == null) {
+		throw new NotFoundException("format " + content.getFormat() + " not found.");
+	}
+	
+	//Save content
     Content newContent = daoContent.create(content);
 
+    //Reread item and store it in the search index
+    item = itemService.read(content.getIdentifier(), null, null);
+    searchService.updateDocument(item);
+    
     return newContent;
   }
 
   @Override
   public Content update(Content content) throws IOException {
-    // TODO Auto-generated method stub
-    return null;
+	//Does the item (referenced by identifier) exists?
+	Item item = itemService.read(content.getIdentifier(), null, null);
+	  
+	//Does the format (referenced by format) exists?
+	formatService.read(content.getFormat());
+	
+	//Update content
+	daoContent.delete(item.getIdentifier(), content.getFormat());
+    Content newContent = daoContent.create(content);
+
+    //Reread item and store it in the search index
+    item = itemService.read(content.getIdentifier(), null, null);
+    searchService.updateDocument(item);
+    
+    return newContent;
   }
 
   @Override

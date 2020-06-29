@@ -218,7 +218,7 @@ public class ContentControllerIT extends JerseyTest {
 
 
   @Test
-  public void testCreateFormat() throws Exception {
+  public void testCreateContent() throws Exception {
     Content content = new Content();
     content.setIdentifier("123456");
     content.setFormat("oai_dc");
@@ -233,7 +233,7 @@ public class ContentControllerIT extends JerseyTest {
   }
 
   @Test
-  public void testCreateFormatNoIdentifier() throws Exception {
+  public void testCreateContentNoIdentifier() throws Exception {
    
     Response response = target("content").request().post(Entity.json(
         "{\"identifier\":\"\",\"format\":\"oai_dc\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
@@ -242,7 +242,7 @@ public class ContentControllerIT extends JerseyTest {
   }
 
   @Test
-  public void testCreateFormatNoFormat() throws Exception {
+  public void testCreateContentNoFormat() throws Exception {
    
     Response response = target("content").request().post(Entity.json(
         "{\"identifier\":\"123456\",\"format\":\"\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
@@ -251,7 +251,7 @@ public class ContentControllerIT extends JerseyTest {
   }
   
   @Test
-  public void testCreateFormatWrongFormat() throws Exception {
+  public void testCreateContentWrongFormat() throws Exception {
    
     Response response = target("content").request().post(Entity.json(
         "{\"identifier\":\"123456\",\"format\":\"oai dc\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
@@ -260,7 +260,7 @@ public class ContentControllerIT extends JerseyTest {
   }
   
   @Test
-  public void testCreateFormatNoContent() throws Exception {
+  public void testCreateContentNoContent() throws Exception {
    
     Response response = target("content").request().post(Entity.json(
         "{\"identifier\":\"123456\",\"format\":\"oai_dc\",\"content\":\"\"}"));

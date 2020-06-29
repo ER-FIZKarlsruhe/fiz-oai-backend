@@ -140,64 +140,6 @@ public class SearchServiceImpl implements SearchService {
     }
   }
 
-  private void indexDocument(Item item, String indexName, RestHighLevelClient client) throws IOException {
-
-    Map<String, Object> itemMap = item.toMap();
-
-    // Add all available formats
-    List<Content> allContents = daoContent.readFormats(item.getIdentifier());
-    List<String> itemFormats = new ArrayList<>();
-    if (allContents != null && !allContents.isEmpty()) {
-      for (final Content pickedContent : allContents) {
-        itemFormats.add(pickedContent.getFormat());
-      }
-    }
-    itemMap.put("formats", itemFormats);
-
-    // Add all the matching sets
-    List<Set> allSets = daoSet.readAll();
-    List<String> itemSets = new ArrayList<>();
-    if (allSets != null && !allSets.isEmpty()) {
-
-      for (final Set pickedSet : allSets) {
-        // Check set membership via xPath
-        Map<String, String> xPaths = pickedSet.getxPaths();
-        if (allContents != null && !allContents.isEmpty()) {
-          for (final Content pickedContent : allContents) {
-            if (xPaths.containsKey(pickedContent.getFormat())) {
-              final String xPathToCheck = xPaths.get(pickedContent.getFormat());
-              if (XPathHelper.isTextValueMatching(pickedContent.getContent(), xPathToCheck)) {
-                itemSets.add(pickedSet.getName());
-              }
-            }
-          }
-        }
-
-        // Check set membership via item tags
-        List<String> setTags = pickedSet.getTags();
-
-        if (setTags != null && !setTags.isEmpty()) {
-          for (String setTag : setTags) {
-            if (item.getTags().contains(setTag)) {
-              itemSets.add(pickedSet.getName());
-            }
-          }
-        }
-      }
-
-    }
-    itemMap.put("sets", itemSets);
-
-    IndexRequest indexRequest = new IndexRequest();
-
-    indexRequest.index(indexName);
-    indexRequest.type("_doc");
-    indexRequest.source(itemMap);
-    indexRequest.id(item.getIdentifier());
-
-    client.index(indexRequest, RequestOptions.DEFAULT);
-  }
-
   /**
    * 
    * @param item @throws IOException @throws
@@ -207,17 +149,81 @@ public class SearchServiceImpl implements SearchService {
     try (RestHighLevelClient client = new RestHighLevelClient(
         RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
 
-      Map<String, Object> itemMap = item.toMap();
-
+	  Map<String, Object> itemMap = createItemMapForIndexing(item);
+	  
       UpdateRequest updateRequest = new UpdateRequest();
       updateRequest.index(ITEMS_ALIAS_INDEX_NAME);
       updateRequest.type("_doc");
       updateRequest.id(item.getIdentifier());
       updateRequest.doc(itemMap);
       client.update(updateRequest, RequestOptions.DEFAULT);
-
     }
   }
+  
+  private void indexDocument(Item item, String indexName, RestHighLevelClient client) throws IOException {
+
+    Map<String, Object> itemMap = createItemMapForIndexing(item);
+
+    IndexRequest indexRequest = new IndexRequest();
+    indexRequest.index(indexName);
+    indexRequest.type("_doc");
+    indexRequest.source(itemMap);
+    indexRequest.id(item.getIdentifier());
+
+    client.index(indexRequest, RequestOptions.DEFAULT);
+  }
+
+  
+  private Map<String, Object> createItemMapForIndexing(Item item) throws IOException {
+	    Map<String, Object> itemMap = item.toMap();
+
+	    // Add all available formats
+	    List<Content> allContents = daoContent.readFormats(item.getIdentifier());
+	    List<String> itemFormats = new ArrayList<>();
+	    if (allContents != null && !allContents.isEmpty()) {
+	      for (final Content pickedContent : allContents) {
+	        itemFormats.add(pickedContent.getFormat());
+	      }
+	    }
+	    itemMap.put("formats", itemFormats);
+
+	    // Add all the matching sets
+	    List<Set> allSets = daoSet.readAll();
+	    List<String> itemSets = new ArrayList<>();
+	    if (allSets != null && !allSets.isEmpty()) {
+
+	      for (final Set pickedSet : allSets) {
+	        // Check set membership via xPath
+	        Map<String, String> xPaths = pickedSet.getxPaths();
+	        if (allContents != null && !allContents.isEmpty()) {
+	          for (final Content pickedContent : allContents) {
+	            if (xPaths.containsKey(pickedContent.getFormat())) {
+	              final String xPathToCheck = xPaths.get(pickedContent.getFormat());
+	              if (XPathHelper.isTextValueMatching(pickedContent.getContent(), xPathToCheck)) {
+	                itemSets.add(pickedSet.getName());
+	              }
+	            }
+	          }
+	        }
+
+	        // Check set membership via item tags
+	        List<String> setTags = pickedSet.getTags();
+
+	        if (setTags != null && !setTags.isEmpty()) {
+	          for (String setTag : setTags) {
+	            if (item.getTags().contains(setTag)) {
+	              itemSets.add(pickedSet.getName());
+	            }
+	          }
+	        }
+	      }
+
+	    }
+	    itemMap.put("sets", itemSets);
+	    
+	    return itemMap;
+  }
+
 
   /**
    * 
