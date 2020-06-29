@@ -42,10 +42,8 @@ public class InfoController extends AbstractController{
     @Path("/version")
     @Produces(MediaType.TEXT_PLAIN)
     public String getVersion() throws IOException {
-
         LOGGER.debug("getVersion called");
-        Configuration.getInstance().getProperty("name");
-        return "0.1.0";
+        return getClass().getPackage().getImplementationVersion();
     }
 
     @GET
