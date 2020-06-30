@@ -110,16 +110,12 @@ public class CrosswalkController extends AbstractController {
       @Context HttpServletResponse response) {
 
     validate(crosswalk);
-    
-    Crosswalk newCrosswalk = null;
 
     try {
-      newCrosswalk = crosswalkService.create(crosswalk);
+      return crosswalkService.create(crosswalk);
     } catch (IOException e) {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
-
-    return newCrosswalk;
   }
 
   
@@ -130,16 +126,12 @@ public class CrosswalkController extends AbstractController {
       @Context HttpServletResponse response) {
 
     validate(crosswalk);
-    
-    Crosswalk newCrosswalk = null;
 
     try {
-      newCrosswalk = crosswalkService.update(crosswalk);
+      return crosswalkService.update(crosswalk);
     } catch (IOException e) {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
-
-    return newCrosswalk;
   }
   
   private void validate(Crosswalk crosswalk) throws WebApplicationException {

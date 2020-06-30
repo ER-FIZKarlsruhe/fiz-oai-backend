@@ -134,15 +134,12 @@ public class ContentController extends AbstractController {
   @Produces(MediaType.APPLICATION_JSON)
   public Content createContent(Content content, @Context HttpServletRequest request,
       @Context HttpServletResponse response) {
-	  
-    LOGGER.info("createContent " + content.toString());
-	  
+
+	  LOGGER.info("createContent " + content.toString());
     validate(content);
     
-    Content newContent = null;
-
     try {
-      newContent = contentService.create(content);
+      return contentService.create(content);
     } catch (NotFoundException nfe) {
     	LOGGER.error("Cannot createContent " , nfe);
     	throw new WebApplicationException(nfe.getMessage(), Status.BAD_REQUEST);
@@ -151,7 +148,6 @@ public class ContentController extends AbstractController {
     	throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
 
-    return newContent;
   }
 
 
@@ -162,10 +158,9 @@ public class ContentController extends AbstractController {
       @Context HttpServletResponse response) {
 
     validate(content);
-    Content newContent = null;
 
     try {
-      newContent = contentService.update(content);
+      return contentService.update(content);
     } catch (NotFoundException nfe) {
     	LOGGER.error("Cannot createContent " , nfe);
     	throw new WebApplicationException(nfe.getMessage(), Status.BAD_REQUEST);
@@ -173,8 +168,6 @@ public class ContentController extends AbstractController {
     	LOGGER.error("Cannot createContent " , e);
     	throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
-
-    return newContent;
   }
   
   

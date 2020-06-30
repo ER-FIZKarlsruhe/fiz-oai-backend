@@ -83,7 +83,7 @@ public class FormatController extends AbstractController {
     List<Format> formatList;
     try {
       formatList = formatService.readAll();
-    } catch (IOException e) {
+    } catch (Exception e) {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
 
@@ -103,7 +103,7 @@ public class FormatController extends AbstractController {
       formatService.delete(metadataPrefix);
     } catch (NotFoundException e) {
       throw new WebApplicationException(Status.NOT_FOUND);
-    } catch (IOException ioe) {
+    } catch (Exception ioe) {
       throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
   }
@@ -127,19 +127,17 @@ public class FormatController extends AbstractController {
       throw new WebApplicationException("Format schemaNamespace cannot be empty!", Status.BAD_REQUEST);
     }
     
-    
     if (!Pattern.matches( "[A-Za-z0-9\\-_\\.!~\\*'\\(\\)]+", format.getMetadataPrefix()) ) {
       throw new WebApplicationException("Format metadataPrefix does not match regex!", Status.BAD_REQUEST);
     }
     
-    // TODO add more validations
-
     Format newFormat = null;
 
     try {
-      newFormat = formatService.create(format);
-    } catch (IOException e) {
-      throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+        newFormat = formatService.create(format);
+    } catch (Exception e) {
+    	LOGGER.error("Cannot createFormat " , e);
+    	throw new WebApplicationException(e.getMessage(), Status.INTERNAL_SERVER_ERROR);
     }
 
     LOGGER.info("newFormat: {}", newFormat);
@@ -181,8 +179,9 @@ public class FormatController extends AbstractController {
 
     } catch (NotFoundException nfe) {
       throw new WebApplicationException(Status.NOT_FOUND);
-    } catch (IOException e) {
-      throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+    }  catch (Exception e) {
+    	LOGGER.error("Cannot updateFormat " , e);
+    	throw new WebApplicationException(e.getMessage(), Status.INTERNAL_SERVER_ERROR);
     }
 
     return format;

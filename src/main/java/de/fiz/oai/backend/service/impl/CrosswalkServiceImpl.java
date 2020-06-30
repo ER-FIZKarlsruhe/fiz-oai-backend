@@ -90,8 +90,7 @@ public class CrosswalkServiceImpl implements CrosswalkService {
 		}
 
 		daoCrosswalk.delete(crosswalk.getName());
-		Crosswalk newCrosswalk = daoCrosswalk.create(crosswalk);
-		return newCrosswalk;
+		return daoCrosswalk.create(crosswalk);
 	}
 
 	@Override
