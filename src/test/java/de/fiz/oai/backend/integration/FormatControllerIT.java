@@ -209,13 +209,13 @@ public class FormatControllerIT extends JerseyTest {
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
-  @Test
-  public void testCreateFormatNoXPath() throws Exception {
-    Response response = target("format").request().post(Entity.json(
-        "{\"metadataPrefix\":\"oai_dc\",\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\"}"));
-
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-  }
+//  @Test
+//  public void testCreateFormatNoXPath() throws Exception {
+//    Response response = target("format").request().post(Entity.json(
+//        "{\"metadataPrefix\":\"oai_dc\",\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\"}"));
+//
+//    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+//  }
   
   @Test
   public void testCreateFormatInvamidMetadataPrefix() throws Exception {
@@ -269,13 +269,13 @@ public class FormatControllerIT extends JerseyTest {
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
-  @Test
-  public void testUpdateFormatNoXPath() throws Exception {
-    Response response = target("format/oai_dc").request().put(Entity.json(
-        "{\"metadataPrefix\":\"oai_dc\",\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\"}"));
-
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-  }
+//  @Test
+//  public void testUpdateFormatNoXPath() throws Exception {
+//    Response response = target("format/oai_dc").request().put(Entity.json(
+//        "{\"metadataPrefix\":\"oai_dc\",\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\"}"));
+//
+//    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+//  }
   
   @Test
   public void testUpdateFormatInvamidMetadataPrefix() throws Exception {

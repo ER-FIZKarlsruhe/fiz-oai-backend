@@ -37,6 +37,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tinkerpop.shaded.minlog.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Content;
@@ -48,6 +51,8 @@ public class ContentController extends AbstractController {
   @Inject
   ContentService contentService;
 
+  private static Logger LOGGER = LoggerFactory.getLogger(ContentController.class);
+  
   @GET
   @Path("/{identifier}/{format}")
   @Produces(MediaType.APPLICATION_JSON)
@@ -129,15 +134,21 @@ public class ContentController extends AbstractController {
   @Produces(MediaType.APPLICATION_JSON)
   public Content createContent(Content content, @Context HttpServletRequest request,
       @Context HttpServletResponse response) {
-
+	  
+    LOGGER.info("createContent " + content.toString());
+	  
     validate(content);
     
     Content newContent = null;
 
     try {
-      newContent = contentService.create(newContent);
-    } catch (IOException e) {
-      throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+      newContent = contentService.create(content);
+    } catch (NotFoundException nfe) {
+    	LOGGER.error("Cannot createContent " , nfe);
+    	throw new WebApplicationException(nfe.getMessage(), Status.BAD_REQUEST);
+    } catch (Exception e) {
+    	LOGGER.error("Cannot createContent " , e);
+    	throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
 
     return newContent;
@@ -150,13 +161,17 @@ public class ContentController extends AbstractController {
   public Content updateContent(Content content, @Context HttpServletRequest request,
       @Context HttpServletResponse response) {
 
-	  validate(content);
-	  Content newContent = null;
+    validate(content);
+    Content newContent = null;
 
     try {
-      newContent = contentService.update(newContent);
-    } catch (IOException e) {
-      throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+      newContent = contentService.update(content);
+    } catch (NotFoundException nfe) {
+    	LOGGER.error("Cannot createContent " , nfe);
+    	throw new WebApplicationException(nfe.getMessage(), Status.BAD_REQUEST);
+    } catch (Exception e) {
+    	LOGGER.error("Cannot createContent " , e);
+    	throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
     }
 
     return newContent;

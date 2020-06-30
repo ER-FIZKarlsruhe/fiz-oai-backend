@@ -46,5 +46,10 @@ public class Content {
       this.content = content;
     }
 
+	@Override
+	public String toString() {
+		return "Content [identifier=" + identifier + ", format=" + format + ", content=" + content + "]";
+	}
+
   
 }

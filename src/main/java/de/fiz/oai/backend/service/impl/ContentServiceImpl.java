@@ -56,7 +56,7 @@ public class ContentServiceImpl implements ContentService {
   @Override
   public Content create(Content content) throws IOException {
 	//Does the item (referenced by identifier) exists?
-	Item item = itemService.read(content.getIdentifier(), null, null);
+	Item item = itemService.read(content.getIdentifier(), null, false);
 	if (item == null) {
 		throw new NotFoundException("item " + content.getIdentifier() + " not found.");
 	}
@@ -71,7 +71,7 @@ public class ContentServiceImpl implements ContentService {
     Content newContent = daoContent.create(content);
 
     //Reread item and store it in the search index
-    item = itemService.read(content.getIdentifier(), null, null);
+    item = itemService.read(content.getIdentifier(), null, false);
     searchService.updateDocument(item);
     
     return newContent;
@@ -80,7 +80,7 @@ public class ContentServiceImpl implements ContentService {
   @Override
   public Content update(Content content) throws IOException {
 	//Does the item (referenced by identifier) exists?
-	Item item = itemService.read(content.getIdentifier(), null, null);
+	Item item = itemService.read(content.getIdentifier(), null, false);
 	  
 	//Does the format (referenced by format) exists?
 	formatService.read(content.getFormat());
@@ -90,7 +90,7 @@ public class ContentServiceImpl implements ContentService {
     Content newContent = daoContent.create(content);
 
     //Reread item and store it in the search index
-    item = itemService.read(content.getIdentifier(), null, null);
+    item = itemService.read(content.getIdentifier(), null, false);
     searchService.updateDocument(item);
     
     return newContent;

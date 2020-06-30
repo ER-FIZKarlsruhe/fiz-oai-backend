@@ -127,9 +127,6 @@ public class FormatController extends AbstractController {
       throw new WebApplicationException("Format schemaNamespace cannot be empty!", Status.BAD_REQUEST);
     }
     
-    if (StringUtils.isBlank(format.getIdentifierXpath())) {
-      throw new WebApplicationException("Format identifierXPath cannot be empty!", Status.BAD_REQUEST);
-    }
     
     if (!Pattern.matches( "[A-Za-z0-9\\-_\\.!~\\*'\\(\\)]+", format.getMetadataPrefix()) ) {
       throw new WebApplicationException("Format metadataPrefix does not match regex!", Status.BAD_REQUEST);
@@ -156,7 +153,7 @@ public class FormatController extends AbstractController {
   public Format updateFormat(@PathParam("metadataPrefix") String metadataPrefix, Format format,
       @Context HttpServletRequest request, @Context HttpServletResponse response) {
   
-	LOGGER.info("updateFormat format: {}", format.toString());
+	LOGGER.info("createFormat format: {}", format.toString());
     if (StringUtils.isBlank(format.getMetadataPrefix())) {
       throw new WebApplicationException("Format metadataPrefix cannot be empty!", Status.BAD_REQUEST);
     }
@@ -169,9 +166,6 @@ public class FormatController extends AbstractController {
       throw new WebApplicationException("Format schemaNamespace cannot be empty!", Status.BAD_REQUEST);
     }
     
-    if (StringUtils.isBlank(format.getIdentifierXpath())) {
-      throw new WebApplicationException("Format identifierXPath cannot be empty!", Status.BAD_REQUEST);
-    }
     
     if (!Pattern.matches( "[A-Za-z0-9\\-_\\.!~\\*'\\(\\)]+", format.getMetadataPrefix()) ) {
       throw new WebApplicationException("Format metadataPrefix does not match regex!", Status.BAD_REQUEST);
