@@ -127,38 +127,72 @@ public class SearchServiceImpl implements SearchService {
   }
 
   /**
-   * 
-   * @param item @throws IOException @throws
+   * Create new item in index.
+   *
+   * @param item The item to create
+   * @throws IOException
    */
   @Override
   public void createDocument(Item item) throws IOException {
     try (RestHighLevelClient client = new RestHighLevelClient(
-        RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
+            RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
 
       indexDocument(item, ITEMS_ALIAS_INDEX_NAME, client);
-      LOGGER.info("Added item to search index");
+      LOGGER.info("Added item " + item.getIdentifier() + " to search index.");
     }
   }
 
+  /**
+   * Create new item in index.
+   *
+   * @param item The item to create
+   * @param indexName Name of index
+   * @param client Client
+   * @throws IOException
+   */
   private void indexDocument(Item item, String indexName, RestHighLevelClient client) throws IOException {
+    List<Content> allContents = daoContent.readFormats(item.getIdentifier());
 
     Map<String, Object> itemMap = item.toMap();
+    itemMap.put("formats", getItemFormats(allContents));
+    itemMap.put("sets", getItemSets(item, allContents));
 
-    // Add all available formats
-    List<Content> allContents = daoContent.readFormats(item.getIdentifier());
+    IndexRequest indexRequest = new IndexRequest();
+    indexRequest.index(indexName);
+    indexRequest.type("_doc");
+    indexRequest.source(itemMap);
+    indexRequest.id(item.getIdentifier());
+
+    client.index(indexRequest, RequestOptions.DEFAULT);
+  }
+
+  /**
+   * @param allContents Contents
+   * @return returns all formats for this item
+   */
+  private List<String> getItemFormats(List<Content> allContents) {
     List<String> itemFormats = new ArrayList<>();
     if (allContents != null && !allContents.isEmpty()) {
       for (final Content pickedContent : allContents) {
         itemFormats.add(pickedContent.getFormat());
       }
     }
-    itemMap.put("formats", itemFormats);
+    return itemFormats;
+  }
 
-    // Add all the matching sets
+  /**
+   *
+   * @param item Item data
+   * @param allContents Contents
+   * @return returns the sets for this item
+   * @throws IOException
+   */
+  private List<String> getItemSets(Item item, List<Content> allContents) throws IOException {
     List<Set> allSets = daoSet.readAll();
     List<String> itemSets = new ArrayList<>();
     if (allSets != null && !allSets.isEmpty()) {
 
+      // Add all the matching sets
       for (final Set pickedSet : allSets) {
         // Check set membership via xPath
         Map<String, String> xPaths = pickedSet.getxPaths();
@@ -186,36 +220,34 @@ public class SearchServiceImpl implements SearchService {
       }
 
     }
-    itemMap.put("sets", itemSets);
-
-    IndexRequest indexRequest = new IndexRequest();
-
-    indexRequest.index(indexName);
-    indexRequest.type("_doc");
-    indexRequest.source(itemMap);
-    indexRequest.id(item.getIdentifier());
-
-    client.index(indexRequest, RequestOptions.DEFAULT);
+    return itemSets;
   }
 
   /**
-   * 
-   * @param item @throws IOException @throws
+   * Update item in index.
+   *
+   * @param item The item to update
+   * @throws IOException
    */
   @Override
   public void updateDocument(Item item) throws IOException {
     try (RestHighLevelClient client = new RestHighLevelClient(
-        RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
+            RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
+
+      List<Content> allContents = daoContent.readFormats(item.getIdentifier());
 
       Map<String, Object> itemMap = item.toMap();
+      itemMap.put("formats", getItemFormats(allContents));
+      itemMap.put("sets", getItemSets(item, allContents));
 
       UpdateRequest updateRequest = new UpdateRequest();
       updateRequest.index(ITEMS_ALIAS_INDEX_NAME);
       updateRequest.type("_doc");
       updateRequest.id(item.getIdentifier());
       updateRequest.doc(itemMap);
-      client.update(updateRequest, RequestOptions.DEFAULT);
 
+      client.update(updateRequest, RequestOptions.DEFAULT);
+      LOGGER.info("Updated item " + item.getIdentifier() + " in search index.");
     }
   }
 
