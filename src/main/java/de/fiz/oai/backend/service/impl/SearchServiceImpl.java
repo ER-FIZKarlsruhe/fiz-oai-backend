@@ -142,30 +142,21 @@ public class SearchServiceImpl implements SearchService {
     }
   }
 
-  /**
-   * Create new item in index.
-   *
-   * @param item The item to create
-   * @param indexName Name of index
-   * @param client Client
-   * @throws IOException
-   */
+
+
+  
   private void indexDocument(Item item, String indexName, RestHighLevelClient client) throws IOException {
-    List<Content> allContents = daoContent.readFormats(item.getIdentifier());
+	    Map<String, Object> itemMap = createItemMapForIndexing(item);
 
-    Map<String, Object> itemMap = item.toMap();
-    itemMap.put("formats", getItemFormats(allContents));
-    itemMap.put("sets", getItemSets(item, allContents));
+	    IndexRequest indexRequest = new IndexRequest();
+	    indexRequest.index(indexName);
+	    indexRequest.type("_doc");
+	    indexRequest.source(itemMap);
+	    indexRequest.id(item.getIdentifier());
 
-    IndexRequest indexRequest = new IndexRequest();
-    indexRequest.index(indexName);
-    indexRequest.type("_doc");
-    indexRequest.source(itemMap);
-    indexRequest.id(item.getIdentifier());
-
-    client.index(indexRequest, RequestOptions.DEFAULT);
-  }
-
+	    client.index(indexRequest, RequestOptions.DEFAULT);
+	  }
+  
   /**
    * @param allContents Contents
    * @return returns all formats for this item
@@ -223,7 +214,6 @@ public class SearchServiceImpl implements SearchService {
     return itemSets;
   }
 
->>>>>>> OAI-77
   /**
    * Update item in index.
    *
@@ -252,18 +242,7 @@ public class SearchServiceImpl implements SearchService {
     }
   }
   
-  private void indexDocument(Item item, String indexName, RestHighLevelClient client) throws IOException {
 
-    Map<String, Object> itemMap = createItemMapForIndexing(item);
-
-    IndexRequest indexRequest = new IndexRequest();
-    indexRequest.index(indexName);
-    indexRequest.type("_doc");
-    indexRequest.source(itemMap);
-    indexRequest.id(item.getIdentifier());
-
-    client.index(indexRequest, RequestOptions.DEFAULT);
-  }
 
   
   private Map<String, Object> createItemMapForIndexing(Item item) throws IOException {
