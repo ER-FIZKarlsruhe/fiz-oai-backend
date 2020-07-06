@@ -205,14 +205,29 @@
       <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
-        <version>5.2.4</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
+        <version>5.3.2</version>
+        <dependencies>
+          <dependency>
+              <groupId>org.postgresql</groupId>
+              <artifactId>postgresql</artifactId>
+              <version>42.2.14</version>
+          </dependency>
+        </dependencies>
+
+          <configuration>
+              <databaseDriverName>org.postgresql.Driver</databaseDriverName>
+              <connectionString>jdbc:postgresql://${dependencyCheckHost}/${dependencyCheckDatabase}</connectionString>
+              <databaseUser>${dependencyCheckUser}</databaseUser>
+              <databasePassword>${dependencyCheckPassword}</databasePassword>
+          </configuration>
+          <executions>
+              <execution>
+                  <goals>
+<!--                       <goal>update-only</goal> -->
+                  <goal>check</goal>
+                  </goals>
+              </execution>
+          </executions>
       </plugin>
       
         <plugin>
