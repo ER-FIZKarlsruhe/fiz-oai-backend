@@ -40,7 +40,7 @@
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-core</artifactId>
-      <version>4.4.0</version>
+      <version>4.7.2</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -219,6 +219,7 @@
               <connectionString>jdbc:postgresql://${dependencyCheckHost}/${dependencyCheckDatabase}</connectionString>
               <databaseUser>${dependencyCheckUser}</databaseUser>
               <databasePassword>${dependencyCheckPassword}</databasePassword>
+			  <formats>HTML,JUNIT</formats>              
           </configuration>
           <executions>
               <execution>
