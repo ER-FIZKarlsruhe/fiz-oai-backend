@@ -219,13 +219,15 @@
               <connectionString>jdbc:postgresql://${dependencyCheckHost}/${dependencyCheckDatabase}</connectionString>
               <databaseUser>${dependencyCheckUser}</databaseUser>
               <databasePassword>${dependencyCheckPassword}</databasePassword>
-			  <formats>HTML,JUNIT</formats>              
+			  <formats>HTML,JUNIT</formats>
+			  <skipProvidedScope>true</skipProvidedScope>
+		  	  <suppressionFile>src/test/resources/suppress.xml</suppressionFile>
+		  	  <failBuildOnCVSS>8</failBuildOnCVSS>
           </configuration>
           <executions>
               <execution>
                   <goals>
-<!--                       <goal>update-only</goal> -->
-                  <goal>check</goal>
+                  	<goal>check</goal>
                   </goals>
               </execution>
           </executions>
