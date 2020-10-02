@@ -14,7 +14,6 @@
     <javax.javaee.version>7.0</javax.javaee.version>
     <junit.version>4.12</junit.version>
     <elasticsearch.version>6.8.12</elasticsearch.version>
-    <!-- saxon.version>9.9.1-5</saxon.version -->
     <saxon.version>10.2</saxon.version>
   </properties>
 
