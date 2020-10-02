@@ -284,7 +284,7 @@ public class ItemServiceImpl implements ItemService {
             itemFormats.add(currentWalk.getFormatTo());
         }
         else {
-            LOGGER.info("XML IS EMPTY: " + currentWalk.getFormatTo() + ", " + item.getIdentifier());
+            LOGGER.warn("XML IS EMPTY: " + currentWalk.getFormatTo() + ", " + item.getIdentifier());
         }
       }
     }
