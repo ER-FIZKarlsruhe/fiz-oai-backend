@@ -275,12 +275,17 @@ public class ItemServiceImpl implements ItemService {
     for (Crosswalk currentWalk : crosswalks) {
       if (currentWalk.getFormatFrom().equals(item.getIngestFormat())) {
         String newXml = transformerService.transform(item.getContent().getContent(), currentWalk.getName());
-        Content crosswalkConten = new Content();
-        crosswalkConten.setContent(newXml);
-        crosswalkConten.setIdentifier(item.getIdentifier());
-        crosswalkConten.setFormat(currentWalk.getFormatTo());
-        daoContent.create(crosswalkConten);
-        itemFormats.add(currentWalk.getFormatTo());
+        if (StringUtils.isNotBlank(newXml)) {
+            Content crosswalkConten = new Content();
+            crosswalkConten.setContent(newXml);
+            crosswalkConten.setIdentifier(item.getIdentifier());
+            crosswalkConten.setFormat(currentWalk.getFormatTo());
+            daoContent.create(crosswalkConten);
+            itemFormats.add(currentWalk.getFormatTo());
+        }
+        else {
+            LOGGER.info("XML IS EMPTY: " + currentWalk.getFormatTo() + ", " + item.getIdentifier());
+        }
       }
     }
   }

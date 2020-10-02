@@ -6,6 +6,8 @@ package de.fiz.oai.backend.utils;
 import de.fiz.oai.backend.dao.DAOCrosswalk;
 import de.fiz.oai.backend.models.Crosswalk;
 import de.fiz.oai.backend.service.TransformerService;
+import net.sf.saxon.lib.FeatureKeys;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -69,11 +71,11 @@ public class TransformerServiceImpl implements TransformerService, KeyedObjectPo
         LOGGER.info("Initialize TransformerPool ...");
 
         // Create transformerFactory as singleton.
-        TransformerFactory tf = TransformerFactory.newInstance("com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl", null);
+        TransformerFactory tf = TransformerFactory.newInstance("net.sf.saxon.TransformerFactoryImpl", null);
         if (tf.getFeature(SAXTransformerFactory.FEATURE)) {
             try {
-                tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "all");
-                tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "all");
+                tf.setAttribute(
+                    FeatureKeys.XML_PARSER_FEATURE + "http://xml.org/sax/features/external-general-entities", false);
                 tf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             } catch (TransformerConfigurationException e) {
                 LOGGER.error(e.getMessage(), e);
