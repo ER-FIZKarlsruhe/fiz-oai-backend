@@ -65,6 +65,12 @@ public class ClusterManager {
         LOGGER.info("Found username {}", username);
         LOGGER.info("Found password {}", "***");
         oiaBuilder = CqlSession.builder();
+        oiaBuilder.withKeyspace(keyspace);
+        oiaBuilder.withLocalDatacenter(datacenter);
+        
+        if (!StringUtils.isBlank(username) && !StringUtils.isBlank(password)) {
+          oiaBuilder.withAuthCredentials(username, password);
+        }
         
         for (InetSocketAddress address : addresses) {
             LOGGER.info("Found address {}", address);
@@ -72,12 +78,6 @@ public class ClusterManager {
             LOGGER.info("Found containerPort {}", containerPort);
             
             oiaBuilder.addContactPoint(new InetSocketAddress(address.getHostString(), containerPort));
-            oiaBuilder.withKeyspace(keyspace);
-            oiaBuilder.withLocalDatacenter(datacenter);
-            
-            if (!StringUtils.isBlank(username) && !StringUtils.isBlank(password)) {
-              oiaBuilder.withAuthCredentials(username, password);
-            }
         }
 
         String cassandraSessionsStr = config.getProperty("cassandra.sessions");
