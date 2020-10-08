@@ -160,7 +160,9 @@ public class ItemServiceImpl implements ItemService {
 
   @Override
   public Item update(Item item) throws IOException {
+    LOGGER.info("MIH: 1 " + item.getIdentifier());
     Item oldItem = read(item.getIdentifier(), null, false);
+    LOGGER.info("MIH: 2 " + item.getIdentifier());
 
     if (oldItem == null) {
       throw new WebApplicationException(Status.NOT_FOUND);
@@ -168,6 +170,7 @@ public class ItemServiceImpl implements ItemService {
 
     // Format exists?
     Format ingestFormat = daoFormat.read(item.getIngestFormat());
+    LOGGER.info("MIH: 3 " + item.getIdentifier());
     if (ingestFormat == null) {
       throw new UnknownFormatException("Cannot find a Fomat for the given ingestFormat: " + item.getIngestFormat());
     }
@@ -177,18 +180,23 @@ public class ItemServiceImpl implements ItemService {
     // String(item.getContent().getContent(), "UTF-8"));
 
     daoContent.delete(oldItem);
+    LOGGER.info("MIH: 4 " + item.getIdentifier());
 
     // Overwrite datestamp!
     item.setDatestamp(StringUtils.isNotEmpty(item.getDatestamp()) ? item.getDatestamp() : Configuration.getDateformat().format(new Date()));
 
     Item updateItem = daoItem.create(item);
+    LOGGER.info("MIH: 5 " + item.getIdentifier());
     daoContent.create(item.getContent());
+    LOGGER.info("MIH: 6 " + item.getIdentifier());
 
     Set<String> itemFormats = Stream.of(item.getIngestFormat()).collect(Collectors.toCollection(HashSet::new));
+    LOGGER.info("MIH: 7 " + item.getIdentifier());
     createCrosswalks(item, itemFormats);
 //    updateItem.setFormats(itemFormats);
 
     searchService.updateDocument(updateItem);
+    LOGGER.info("MIH: 11 " + item.getIdentifier());
 
     return updateItem;
   }
@@ -272,15 +280,18 @@ public class ItemServiceImpl implements ItemService {
 
   private void createCrosswalks(Item item, Set<String> itemFormats) throws IOException {
     List<Crosswalk> crosswalks = daoCrosswalk.readAll();
+    LOGGER.info("MIH: 8 " + item.getIdentifier());
     for (Crosswalk currentWalk : crosswalks) {
       if (currentWalk.getFormatFrom().equals(item.getIngestFormat())) {
         String newXml = transformerService.transform(item.getContent().getContent(), currentWalk.getName());
+        LOGGER.info("MIH: 9 " + item.getIdentifier());
         if (StringUtils.isNotBlank(newXml)) {
             Content crosswalkConten = new Content();
             crosswalkConten.setContent(newXml);
             crosswalkConten.setIdentifier(item.getIdentifier());
             crosswalkConten.setFormat(currentWalk.getFormatTo());
             daoContent.create(crosswalkConten);
+            LOGGER.info("MIH: 10 " + item.getIdentifier());
             itemFormats.add(currentWalk.getFormatTo());
         }
         else {

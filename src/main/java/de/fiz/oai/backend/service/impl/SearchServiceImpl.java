@@ -89,6 +89,9 @@ public class SearchServiceImpl implements SearchService {
   public static String ITEMS_ALIAS_INDEX_NAME = "items";
 
   public static String ITEMS_MAPPING_V7_FILENAME = "/WEB-INF/classes/elasticsearch/item_mapping_es_v7";
+  
+  private RestHighLevelClient elasticsearchClient = new RestHighLevelClient(
+      RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
 
   @Context
   ServletContext servletContext;
@@ -115,15 +118,12 @@ public class SearchServiceImpl implements SearchService {
    */
   @Override
   public Map<String, Object> readDocument(Item item) throws IOException {
-    try (RestHighLevelClient client = new RestHighLevelClient(
-        RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
       GetRequest getRequest = new GetRequest(ITEMS_ALIAS_INDEX_NAME, "_doc", item.getIdentifier());
 
-      GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
+      GetResponse getResponse = elasticsearchClient.get(getRequest, RequestOptions.DEFAULT);
       Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
 
       return sourceAsMap;
-    }
   }
 
   /**
@@ -134,12 +134,8 @@ public class SearchServiceImpl implements SearchService {
    */
   @Override
   public void createDocument(Item item) throws IOException {
-    try (RestHighLevelClient client = new RestHighLevelClient(
-            RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
-
-      indexDocument(item, ITEMS_ALIAS_INDEX_NAME, client);
+      indexDocument(item, ITEMS_ALIAS_INDEX_NAME, elasticsearchClient);
       LOGGER.info("Added item " + item.getIdentifier() + " to search index.");
-    }
   }
 
 
@@ -222,9 +218,6 @@ public class SearchServiceImpl implements SearchService {
    */
   @Override
   public void updateDocument(Item item) throws IOException {
-    try (RestHighLevelClient client = new RestHighLevelClient(
-            RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
-
       List<Content> allContents = daoContent.readFormats(item.getIdentifier());
 
       Map<String, Object> itemMap = item.toMap();
@@ -237,9 +230,8 @@ public class SearchServiceImpl implements SearchService {
       updateRequest.id(item.getIdentifier());
       updateRequest.doc(itemMap);
 
-      client.update(updateRequest, RequestOptions.DEFAULT);
+      elasticsearchClient.update(updateRequest, RequestOptions.DEFAULT);
       LOGGER.info("Updated item " + item.getIdentifier() + " in search index.");
-    }
   }
   
 
@@ -302,16 +294,12 @@ public class SearchServiceImpl implements SearchService {
    */
   @Override
   public void deleteDocument(Item item) throws IOException {
-    try (RestHighLevelClient client = new RestHighLevelClient(
-        RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
-
       DeleteRequest request = new DeleteRequest();
       request.index(ITEMS_ALIAS_INDEX_NAME);
       request.type("_doc");
       request.id(item.getIdentifier());
 
-      client.delete(request, RequestOptions.DEFAULT);
-    }
+      elasticsearchClient.delete(request, RequestOptions.DEFAULT);
   }
 
   @Override
@@ -322,9 +310,7 @@ public class SearchServiceImpl implements SearchService {
     LOGGER.info("DEBUG: format: {}", format);
     LOGGER.info("DEBUG: lastItem: {}", lastItem);
 
-    try (RestHighLevelClient client = new RestHighLevelClient(
-        RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
-
+    try {
       final BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
 
       Date finalFromDate = new SimpleDateFormat("yyyy-MM-dd").parse("0001-01-01");
@@ -372,7 +358,7 @@ public class SearchServiceImpl implements SearchService {
 
       LOGGER.info("DEBUG: searchRequest: {}", searchRequest.toString());
 
-      SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+      SearchResponse searchResponse = elasticsearchClient.search(searchRequest, RequestOptions.DEFAULT);
 
       LOGGER.info("DEBUG: searchResponse: {}", searchResponse.toString());
       
@@ -415,7 +401,7 @@ public class SearchServiceImpl implements SearchService {
 
         LOGGER.info("DEBUG: currentLastItemId: {}", newLastItemId);
         LOGGER.info("DEBUG: searchRequest next elements?: {}", searchRequest.toString());
-        searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        searchResponse = elasticsearchClient.search(searchRequest, RequestOptions.DEFAULT);
         if (searchResponse.getHits().getHits().length == 0) {
           idResult.setLastItemId(null);
         }
@@ -433,12 +419,10 @@ public class SearchServiceImpl implements SearchService {
   @Override
   public boolean createIndex(final String indexName, final String mapping) throws IOException {
     if (StringUtils.isNotBlank(indexName) && StringUtils.isNotBlank(mapping)) {
-      try (RestHighLevelClient client = new RestHighLevelClient(
-          RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
         CreateIndexRequest request = new CreateIndexRequest(indexName);
-        CreateIndexResponse createIndexResponse = client.indices().create(request, RequestOptions.DEFAULT);
+        CreateIndexResponse createIndexResponse = elasticsearchClient.indices().create(request, RequestOptions.DEFAULT);
         if (createIndexResponse.isAcknowledged()) {
-          RestClient lowLevelClient = client.getLowLevelClient();
+          RestClient lowLevelClient = elasticsearchClient.getLowLevelClient();
 
           Request requestMapping = new Request("PUT", "/" + indexName + "/_mapping");
           requestMapping.setJsonEntity(mapping);
@@ -448,7 +432,6 @@ public class SearchServiceImpl implements SearchService {
             return true;
           }
         }
-      }
     }
     LOGGER.info("CREATE status: something went wrong, return false");
     return false;
@@ -457,11 +440,8 @@ public class SearchServiceImpl implements SearchService {
   @Override
   public void dropIndex(final String indexName) throws IOException {
     if (StringUtils.isNotBlank(indexName)) {
-      try (RestHighLevelClient client = new RestHighLevelClient(
-          RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
         DeleteIndexRequest request = new DeleteIndexRequest(indexName);
-        client.indices().delete(request, RequestOptions.DEFAULT);
-      }
+        elasticsearchClient.indices().delete(request, RequestOptions.DEFAULT);
     }
   }
 
@@ -520,11 +500,10 @@ public class SearchServiceImpl implements SearchService {
 
     reindexAllFuture = CompletableFuture.supplyAsync(() -> {
 
-      try (RestHighLevelClient client = new RestHighLevelClient(
-          RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")))) {
+      try {
 
         ClusterHealthRequest requestAllIndexes = new ClusterHealthRequest();
-        ClusterHealthResponse responseAllIndexes = client.cluster().health(requestAllIndexes, RequestOptions.DEFAULT);
+        ClusterHealthResponse responseAllIndexes = elasticsearchClient.cluster().health(requestAllIndexes, RequestOptions.DEFAULT);
         java.util.Set<String> allIndexes = responseAllIndexes.getIndices().keySet();
 
         LOGGER.info("REINDEX status: Found " + allIndexes.size() + " indexes:");
@@ -592,7 +571,7 @@ public class SearchServiceImpl implements SearchService {
           List<Item> bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
 
           for (final Item pickedItem : bufferListItems) {
-            indexDocument(pickedItem, reindexStatus.getNewIndexName(), client);
+            indexDocument(pickedItem, reindexStatus.getNewIndexName(), elasticsearchClient);
             reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
 
             // Keep the most recent Item
@@ -619,7 +598,7 @@ public class SearchServiceImpl implements SearchService {
         if (!reindexStatus.isStopSignalReceived()) {
 
           // Switch alias from old index to new one
-          RestClient lowLevelClient = client.getLowLevelClient();
+          RestClient lowLevelClient = elasticsearchClient.getLowLevelClient();
 
           LOGGER.info("REINDEX status: Remove all old aliases of {}", ITEMS_ALIAS_INDEX_NAME);
           for (final String pickedIndex : allIndexes) {

@@ -16,6 +16,7 @@
 package de.fiz.oai.backend.utils;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -25,27 +26,35 @@ import org.slf4j.LoggerFactory;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
-
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 
 public class ClusterManager {
 
     private static final int CASSANDRA_DEFAULT_PORT = 9042;
+
     private static ClusterManager instance;
 
     private static int DEFAULT_CASSANDRA_SESSIONS = 20;
+    
+    private static long DEFAULT_REQUEST_TIMEOUT = 2;
+
     private final int numberOfCassandraSessions;
 
     private final String keyspace;
+
     private final String replicationFactor;
+
     private final String datacenter;
 
     private CqlSession[] sessions = null;
+
     private int rrSessionCounter = 0;
 
     CqlSessionBuilder oiaBuilder;
 
     private Logger LOGGER = LoggerFactory.getLogger(ClusterManager.class);
-    
+
     private ClusterManager() {
         LOGGER.info("Init cluster manager");
         Configuration config = Configuration.getInstance();
@@ -58,25 +67,39 @@ public class ClusterManager {
         LOGGER.info("Found datacenter {}", datacenter);
         LOGGER.info("Found replicationFactor {}", replicationFactor);
         LOGGER.info("Found cassandraNodes {}", cassandraNodes);
-        
+
         String username = config.getProperty("cassandra.username");
         String password = config.getProperty("cassandra.password");
-        
         LOGGER.info("Found username {}", username);
         LOGGER.info("Found password {}", "***");
+
+        long requestTimeout = DEFAULT_REQUEST_TIMEOUT;
+        try {
+            requestTimeout = Integer.parseInt(config.getProperty("cassandra.requesttimeout"));
+        }
+        catch (NumberFormatException e) {
+            LOGGER.warn("Invalid value of property: cassandra.requesttimeout", e);
+        }
+        LOGGER.info("Found requesttimeout {}", requestTimeout);
+
         oiaBuilder = CqlSession.builder();
         oiaBuilder.withKeyspace(keyspace);
         oiaBuilder.withLocalDatacenter(datacenter);
-        
+
+        DriverConfigLoader configLoader =
+            DriverConfigLoader
+                .programmaticBuilder().withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(requestTimeout))
+                .build();
+
         if (!StringUtils.isBlank(username) && !StringUtils.isBlank(password)) {
-          oiaBuilder.withAuthCredentials(username, password);
+            oiaBuilder.withAuthCredentials(username, password);
         }
-        
+
         for (InetSocketAddress address : addresses) {
             LOGGER.info("Found address {}", address);
             int containerPort = address.getPort();
             LOGGER.info("Found containerPort {}", containerPort);
-            
+
             oiaBuilder.addContactPoint(new InetSocketAddress(address.getHostString(), containerPort));
         }
 
@@ -85,15 +108,16 @@ public class ClusterManager {
         if (StringUtils.isNotBlank(cassandraSessionsStr)) {
             try {
                 cassandraSessions = Integer.parseInt(cassandraSessionsStr);
-            } catch (NumberFormatException e) {
-              LOGGER.warn("Invalid value of property: cassandra.sessions", e);
+            }
+            catch (NumberFormatException e) {
+                LOGGER.warn("Invalid value of property: cassandra.sessions", e);
             }
         }
         numberOfCassandraSessions = cassandraSessions;
         sessions = new CqlSession[numberOfCassandraSessions];
 
         // Check and create keyspace and tables if not exists
-        CqlSession session = oiaBuilder.build();
+        CqlSession session = oiaBuilder.withConfigLoader(configLoader).build();
         CassandraUtils.createKeyspace(session, replicationFactor, keyspace);
         session.close();
     }
@@ -109,7 +133,7 @@ public class ClusterManager {
         int currentSession;
         synchronized (this) {
             currentSession = rrSessionCounter++;
-            if (rrSessionCounter  == numberOfCassandraSessions) {
+            if (rrSessionCounter == numberOfCassandraSessions) {
                 rrSessionCounter = 0;
             }
         }
@@ -120,7 +144,6 @@ public class ClusterManager {
         }
         return session;
     }
-
 
     private Collection<InetSocketAddress> parseCassandraHostConfig(String cassandraConfigStr, Configuration config) {
         // TODO: need to support IPv6 addresses here at some point
