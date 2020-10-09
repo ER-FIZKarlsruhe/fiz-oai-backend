@@ -78,9 +78,9 @@ import de.fiz.oai.backend.utils.ResourcesUtils;
 import de.fiz.oai.backend.utils.XPathHelper;
 
 @Service
-public class SearchServiceImpl implements SearchService {
+public class EsSearchServiceImpl implements SearchService {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(SearchServiceImpl.class);
+  private static Logger LOGGER = LoggerFactory.getLogger(EsSearchServiceImpl.class);
 
   String elastisearchHost = Configuration.getInstance().getProperty("elasticsearch.host");
 
@@ -304,11 +304,11 @@ public class SearchServiceImpl implements SearchService {
 
   @Override
   public SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate,
-      Item lastItem) throws IOException {
+      String resumptionToken) throws IOException {
 
     LOGGER.info("DEBUG: rows: {}", rows);
     LOGGER.info("DEBUG: format: {}", format);
-    LOGGER.info("DEBUG: lastItem: {}", lastItem);
+    LOGGER.info("DEBUG: lastItem: {}", resumptionToken);
 
     try {
       final BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
@@ -342,7 +342,9 @@ public class SearchServiceImpl implements SearchService {
       searchSourceBuilder.size(rows);
       searchSourceBuilder.fetchSource(false);
 
-      if (lastItem != null) {
+      
+      if (StringUtils.isNotBlank(resumptionToken)) {
+        Item lastItem = daoItem.read(resumptionToken);
         Long timestamp = null;
         try {
           timestamp = Configuration.getDateformat().parse(lastItem.getDatestamp()).getTime();

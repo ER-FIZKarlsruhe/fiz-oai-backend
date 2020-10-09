@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements. See the NOTICE file 
+    distributed with this work for additional information regarding copyright ownership. The ASF licenses this file to You under 
+    the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may 
+    obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to 
+    in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF 
+    ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under 
+    the License. -->
+
+<!-- For more details about configurations options that may appear in this file, see http://wiki.apache.org/solr/SolrConfigXml. -->
+<config>
+    <luceneMatchVersion>8.5.1</luceneMatchVersion>
+    <lib dir="../lib" regex=".*\.jar" />
+    <directoryFactory name="DirectoryFactory"
+        class="${solr.directoryFactory:solr.StandardDirectoryFactory}" />
+
+    <schemaFactory class="ClassicIndexSchemaFactory" />
+
+    <indexConfig>
+        <useCompoundFile>false</useCompoundFile>
+        <ramBufferSizeMB>32</ramBufferSizeMB>
+
+        <mergePolicyFactory class="org.apache.solr.index.TieredMergePolicyFactory">
+            <int name="maxMergeAtOnce">10</int>
+            <int name="segmentsPerTier">10</int>
+        </mergePolicyFactory>
+
+        <mergeScheduler class="org.apache.lucene.index.ConcurrentMergeScheduler" />
+        <mergedSegmentWarmer class="org.apache.lucene.index.SimpleMergedSegmentWarmer" />
+
+        <writeLockTimeout>1000</writeLockTimeout>
+
+        <lockType>native</lockType>
+
+        <reopenReaders>true</reopenReaders>
+
+        <deletionPolicy class="solr.SolrDeletionPolicy">
+            <str name="maxCommitsToKeep">1</str>
+            <str name="maxOptimizedCommitsToKeep">0</str>
+            <str name="maxCommitAge">1DAY</str>
+        </deletionPolicy>
+        <infoStream>false</infoStream>
+    </indexConfig>
+
+    <updateHandler class="solr.DirectUpdateHandler2">
+        <!-- Disabled: see ticket https://jira.deutsche-digitale-bibliothek.de/browse/DDB-920 -->
+        <!-- <autoCommit> <maxDocs>10000</maxDocs> <maxTime>3600000</maxTime> </autoCommit> -->
+    </updateHandler>
+
+    <query>
+        <maxBooleanClauses>1024</maxBooleanClauses>
+
+        <filterCache class="solr.FastLRUCache" size="4096" initialSize="4096" autowarmCount="4096" />
+
+        <queryResultCache class="solr.LRUCache" size="1024" initialSize="1024" autowarmCount="0" />
+
+        <documentCache class="solr.LRUCache" size="1024" initialSize="1024" autowarmCount="0" />
+
+        <fieldValueCache class="solr.FastLRUCache" size="4096" autowarmCount="4096" />
+
+        <enableLazyFieldLoading>true</enableLazyFieldLoading>
+        <queryResultWindowSize>20</queryResultWindowSize>
+        <queryResultMaxDocsCached>0</queryResultMaxDocsCached>
+
+        <listener event="newSearcher" class="solr.QuerySenderListener">
+            <arr name="queries">
+            </arr>
+        </listener>
+        <listener event="firstSearcher" class="solr.QuerySenderListener">
+            <arr name="queries">
+                <lst>
+                    <str name="q">*:*</str>
+                </lst>
+            </arr>
+        </listener>
+        <useColdSearcher>true</useColdSearcher>
+        <maxWarmingSearchers>2</maxWarmingSearchers>
+    </query>
+
+
+    <requestDispatcher handleSelect="true">
+        <requestParsers enableRemoteStreaming="true" multipartUploadLimitInKB="2048000" />
+
+        <httpCaching never304="true" />
+    </requestDispatcher>
+
+    <requestHandler name="/select" class="solr.SearchHandler">
+        <arr name="components">
+            <str>query</str>
+            <str>facet</str>
+            <str>highlight</str>
+            <str>stats</str>
+            <str>debug</str>
+        </arr>
+        <lst name="defaults">
+            <str name="echoParams">explicit</str>
+            <str name="qf">title</str>
+            <int name="rows">10</int>
+            <str name="q.op">AND</str>
+            <str name="mm">1</str>
+        </lst>
+    </requestHandler>
+
+
+    <requestHandler name="search" class="solr.SearchHandler" default="true">
+        <lst name="defaults">
+            <str name="echoParams">explicit</str>
+            <str name="qf">identifier</str>
+            <int name="rows">10</int>
+            <str name="q.op">AND</str>
+            <str name="mm">1</str>
+        </lst>
+    </requestHandler>
+
+    <requestHandler name="/update" class="solr.UpdateRequestHandler" />
+
+    <requestHandler name="/update/javabin" class="solr.UpdateRequestHandler" />
+
+    <!-- Echo the request contents back to the client -->
+    <requestHandler name="/debug/dump" class="solr.DumpRequestHandler">
+        <lst name="defaults">
+            <str name="echoParams">explicit</str>
+            <str name="echoHandler">true</str>
+        </lst>
+    </requestHandler>
+
+    <!-- Term Vector Component http://wiki.apache.org/solr/TermVectorComponent -->
+    <searchComponent name="tvComponent" class="solr.TermVectorComponent" />
+
+    <!-- A request handler for demonstrating the term vector component This is purely as an example. In reality you will 
+        likely want to add the component to your already specified request handlers. -->
+    <requestHandler name="tvrh" class="solr.SearchHandler" startup="lazy">
+        <lst name="defaults">
+            <bool name="tv">true</bool>
+        </lst>
+        <arr name="last-components">
+            <str>tvComponent</str>
+        </arr>
+    </requestHandler>
+
+
+    <!-- Terms Component http://wiki.apache.org/solr/TermsComponent A component to return terms and document frequency of 
+        those terms -->
+    <searchComponent name="terms" class="solr.TermsComponent" />
+
+    <!-- A request handler for demonstrating the terms component -->
+    <requestHandler name="/terms" class="solr.SearchHandler" startup="lazy">
+        <lst name="defaults">
+            <bool name="terms">true</bool>
+        </lst>
+        <arr name="components">
+            <str>terms</str>
+        </arr>
+    </requestHandler>
+
+    <!-- replication settings -->
+    <requestHandler name="/replication" class="solr.ReplicationHandler">
+        <lst name="slave">
+            <str name="masterUrl">http://SOLR_MASTER:8183/${solr.core.name}</str>
+            <str name="pollInterval">01:00:00</str>
+        </lst>
+    </requestHandler>
+
+    <admin>
+        <defaultQuery>*:*</defaultQuery>
+    </admin>
+
+</config>

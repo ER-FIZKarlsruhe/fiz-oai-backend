@@ -102,14 +102,14 @@ public class ItemServiceImpl implements ItemService {
       }
 
       // Retrieve sets and formats from elasticsearch
-      Map<String, Object> esResponse = searchService.readDocument(item);
-      if (esResponse != null) {
-        if (esResponse.get("sets") != null) {
-          List<String> sets = esResponse.get("sets") instanceof List<?> ? (List<String>) esResponse.get("sets") : List.of((String) esResponse.get("sets"));
+      Map<String, Object> searchResponse = searchService.readDocument(item);
+      if (searchResponse != null) {
+        if (searchResponse.get("sets") != null) {
+          List<String> sets = searchResponse.get("sets") instanceof List<?> ? (List<String>) searchResponse.get("sets") : List.of((String) searchResponse.get("sets"));
           item.setSets(sets);
         }
-        if (esResponse.get("formats") != null) {
-          List<String> formats = esResponse.get("formats") instanceof List<?> ? (List<String>) esResponse.get("formats") : List.of((String) esResponse.get("formats"));
+        if (searchResponse.get("formats") != null) {
+          List<String> formats = searchResponse.get("formats") instanceof List<?> ? (List<String>) searchResponse.get("formats") : List.of((String) searchResponse.get("formats"));
           item.setFormats(formats);
         }
       } else {
@@ -205,12 +205,7 @@ public class ItemServiceImpl implements ItemService {
       throw new IOException("rows parameter must NOT be greater than 1000!");
     }
 
-    Item lastItem = null;
-    if (StringUtils.isNotBlank(lastItemId)) {
-      lastItem = daoItem.read(lastItemId);
-    }
-
-    final SearchResult<String> idResult = searchService.search(rows, setName, format, from, until, lastItem);
+    final SearchResult<String> idResult = searchService.search(rows, setName, format, from, until, lastItemId);
 
     List<Item> itemList = new ArrayList<>();
 

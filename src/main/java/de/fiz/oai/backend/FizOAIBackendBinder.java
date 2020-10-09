@@ -35,7 +35,7 @@ import de.fiz.oai.backend.service.impl.ContentServiceImpl;
 import de.fiz.oai.backend.service.impl.CrosswalkServiceImpl;
 import de.fiz.oai.backend.service.impl.FormatServiceImpl;
 import de.fiz.oai.backend.service.impl.ItemServiceImpl;
-import de.fiz.oai.backend.service.impl.SearchServiceImpl;
+import de.fiz.oai.backend.service.impl.EsSearchServiceImpl;
 import de.fiz.oai.backend.service.impl.SetServiceImpl;
 
 public class FizOAIBackendBinder extends AbstractBinder {
@@ -51,7 +51,7 @@ public class FizOAIBackendBinder extends AbstractBinder {
       bind(CrosswalkServiceImpl.class).to(CrosswalkService.class).in(Singleton.class);
       bind(FormatServiceImpl.class).to(FormatService.class).in(Singleton.class);
       bind(ItemServiceImpl.class).to(ItemService.class).in(Singleton.class);
-      bind(SearchServiceImpl.class).to(SearchService.class).in(Singleton.class);
+      bind(EsSearchServiceImpl.class).to(SearchService.class).in(Singleton.class);
       bind(SetServiceImpl.class).to(SetService.class).in(Singleton.class);
       bind(TransformerServiceImpl.class).to(TransformerService.class).in(Singleton.class);
   }
