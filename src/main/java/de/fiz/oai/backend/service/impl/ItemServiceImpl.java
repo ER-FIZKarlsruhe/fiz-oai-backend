@@ -107,7 +107,7 @@ public class ItemServiceImpl implements ItemService {
         item.setContent(content);
       }
 
-      // Retrieve sets and formats from elasticsearch
+      // Retrieve sets and formats from search-server
       Map<String, Object> searchResponse = searchService.readDocument(item);
       if (searchResponse != null) {
         if (searchResponse.get("sets") != null) {
