@@ -19,7 +19,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -33,7 +38,6 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
-import de.fiz.oai.backend.service.TransformerService;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -55,7 +59,9 @@ import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.service.ItemService;
 import de.fiz.oai.backend.service.SearchService;
+import de.fiz.oai.backend.service.TransformerService;
 import de.fiz.oai.backend.utils.Configuration;
+import de.fiz.oai.backend.utils.XPathHelper;
 
 @Service
 public class ItemServiceImpl implements ItemService {
@@ -153,6 +159,7 @@ public class ItemServiceImpl implements ItemService {
     // Create Crosswalk content
     createCrosswalks(item, itemFormats);
 
+    addFormatsAndSets(newItem);
     searchService.createDocument(newItem);
 
     return newItem;
@@ -188,6 +195,7 @@ public class ItemServiceImpl implements ItemService {
     createCrosswalks(item, itemFormats);
 //    updateItem.setFormats(itemFormats);
 
+    addFormatsAndSets(updateItem);
     searchService.updateDocument(updateItem);
 
     return updateItem;
@@ -233,9 +241,56 @@ public class ItemServiceImpl implements ItemService {
 
     daoItem.create(itemToDelete);
 
+    addFormatsAndSets(itemToDelete);
     searchService.updateDocument(itemToDelete);
     
     // DELETE Content in all formats? Or keep it?
+  }
+  
+  public void addFormatsAndSets(Item item) throws IOException {
+      // Add all available formats
+      List<Content> allContents = daoContent.readFormats(item.getIdentifier());
+      List<String> itemFormats = new ArrayList<>();
+      if (allContents != null && !allContents.isEmpty()) {
+          for (final Content pickedContent : allContents) {
+              itemFormats.add(pickedContent.getFormat());
+          }
+      }
+      item.setFormats(itemFormats);
+
+      // Add all the matching sets
+      List<de.fiz.oai.backend.models.Set> allSets = daoSet.readAll();
+      List<String> itemSets = new ArrayList<>();
+      if (allSets != null && !allSets.isEmpty()) {
+
+          for (final de.fiz.oai.backend.models.Set pickedSet : allSets) {
+              // Check set membership via xPath
+              Map<String, String> xPaths = pickedSet.getxPaths();
+              if (allContents != null && !allContents.isEmpty()) {
+                  for (final Content pickedContent : allContents) {
+                      if (xPaths.containsKey(pickedContent.getFormat())) {
+                          final String xPathToCheck = xPaths.get(pickedContent.getFormat());
+                          if (XPathHelper.isTextValueMatching(pickedContent.getContent(), xPathToCheck)) {
+                              itemSets.add(pickedSet.getName());
+                          }
+                      }
+                  }
+              }
+
+              // Check set membership via item tags
+              List<String> setTags = pickedSet.getTags();
+
+              if (setTags != null && !setTags.isEmpty()) {
+                  for (String setTag : setTags) {
+                      if (item.getTags().contains(setTag)) {
+                          itemSets.add(pickedSet.getName());
+                      }
+                  }
+              }
+          }
+
+      }
+      item.setSets(itemSets);
   }
 
   /**

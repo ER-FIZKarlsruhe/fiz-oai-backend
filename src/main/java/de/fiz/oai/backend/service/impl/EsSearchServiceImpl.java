@@ -67,15 +67,12 @@ import de.fiz.oai.backend.dao.DAOContent;
 import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.dao.DAOSet;
-import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
-import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.models.reindex.ReindexStatus;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.utils.Configuration;
 import de.fiz.oai.backend.utils.ResourcesUtils;
-import de.fiz.oai.backend.utils.XPathHelper;
 
 @Service
 public class EsSearchServiceImpl implements SearchService {
@@ -142,7 +139,7 @@ public class EsSearchServiceImpl implements SearchService {
 
   
   private void indexDocument(Item item, String indexName, RestHighLevelClient client) throws IOException {
-	    Map<String, Object> itemMap = createItemMapForIndexing(item);
+      Map<String, Object> itemMap = item.toMap();
 
 	    IndexRequest indexRequest = new IndexRequest();
 	    indexRequest.index(indexName);
@@ -154,63 +151,6 @@ public class EsSearchServiceImpl implements SearchService {
 	  }
   
   /**
-   * @param allContents Contents
-   * @return returns all formats for this item
-   */
-  private List<String> getItemFormats(List<Content> allContents) {
-    List<String> itemFormats = new ArrayList<>();
-    if (allContents != null && !allContents.isEmpty()) {
-      for (final Content pickedContent : allContents) {
-        itemFormats.add(pickedContent.getFormat());
-      }
-    }
-    return itemFormats;
-  }
-
-  /**
-   *
-   * @param item Item data
-   * @param allContents Contents
-   * @return returns the sets for this item
-   * @throws IOException
-   */
-  private List<String> getItemSets(Item item, List<Content> allContents) throws IOException {
-    List<Set> allSets = daoSet.readAll();
-    List<String> itemSets = new ArrayList<>();
-    if (allSets != null && !allSets.isEmpty()) {
-
-      // Add all the matching sets
-      for (final Set pickedSet : allSets) {
-        // Check set membership via xPath
-        Map<String, String> xPaths = pickedSet.getxPaths();
-        if (allContents != null && !allContents.isEmpty()) {
-          for (final Content pickedContent : allContents) {
-            if (xPaths.containsKey(pickedContent.getFormat())) {
-              final String xPathToCheck = xPaths.get(pickedContent.getFormat());
-              if (XPathHelper.isTextValueMatching(pickedContent.getContent(), xPathToCheck)) {
-                itemSets.add(pickedSet.getName());
-              }
-            }
-          }
-        }
-
-        // Check set membership via item tags
-        List<String> setTags = pickedSet.getTags();
-
-        if (setTags != null && !setTags.isEmpty()) {
-          for (String setTag : setTags) {
-            if (item.getTags().contains(setTag)) {
-              itemSets.add(pickedSet.getName());
-            }
-          }
-        }
-      }
-
-    }
-    return itemSets;
-  }
-
-  /**
    * Update item in index.
    *
    * @param item The item to update
@@ -218,11 +158,7 @@ public class EsSearchServiceImpl implements SearchService {
    */
   @Override
   public void updateDocument(Item item) throws IOException {
-      List<Content> allContents = daoContent.readFormats(item.getIdentifier());
-
       Map<String, Object> itemMap = item.toMap();
-      itemMap.put("formats", getItemFormats(allContents));
-      itemMap.put("sets", getItemSets(item, allContents));
 
       UpdateRequest updateRequest = new UpdateRequest();
       updateRequest.index(ITEMS_ALIAS_INDEX_NAME);
@@ -234,60 +170,6 @@ public class EsSearchServiceImpl implements SearchService {
       LOGGER.info("Updated item " + item.getIdentifier() + " in search index.");
   }
   
-
-
-  
-  private Map<String, Object> createItemMapForIndexing(Item item) throws IOException {
-	    Map<String, Object> itemMap = item.toMap();
-
-	    // Add all available formats
-	    List<Content> allContents = daoContent.readFormats(item.getIdentifier());
-	    List<String> itemFormats = new ArrayList<>();
-	    if (allContents != null && !allContents.isEmpty()) {
-	      for (final Content pickedContent : allContents) {
-	        itemFormats.add(pickedContent.getFormat());
-	      }
-	    }
-	    itemMap.put("formats", itemFormats);
-
-	    // Add all the matching sets
-	    List<Set> allSets = daoSet.readAll();
-	    List<String> itemSets = new ArrayList<>();
-	    if (allSets != null && !allSets.isEmpty()) {
-
-	      for (final Set pickedSet : allSets) {
-	        // Check set membership via xPath
-	        Map<String, String> xPaths = pickedSet.getxPaths();
-	        if (allContents != null && !allContents.isEmpty()) {
-	          for (final Content pickedContent : allContents) {
-	            if (xPaths.containsKey(pickedContent.getFormat())) {
-	              final String xPathToCheck = xPaths.get(pickedContent.getFormat());
-	              if (XPathHelper.isTextValueMatching(pickedContent.getContent(), xPathToCheck)) {
-	                itemSets.add(pickedSet.getName());
-	              }
-	            }
-	          }
-	        }
-
-	        // Check set membership via item tags
-	        List<String> setTags = pickedSet.getTags();
-
-	        if (setTags != null && !setTags.isEmpty()) {
-	          for (String setTag : setTags) {
-	            if (item.getTags().contains(setTag)) {
-	              itemSets.add(pickedSet.getName());
-	            }
-	          }
-	        }
-	      }
-
-	    }
-	    itemMap.put("sets", itemSets);
-	    
-	    return itemMap;
-  }
-
-
   /**
    * 
    * @param item @throws IOException @throws
@@ -304,11 +186,11 @@ public class EsSearchServiceImpl implements SearchService {
 
   @Override
   public SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate,
-      String resumptionToken) throws IOException {
+      String searchMark) throws IOException {
 
     LOGGER.info("DEBUG: rows: {}", rows);
     LOGGER.info("DEBUG: format: {}", format);
-    LOGGER.info("DEBUG: lastItem: {}", resumptionToken);
+    LOGGER.info("DEBUG: searchMark: {}", searchMark);
 
     try {
       final BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
@@ -343,8 +225,8 @@ public class EsSearchServiceImpl implements SearchService {
       searchSourceBuilder.fetchSource(false);
 
       
-      if (StringUtils.isNotBlank(resumptionToken)) {
-        Item lastItem = daoItem.read(resumptionToken);
+      if (StringUtils.isNotBlank(searchMark)) {
+        Item lastItem = daoItem.read(searchMark);
         Long timestamp = null;
         try {
           timestamp = Configuration.getDateformat().parse(lastItem.getDatestamp()).getTime();

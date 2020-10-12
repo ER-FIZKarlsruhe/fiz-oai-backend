@@ -108,13 +108,14 @@ public class Item {
     itemMap.put("deleteFlag", deleteFlag);
     itemMap.put("ingestFormat", ingestFormat);
     itemMap.put("sets", sets);
+    itemMap.put("formats", formats);
     itemMap.put("tags", tags);
     return itemMap;
   }
 
   @Override
   public String toString() {
-    return "Item [identifier=" + identifier + ", datestamp=" + datestamp + ", deleteFlag=" + deleteFlag + ", sets=" + sets
+    return "Item [identifier=" + identifier + ", datestamp=" + datestamp + ", deleteFlag=" + deleteFlag + ", sets=" + sets + ", formats=" + formats
             + ", tags=" + tags + ", ingestFormat=" + ingestFormat + "]";
   }
 

@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +66,13 @@ public class Configuration {
     }
 
     public String getProperty(String name) {
+        return properties.getProperty(name);
+    }
+
+    public String getProperty(String name, String defaultValue) {
+        if (StringUtils.isBlank(properties.getProperty(name))) {
+            return defaultValue;
+        }
         return properties.getProperty(name);
     }
 

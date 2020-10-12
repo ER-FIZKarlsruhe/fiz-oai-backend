@@ -72,4 +72,12 @@ public interface ItemService {
    */
   void delete(String identifier) throws IOException;
   
+  /**
+   * Fill formats and sets in Item-Object
+   * @param item
+   * @return item
+   * @throws IOException
+   */
+  void addFormatsAndSets(Item item) throws IOException;
+  
 }

@@ -83,11 +83,11 @@ public interface SearchService {
    * @param format
    * @param fromDate
    * @param untilDate
-   * @param resumptionToken
+   * @param searchMark
    * @return
    * @throws IOException
    */
-  SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate, String resumptionToken)
+  SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate, String searchMark)
       throws IOException;
 
 }

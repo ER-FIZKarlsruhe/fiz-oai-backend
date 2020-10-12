@@ -72,6 +72,7 @@ public class ContentServiceImpl implements ContentService {
 
     //Reread item and store it in the search index
     item = itemService.read(content.getIdentifier(), null, false);
+    itemService.addFormatsAndSets(item);
     searchService.updateDocument(item);
     
     return newContent;
@@ -91,6 +92,7 @@ public class ContentServiceImpl implements ContentService {
 
     //Reread item and store it in the search index
     item = itemService.read(content.getIdentifier(), null, false);
+    itemService.addFormatsAndSets(item);
     searchService.updateDocument(item);
     
     return newContent;
