@@ -34,6 +34,7 @@ import javax.ws.rs.core.Context;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
+import org.eclipse.jetty.http.HttpStatus;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
@@ -188,9 +189,11 @@ public class EsSearchServiceImpl implements SearchService {
   public SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate,
       String searchMark) throws IOException {
 
-    LOGGER.info("DEBUG: rows: {}", rows);
-    LOGGER.info("DEBUG: format: {}", format);
-    LOGGER.info("DEBUG: searchMark: {}", searchMark);
+    if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("rows: {}", rows);
+        LOGGER.debug("format: {}", format);
+        LOGGER.debug("searchMark: {}", searchMark);
+    }
 
     try {
       final BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
@@ -231,7 +234,7 @@ public class EsSearchServiceImpl implements SearchService {
         try {
           timestamp = Configuration.getDateformat().parse(lastItem.getDatestamp()).getTime();
         } catch (ParseException e) {
-          e.printStackTrace();
+          LOGGER.warn(e.getMessage());
         }
         searchSourceBuilder.searchAfter(new Object[] { timestamp, lastItem.getIdentifier() });
         searchSourceBuilder.from(0);
@@ -240,11 +243,11 @@ public class EsSearchServiceImpl implements SearchService {
       SearchRequest searchRequest = new SearchRequest(ITEMS_ALIAS_INDEX_NAME);
       searchRequest.source(searchSourceBuilder);
 
-      LOGGER.info("DEBUG: searchRequest: {}", searchRequest.toString());
+      LOGGER.debug("searchRequest: {}", searchRequest.toString());
 
       SearchResponse searchResponse = elasticsearchClient.search(searchRequest, RequestOptions.DEFAULT);
 
-      LOGGER.info("DEBUG: searchResponse: {}", searchResponse.toString());
+      LOGGER.debug("searchResponse: {}", searchResponse.toString());
       
       SearchHits searchHits = searchResponse.getHits();
       Iterator<SearchHit> iterator = searchHits.iterator();
@@ -283,8 +286,10 @@ public class EsSearchServiceImpl implements SearchService {
         searchSourceBuilder.searchAfter(new Object[] { timestamp, newLastItem.getIdentifier() });
         searchRequest.source(searchSourceBuilder);
 
-        LOGGER.info("DEBUG: currentLastItemId: {}", newLastItemId);
-        LOGGER.info("DEBUG: searchRequest next elements?: {}", searchRequest.toString());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("currentLastItemId: {}", newLastItemId);
+            LOGGER.debug("searchRequest next elements?: {}", searchRequest.toString());
+        }
         searchResponse = elasticsearchClient.search(searchRequest, RequestOptions.DEFAULT);
         if (searchResponse.getHits().getHits().length == 0) {
           idResult.setLastItemId(null);
@@ -311,8 +316,8 @@ public class EsSearchServiceImpl implements SearchService {
           Request requestMapping = new Request("PUT", "/" + indexName + "/_mapping");
           requestMapping.setJsonEntity(mapping);
           Response responseMapping = lowLevelClient.performRequest(requestMapping);
-          if (responseMapping.getStatusLine().getStatusCode() == 200
-              || responseMapping.getStatusLine().getStatusCode() == 204) {
+          if (responseMapping.getStatusLine().getStatusCode() == HttpStatus.OK_200
+              || responseMapping.getStatusLine().getStatusCode() == HttpStatus.NO_CONTENT_204) {
             return true;
           }
         }

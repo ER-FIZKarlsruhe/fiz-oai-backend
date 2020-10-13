@@ -122,9 +122,11 @@ public class SolrSearchServiceImpl implements SearchService {
     public SearchResult<String> search(
         Integer rows, String set, String format, Date fromDate, Date untilDate, String searchMark) throws IOException {
 
-        LOGGER.info("DEBUG: rows: {}", rows);
-        LOGGER.info("DEBUG: format: {}", format);
-        LOGGER.info("DEBUG: searchMark: {}", searchMark);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("rows: {}", rows);
+            LOGGER.debug("format: {}", format);
+            LOGGER.debug("searchMark: {}", searchMark);
+        }
 
         if (StringUtils.isBlank(searchMark)) {
             searchMark = CursorMarkParams.CURSOR_MARK_START;
@@ -157,11 +159,11 @@ public class SolrSearchServiceImpl implements SearchService {
             solrQuery.addSort("identifier", ORDER.asc);
             solrQuery.set(CursorMarkParams.CURSOR_MARK_PARAM, searchMark);
 
-            LOGGER.info("DEBUG: searchRequest: {}", solrQuery.toString());
+            LOGGER.debug("searchRequest: {}", solrQuery.toString());
 
             QueryResponse rsp = solrClient.query(solrQuery);
 
-            LOGGER.info("DEBUG: searchResponse: {}", rsp.toString());
+            LOGGER.debug("searchResponse: {}", rsp.toString());
 
             List<String> idsRetrieved = new ArrayList<>();
 

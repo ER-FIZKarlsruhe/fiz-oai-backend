@@ -70,10 +70,7 @@ public class Configuration {
     }
 
     public String getProperty(String name, String defaultValue) {
-        if (StringUtils.isBlank(properties.getProperty(name))) {
-            return defaultValue;
-        }
-        return properties.getProperty(name);
+        return properties.getProperty(name, defaultValue);
     }
 
     private void loadConfiguration() {
