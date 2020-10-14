@@ -15,4 +15,11 @@
    <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson\-databind@.*$</packageUrl>
    <cve>CVE-2020-24750</cve>
 </suppress>
+<suppress>
+   <notes><![CDATA[
+   file name: jetty-http-9.4.27.v20200227.jar
+   ]]></notes>
+   <packageUrl regex="true">^pkg:maven/org\.eclipse\.jetty/jetty\-http@.*$</packageUrl>
+   <cve>CVE-2019-17638</cve>
+</suppress>
 </suppressions>
