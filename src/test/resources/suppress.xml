@@ -19,14 +19,14 @@
    <notes><![CDATA[
    file name: jetty-http-9.4.27.v20200227.jar
    ]]></notes>
-   <packageUrl regex="true">^pkg:maven/org\.eclipse\.jetty/jetty\-http@.*$</packageUrl>
+   <packageUrl regex="true">^pkg:maven/org\.eclipse\.jetty/jetty.*$</packageUrl>
    <cve>CVE-2019-17638</cve>
 </suppress>
 <suppress>
    <notes><![CDATA[
    file name: http2-common-9.4.27.v20200227.jar
    ]]></notes>
-   <packageUrl regex="true">^pkg:maven/org\.eclipse\.jetty\.http2/http2\-common@.*$</packageUrl>
+   <packageUrl regex="true">^pkg:maven/org\.eclipse\.jetty\.http2/http2.*$</packageUrl>
    <cve>CVE-2019-17638</cve>
 </suppress>
 </suppressions>
