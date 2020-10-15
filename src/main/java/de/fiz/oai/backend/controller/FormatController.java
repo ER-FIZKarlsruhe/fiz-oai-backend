@@ -56,18 +56,13 @@ public class FormatController extends AbstractController {
   @Path("/{metadataPrefix}")
   @Produces(MediaType.APPLICATION_JSON)
   public Format getFormat(@PathParam("metadataPrefix") String metadataPrefix, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) {
+      @Context HttpServletResponse response) throws Exception {
 
     if (StringUtils.isBlank(metadataPrefix)) {
       throw new BadRequestException("name QueryParam cannot be empty!");
     }
 
-    Format format;
-    try {
-      format = formatService.read(metadataPrefix);
-    } catch (IOException e) {
-      throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
-    }
+    Format format = formatService.read(metadataPrefix);
 
     if (format == null) {
       throw new WebApplicationException(Status.NOT_FOUND);
@@ -78,14 +73,9 @@ public class FormatController extends AbstractController {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public List<Format> getAllFormats(@Context HttpServletRequest request, @Context HttpServletResponse response) {
+  public List<Format> getAllFormats(@Context HttpServletRequest request, @Context HttpServletResponse response) throws Exception {
 
-    List<Format> formatList;
-    try {
-      formatList = formatService.readAll();
-    } catch (Exception e) {
-      throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
-    }
+    List<Format> formatList = formatService.readAll();
 
     return formatList;
   }
@@ -93,26 +83,20 @@ public class FormatController extends AbstractController {
   @DELETE
   @Path("/{metadataPrefix}")
   public void deleteFormat(@PathParam("metadataPrefix") String metadataPrefix, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) {
+      @Context HttpServletResponse response) throws Exception {
 
     if (StringUtils.isBlank(metadataPrefix)) {
       throw new BadRequestException("name to delete cannot be empty!");
     }
 
-    try {
-      formatService.delete(metadataPrefix);
-    } catch (NotFoundException e) {
-      throw new WebApplicationException(Status.NOT_FOUND);
-    } catch (Exception ioe) {
-      throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
-    }
+    formatService.delete(metadataPrefix);
   }
 
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Format createFormat(Format format, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) {
+      @Context HttpServletResponse response) throws Exception {
     LOGGER.info("createFormat format: {}", format.toString());
 
     if (StringUtils.isBlank(format.getMetadataPrefix())) {
@@ -133,12 +117,7 @@ public class FormatController extends AbstractController {
     
     Format newFormat = null;
 
-    try {
-        newFormat = formatService.create(format);
-    } catch (Exception e) {
-    	LOGGER.error("Cannot createFormat " , e);
-    	throw new WebApplicationException(e.getMessage(), Status.INTERNAL_SERVER_ERROR);
-    }
+    newFormat = formatService.create(format);
 
     LOGGER.info("newFormat: {}", newFormat);
     return newFormat;
@@ -149,7 +128,7 @@ public class FormatController extends AbstractController {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Format updateFormat(@PathParam("metadataPrefix") String metadataPrefix, Format format,
-      @Context HttpServletRequest request, @Context HttpServletResponse response) {
+      @Context HttpServletRequest request, @Context HttpServletResponse response) throws Exception {
   
 	LOGGER.info("createFormat format: {}", format.toString());
     if (StringUtils.isBlank(format.getMetadataPrefix())) {
@@ -174,15 +153,7 @@ public class FormatController extends AbstractController {
           Status.BAD_REQUEST);
     }
 
-    try {
-      formatService.update(format);
-
-    } catch (NotFoundException nfe) {
-      throw new WebApplicationException(Status.NOT_FOUND);
-    }  catch (Exception e) {
-    	LOGGER.error("Cannot updateFormat " , e);
-    	throw new WebApplicationException(e.getMessage(), Status.INTERNAL_SERVER_ERROR);
-    }
+    formatService.update(format);
 
     return format;
   }

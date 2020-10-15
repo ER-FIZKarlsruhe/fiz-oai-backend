@@ -67,7 +67,7 @@ public class ItemController extends AbstractController {
   @Produces(MediaType.APPLICATION_JSON)
   public Item getItem(@PathParam("identifier") String identifier, @QueryParam("format") String format,
       @QueryParam("content") Boolean content, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws WebApplicationException, IOException {
+      @Context HttpServletResponse response) throws Exception {
 
     if (content == null) {
       content = false;
@@ -88,7 +88,7 @@ public class ItemController extends AbstractController {
   public SearchResult<Item> searchItems(@QueryParam("rows") Integer rows,
       @QueryParam("set") String set, @QueryParam("format") String format, @QueryParam("from") String from,
       @QueryParam("until") String until, @QueryParam("content") Boolean content, @QueryParam("lastItemId") String lastItemId, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws WebApplicationException, IOException {
+      @Context HttpServletResponse response) throws Exception {
 
     LOGGER.info("rows: {}", rows);
     LOGGER.info("set: {}", set);
@@ -133,24 +133,20 @@ public class ItemController extends AbstractController {
   @DELETE
   @Path("/{identifier}")
   public void deleteItem(@PathParam("identifier") String identifier, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws WebApplicationException, IOException {
+      @Context HttpServletResponse response) throws Exception {
 
     if (StringUtils.isBlank(identifier)) {
       throw new BadRequestException("identifier to delete cannot be empty!");
     }
 
-    try {
-      itemService.delete(identifier);
-    } catch (NotFoundException e) {
-      throw new WebApplicationException(Status.NOT_FOUND);
-    }
+    itemService.delete(identifier);
   }
 
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   public Item createItem(@FormDataParam("content") String content, @FormDataParam("item") Item item,
-      @Context HttpServletRequest request, @Context HttpServletResponse response) {
+      @Context HttpServletRequest request, @Context HttpServletResponse response) throws Exception {
     LOGGER.info("createItem item: {}", item.toString());
     LOGGER.debug("content: {}", content);
     
@@ -167,17 +163,8 @@ public class ItemController extends AbstractController {
 
     Item newItem = null;
 
-    try {
-      newItem = itemService.create(item);
-      response.setStatus(HttpServletResponse.SC_CREATED);
-    } catch (NotFoundException e) {
-      throw new WebApplicationException(Status.NOT_FOUND);
-    } catch (AlreadyExistsException e) {
-        throw new WebApplicationException(Status.CONFLICT);
-    } catch (Exception e) {
-      LOGGER.error("An unexpected exception occured", e);
-      throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
-    }
+    newItem = itemService.create(item);
+    response.setStatus(HttpServletResponse.SC_CREATED);
 
     return newItem;
   }
@@ -187,7 +174,7 @@ public class ItemController extends AbstractController {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   public Item updateItem(@PathParam("identifier") String identifier, @FormDataParam("content") String content,
-      @FormDataParam("item") Item item, @Context HttpServletRequest request, @Context HttpServletResponse response) {
+      @FormDataParam("item") Item item, @Context HttpServletRequest request, @Context HttpServletResponse response) throws Exception {
 
     if (!identifier.equals(item.getIdentifier())) {
       throw new WebApplicationException("The identifier in the path and the item json does not match!",
@@ -205,14 +192,7 @@ public class ItemController extends AbstractController {
 
     item.setContent(itemContent);
     
-    Item updateItem = null;
-    try {
-      updateItem = itemService.update(item);
-    } catch (NotFoundException e) {
-      throw new WebApplicationException(Status.NOT_FOUND);
-    } catch (IOException e) {
-      throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
-    }
+    Item updateItem = itemService.update(item);
 
     return updateItem;
   }

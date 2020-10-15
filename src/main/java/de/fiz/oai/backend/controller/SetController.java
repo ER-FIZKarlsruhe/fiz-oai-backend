@@ -58,7 +58,7 @@ public class SetController extends AbstractController {
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
   public Set getSet(@PathParam("name") String name ,  @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws WebApplicationException, IOException {
+      @Context HttpServletResponse response) throws Exception {
 
     if (name == null || StringUtils.isBlank(name)) {
       throw new BadRequestException("name QueryParam cannot be empty!");
@@ -76,7 +76,7 @@ public class SetController extends AbstractController {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   public List<Set> getAllSets( @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws WebApplicationException, IOException {
+      @Context HttpServletResponse response) throws Exception {
     final List<Set> setList = setService.readAll();
     
     return setList;
@@ -85,24 +85,20 @@ public class SetController extends AbstractController {
   @DELETE
   @Path("/{name}")
   public void deleteSet(@PathParam("name") String name, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws WebApplicationException, IOException {
+      @Context HttpServletResponse response) throws Exception {
 
     if (StringUtils.isBlank(name)) {
       throw new BadRequestException("name to delete cannot be empty!");
     }
 
-    try {
-      setService.delete(name);
-    } catch (NotFoundException e) {
-      throw new WebApplicationException(Status.NOT_FOUND);
-    }
+    setService.delete(name);
   }
   
   
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Set createSet( Set set, @Context HttpServletRequest request, @Context HttpServletResponse response) {
+  public Set createSet( Set set, @Context HttpServletRequest request, @Context HttpServletResponse response) throws Exception {
     
     if (StringUtils.isBlank( set.getName())) {
       throw new WebApplicationException("Set name cannot be empty!", Status.BAD_REQUEST);
@@ -118,13 +114,7 @@ public class SetController extends AbstractController {
     
     Set newSet = null;
     
-    try {
-      newSet = setService.create(set);
-    } catch (NotFoundException nfe) {
-      throw new  WebApplicationException(Status.NOT_FOUND);
-    } catch (IOException e) {
-      throw new  WebApplicationException(Status.INTERNAL_SERVER_ERROR);
-    } 
+    newSet = setService.create(set);
     return newSet;
   }
   
@@ -133,7 +123,7 @@ public class SetController extends AbstractController {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Set updateSet(@PathParam("name") String name, Set set,
-      @Context HttpServletRequest request, @Context HttpServletResponse response) {
+      @Context HttpServletRequest request, @Context HttpServletResponse response) throws Exception {
 
     if (StringUtils.isBlank( set.getName())) {
       throw new WebApplicationException("Set name cannot be empty!", Status.BAD_REQUEST);
@@ -153,13 +143,7 @@ public class SetController extends AbstractController {
     
     Set updateSet = null;
     
-    try {
-      updateSet = setService.update(set);
-    } catch (NotFoundException nfe) {
-      throw new  WebApplicationException(Status.NOT_FOUND);
-    } catch (IOException e) {
-      throw new  WebApplicationException(Status.INTERNAL_SERVER_ERROR);
-    } 
+    updateSet = setService.update(set);
     
     return updateSet;
   }

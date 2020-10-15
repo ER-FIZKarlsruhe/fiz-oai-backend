@@ -57,7 +57,7 @@ public class ContentController extends AbstractController {
   @Path("/{identifier}/{format}")
   @Produces(MediaType.APPLICATION_JSON)
   public Content getContent(@PathParam("identifier") String identifier, @PathParam("format") String format , @Context HttpServletRequest request,
-      @Context HttpServletResponse response) {
+      @Context HttpServletResponse response) throws Exception {
 
     if (StringUtils.isBlank(identifier)) {
       throw new BadRequestException("identifier path parameter cannot be empty!");
@@ -67,12 +67,7 @@ public class ContentController extends AbstractController {
       throw new BadRequestException("format path parameter cannot be empty!");
     }
 
-    Content content;
-    try {
-      content = contentService.read(identifier, format);
-    } catch (IOException e) {
-      throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
-    }
+    Content content = contentService.read(identifier, format);
 
     if (content == null) {
       throw new WebApplicationException(Status.NOT_FOUND);
@@ -85,18 +80,13 @@ public class ContentController extends AbstractController {
   @Path("/{identifier}")
   @Produces(MediaType.APPLICATION_JSON)
   public List<Content> getAllContentFormats(@PathParam("identifier") String identifier, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) {
+      @Context HttpServletResponse response) throws Exception {
 
     if (StringUtils.isBlank(identifier)) {
       throw new BadRequestException("identifier path parameter cannot be empty!");
     }
     
-    List<Content> content;
-    try {
-      content = contentService.readFormats(identifier);
-    } catch (IOException e) {
-      throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
-    }
+    List<Content> content = contentService.readFormats(identifier);
 
     if (content == null || content.isEmpty()) {
       throw new WebApplicationException(Status.NOT_FOUND);
@@ -110,7 +100,7 @@ public class ContentController extends AbstractController {
   @DELETE
   @Path("/{identifier}/{format}")
   public void deleteContent(@PathParam("identifier") String identifier, @PathParam("format") String format , @Context HttpServletRequest request,
-      @Context HttpServletResponse response) {
+      @Context HttpServletResponse response) throws Exception {
 
     if (StringUtils.isBlank(identifier)) {
       throw new BadRequestException("identifier path parameter cannot be empty!");
@@ -120,33 +110,19 @@ public class ContentController extends AbstractController {
       throw new BadRequestException("format path parameter cannot be empty!");
     }
 
-    try {
-      contentService.delete(identifier, format);
-    } catch (NotFoundException e) {
-      throw new WebApplicationException(Status.NOT_FOUND);
-    } catch (IOException ioe) {
-      throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
-    }
+    contentService.delete(identifier, format);
   }
 
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Content createContent(Content content, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) {
+      @Context HttpServletResponse response) throws Exception {
 
 	  LOGGER.info("createContent " + content.toString());
     validate(content);
     
-    try {
-      return contentService.create(content);
-    } catch (NotFoundException nfe) {
-    	LOGGER.error("Cannot createContent " , nfe);
-    	throw new WebApplicationException(nfe.getMessage(), Status.BAD_REQUEST);
-    } catch (Exception e) {
-    	LOGGER.error("Cannot createContent " , e);
-    	throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
-    }
+    return contentService.create(content);
 
   }
 
@@ -155,23 +131,15 @@ public class ContentController extends AbstractController {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Content updateContent(Content content, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) {
+      @Context HttpServletResponse response) throws Exception {
 
     validate(content);
 
-    try {
-      return contentService.update(content);
-    } catch (NotFoundException nfe) {
-    	LOGGER.error("Cannot createContent " , nfe);
-    	throw new WebApplicationException(nfe.getMessage(), Status.BAD_REQUEST);
-    } catch (Exception e) {
-    	LOGGER.error("Cannot createContent " , e);
-    	throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
-    }
+    return contentService.update(content);
   }
   
   
-  private void validate(Content content) throws WebApplicationException {
+  private void validate(Content content) throws Exception {
     if (StringUtils.isBlank(content.getIdentifier())) {
         throw new WebApplicationException("Content identifier cannot be empty!", Status.BAD_REQUEST);
       }
