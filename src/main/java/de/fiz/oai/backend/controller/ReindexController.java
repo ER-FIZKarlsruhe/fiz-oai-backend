@@ -34,7 +34,7 @@ public class ReindexController extends AbstractController {
   @Path("/start")
   public void startReindexAll() {
 
-      if (searchService.reindexAll()) {        
+      if (searchService.reindexAll()) {
         throw new WebApplicationException("Reindex process correctly started.", Status.OK);
       }
       throw new WebApplicationException("Not able to start reindex process, maybe is already started. Please check with /status command.", Status.INTERNAL_SERVER_ERROR);
