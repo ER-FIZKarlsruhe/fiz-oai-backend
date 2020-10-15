@@ -38,7 +38,6 @@ import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang3.StringUtils;
 
-import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Crosswalk;
 import de.fiz.oai.backend.service.CrosswalkService;
 
@@ -52,7 +51,7 @@ public class CrosswalkController extends AbstractController {
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
   public Crosswalk getFormat(@PathParam("name") String name, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws IOException {
 
     if (StringUtils.isBlank(name)) {
       throw new BadRequestException("name path parameter cannot be empty!");
@@ -69,7 +68,7 @@ public class CrosswalkController extends AbstractController {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public List<Crosswalk> getAllCrosswalks(@Context HttpServletRequest request, @Context HttpServletResponse response) throws Exception {
+  public List<Crosswalk> getAllCrosswalks(@Context HttpServletRequest request, @Context HttpServletResponse response) throws IOException {
     List<Crosswalk> crosswalks = crosswalkService.readAll();
 
     return crosswalks;
@@ -78,7 +77,7 @@ public class CrosswalkController extends AbstractController {
   @DELETE
   @Path("/{name}")
   public void deleteCrosswalk(@PathParam("name") String name, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws IOException {
 
     if (StringUtils.isBlank(name)) {
       throw new BadRequestException("identifier path parameter cannot be empty!");
@@ -91,7 +90,7 @@ public class CrosswalkController extends AbstractController {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Crosswalk createCrosswalk(Crosswalk crosswalk, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws IOException {
 
     validate(crosswalk);
 
@@ -103,14 +102,14 @@ public class CrosswalkController extends AbstractController {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Crosswalk updateCrosswalk(Crosswalk crosswalk, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws IOException {
 
     validate(crosswalk);
 
     return crosswalkService.update(crosswalk);
   }
   
-  private void validate(Crosswalk crosswalk) throws Exception {
+  private void validate(Crosswalk crosswalk) {
     if (StringUtils.isBlank(crosswalk.getName())) {
         throw new WebApplicationException("Crosswalk identifier cannot be empty!", Status.BAD_REQUEST);
       }

@@ -38,10 +38,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.service.SetService;
 
@@ -58,7 +55,7 @@ public class SetController extends AbstractController {
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
   public Set getSet(@PathParam("name") String name ,  @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws IOException {
 
     if (name == null || StringUtils.isBlank(name)) {
       throw new BadRequestException("name QueryParam cannot be empty!");
@@ -76,7 +73,7 @@ public class SetController extends AbstractController {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   public List<Set> getAllSets( @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws IOException {
     final List<Set> setList = setService.readAll();
     
     return setList;
@@ -85,7 +82,7 @@ public class SetController extends AbstractController {
   @DELETE
   @Path("/{name}")
   public void deleteSet(@PathParam("name") String name, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws IOException {
 
     if (StringUtils.isBlank(name)) {
       throw new BadRequestException("name to delete cannot be empty!");
@@ -98,7 +95,7 @@ public class SetController extends AbstractController {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Set createSet( Set set, @Context HttpServletRequest request, @Context HttpServletResponse response) throws Exception {
+  public Set createSet( Set set, @Context HttpServletRequest request, @Context HttpServletResponse response) throws IOException {
     
     if (StringUtils.isBlank( set.getName())) {
       throw new WebApplicationException("Set name cannot be empty!", Status.BAD_REQUEST);
@@ -123,7 +120,7 @@ public class SetController extends AbstractController {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Set updateSet(@PathParam("name") String name, Set set,
-      @Context HttpServletRequest request, @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletRequest request, @Context HttpServletResponse response) throws IOException {
 
     if (StringUtils.isBlank( set.getName())) {
       throw new WebApplicationException("Set name cannot be empty!", Status.BAD_REQUEST);

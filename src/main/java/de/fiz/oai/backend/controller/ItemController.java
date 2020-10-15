@@ -43,8 +43,6 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.fiz.oai.backend.exceptions.AlreadyExistsException;
-import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
@@ -67,7 +65,7 @@ public class ItemController extends AbstractController {
   @Produces(MediaType.APPLICATION_JSON)
   public Item getItem(@PathParam("identifier") String identifier, @QueryParam("format") String format,
       @QueryParam("content") Boolean content, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws IOException {
 
     if (content == null) {
       content = false;
@@ -88,7 +86,7 @@ public class ItemController extends AbstractController {
   public SearchResult<Item> searchItems(@QueryParam("rows") Integer rows,
       @QueryParam("set") String set, @QueryParam("format") String format, @QueryParam("from") String from,
       @QueryParam("until") String until, @QueryParam("content") Boolean content, @QueryParam("lastItemId") String lastItemId, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws IOException {
 
     LOGGER.info("rows: {}", rows);
     LOGGER.info("set: {}", set);
@@ -133,7 +131,7 @@ public class ItemController extends AbstractController {
   @DELETE
   @Path("/{identifier}")
   public void deleteItem(@PathParam("identifier") String identifier, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws IOException {
 
     if (StringUtils.isBlank(identifier)) {
       throw new BadRequestException("identifier to delete cannot be empty!");
@@ -146,7 +144,7 @@ public class ItemController extends AbstractController {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   public Item createItem(@FormDataParam("content") String content, @FormDataParam("item") Item item,
-      @Context HttpServletRequest request, @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletRequest request, @Context HttpServletResponse response) throws IOException {
     LOGGER.info("createItem item: {}", item.toString());
     LOGGER.debug("content: {}", content);
     
@@ -174,7 +172,7 @@ public class ItemController extends AbstractController {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   public Item updateItem(@PathParam("identifier") String identifier, @FormDataParam("content") String content,
-      @FormDataParam("item") Item item, @Context HttpServletRequest request, @Context HttpServletResponse response) throws Exception {
+      @FormDataParam("item") Item item, @Context HttpServletRequest request, @Context HttpServletResponse response) throws IOException {
 
     if (!identifier.equals(item.getIdentifier())) {
       throw new WebApplicationException("The identifier in the path and the item json does not match!",

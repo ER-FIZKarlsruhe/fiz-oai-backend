@@ -37,11 +37,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.tinkerpop.shaded.minlog.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.service.ContentService;
 
@@ -57,7 +55,7 @@ public class ContentController extends AbstractController {
   @Path("/{identifier}/{format}")
   @Produces(MediaType.APPLICATION_JSON)
   public Content getContent(@PathParam("identifier") String identifier, @PathParam("format") String format , @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws IOException {
 
     if (StringUtils.isBlank(identifier)) {
       throw new BadRequestException("identifier path parameter cannot be empty!");
@@ -80,7 +78,7 @@ public class ContentController extends AbstractController {
   @Path("/{identifier}")
   @Produces(MediaType.APPLICATION_JSON)
   public List<Content> getAllContentFormats(@PathParam("identifier") String identifier, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws IOException {
 
     if (StringUtils.isBlank(identifier)) {
       throw new BadRequestException("identifier path parameter cannot be empty!");
@@ -100,7 +98,7 @@ public class ContentController extends AbstractController {
   @DELETE
   @Path("/{identifier}/{format}")
   public void deleteContent(@PathParam("identifier") String identifier, @PathParam("format") String format , @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws IOException {
 
     if (StringUtils.isBlank(identifier)) {
       throw new BadRequestException("identifier path parameter cannot be empty!");
@@ -117,7 +115,7 @@ public class ContentController extends AbstractController {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Content createContent(Content content, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws IOException {
 
 	  LOGGER.info("createContent " + content.toString());
     validate(content);
@@ -131,7 +129,7 @@ public class ContentController extends AbstractController {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Content updateContent(Content content, @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws Exception {
+      @Context HttpServletResponse response) throws IOException {
 
     validate(content);
 
@@ -139,7 +137,7 @@ public class ContentController extends AbstractController {
   }
   
   
-  private void validate(Content content) throws Exception {
+  private void validate(Content content) {
     if (StringUtils.isBlank(content.getIdentifier())) {
         throw new WebApplicationException("Content identifier cannot be empty!", Status.BAD_REQUEST);
       }
