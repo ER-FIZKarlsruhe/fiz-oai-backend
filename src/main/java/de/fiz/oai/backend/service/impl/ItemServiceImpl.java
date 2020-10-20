@@ -51,6 +51,7 @@ import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.exceptions.AlreadyExistsException;
 import de.fiz.oai.backend.exceptions.FormatValidationException;
+import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.exceptions.UnknownFormatException;
 import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.models.Crosswalk;
@@ -235,6 +236,10 @@ public class ItemServiceImpl implements ItemService {
   public void delete(String identifier) throws IOException {
 
     Item itemToDelete = daoItem.read(identifier);
+    
+    if (itemToDelete == null) {
+        throw new NotFoundException("Item with id " + identifier + " was not found");
+    }
 
     itemToDelete.setDeleteFlag(true);
     itemToDelete.setDatestamp(Configuration.getDateformat().format(new Date()));
