@@ -45,6 +45,7 @@ import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.fiz.oai.backend.FizOaiExceptionMapper;
 import de.fiz.oai.backend.controller.ContentController;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Content;
@@ -78,6 +79,7 @@ public class ContentControllerIT extends JerseyTest {
       }
     });
     config.register(MultiPartFeature.class);
+    config.register(FizOaiExceptionMapper.class);
     return config;
   }
 

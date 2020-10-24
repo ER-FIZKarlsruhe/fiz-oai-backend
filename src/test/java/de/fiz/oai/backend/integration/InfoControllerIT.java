@@ -33,6 +33,7 @@ import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.fiz.oai.backend.FizOaiExceptionMapper;
 import de.fiz.oai.backend.controller.InfoController;
 import de.fiz.oai.backend.service.TransformerService;
 
@@ -56,6 +57,7 @@ public class InfoControllerIT extends JerseyTest {
         bind(transformerService).to(TransformerService.class);
       }
     });
+    config.register(FizOaiExceptionMapper.class);
     return config;
   }
   
