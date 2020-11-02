@@ -20,6 +20,7 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -112,11 +113,11 @@ public class ItemServiceImpl implements ItemService {
       Map<String, Object> searchResponse = searchService.readDocument(item);
       if (searchResponse != null) {
         if (searchResponse.get("sets") != null) {
-          List<String> sets = searchResponse.get("sets") instanceof List<?> ? (List<String>) searchResponse.get("sets") : List.of((String) searchResponse.get("sets"));
+          List<String> sets = searchResponse.get("sets") instanceof List<?> ? (List<String>) searchResponse.get("sets") : Arrays.asList((String) searchResponse.get("sets"));
           item.setSets(sets);
         }
         if (searchResponse.get("formats") != null) {
-          List<String> formats = searchResponse.get("formats") instanceof List<?> ? (List<String>) searchResponse.get("formats") : List.of((String) searchResponse.get("formats"));
+          List<String> formats = searchResponse.get("formats") instanceof List<?> ? (List<String>) searchResponse.get("formats") : Arrays.asList((String) searchResponse.get("formats"));
           item.setFormats(formats);
         }
       } else {

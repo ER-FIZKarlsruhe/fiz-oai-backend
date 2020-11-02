@@ -603,9 +603,9 @@ public class EsSearchServiceImpl implements SearchService {
             StringUtils.isBlank(reindexStatus.getEndTime()) ? ZonedDateTime.now(ZoneOffset.UTC)
                 : ZonedDateTime.parse(reindexStatus.getEndTime()));
         hours = timeLapsed.toHours();
-        minutesOfHours = timeLapsed.toMinutesPart();
-        secondsOfMinutes = timeLapsed.toSecondsPart();
-        totalSecondsSoFar = timeLapsed.toSeconds();
+        minutesOfHours = 0;
+        secondsOfMinutes = 0;
+        totalSecondsSoFar = 0;
       }
 
       statusString.append("Progress: ");

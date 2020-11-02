@@ -19,6 +19,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -36,7 +37,7 @@ public class XPathHelperTest {
       fullFilePath = fullFilePath.substring(1);
     }
 
-    content = Files.readString(Paths.get(fullFilePath));
+    content = new String(Files.readAllBytes(Paths.get(fullFilePath)), StandardCharsets.UTF_8);
   }
 
   @Test

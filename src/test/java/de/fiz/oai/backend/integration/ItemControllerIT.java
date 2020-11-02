@@ -25,6 +25,7 @@ import static org.mockito.Mockito.eq;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -102,9 +103,9 @@ public class ItemControllerIT extends JerseyTest {
     item.setIdentifier("65465456");
     item.setDatestamp("1972-05-20T20:33:18.772Z");
     item.setDeleteFlag(false);
-    item.setTags(List.of("foo", "bar", "baz"));
-    item.setFormats(List.of("nlm", "oai_dc"));
-    item.setSets(List.of("article", "chapter"));
+    item.setTags(Arrays.asList("foo", "bar", "baz"));
+    item.setFormats(Arrays.asList("nlm", "oai_dc"));
+    item.setSets(Arrays.asList("article", "chapter"));
     item.setIngestFormat("radar");
 
     when(itemService.read(any(), any(), eq(false))).thenReturn(item);
@@ -132,9 +133,9 @@ public class ItemControllerIT extends JerseyTest {
     item.setIdentifier("65465456");
     item.setDatestamp("1972-05-20T20:33:18.772Z");
     item.setDeleteFlag(false);
-    item.setTags(List.of("foo", "bar", "baz"));
-    item.setFormats(List.of("nlm", "oai_dc"));
-    item.setSets(List.of("article", "chapter"));
+    item.setTags(Arrays.asList("foo", "bar", "baz"));
+    item.setFormats(Arrays.asList("nlm", "oai_dc"));
+    item.setSets(Arrays.asList("article", "chapter"));
     item.setIngestFormat("radar");
     item.setContent(content);
 
@@ -240,7 +241,7 @@ public class ItemControllerIT extends JerseyTest {
     item.setIdentifier("65465456");
     item.setDatestamp("1972-05-20T20:33:18.772Z");
     item.setDeleteFlag(false);
-    item.setTags(List.of("foo", "bar", "baz"));
+    item.setTags(Arrays.asList("foo", "bar", "baz"));
     item.setIngestFormat("radar");
     String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
 
@@ -289,7 +290,7 @@ public class ItemControllerIT extends JerseyTest {
     item.setIdentifier("65465456");
     item.setDatestamp("1972-05-20T20:33:18.772Z");
     item.setDeleteFlag(false);
-    item.setTags(List.of("foo", "bar", "baz"));
+    item.setTags(Arrays.asList("foo", "bar", "baz"));
     item.setIngestFormat("radar");
     String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
 

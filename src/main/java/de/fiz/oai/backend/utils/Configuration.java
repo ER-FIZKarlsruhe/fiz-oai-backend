@@ -18,6 +18,8 @@ package de.fiz.oai.backend.utils;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.text.SimpleDateFormat;
@@ -25,7 +27,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,8 +114,18 @@ public class Configuration {
             }
         } catch (Exception e) {
             LOGGER.error("Unable to read property file: {}", file.getAbsolutePath());
-            return false;
         }
+        if (properties == null || properties.isEmpty()) {
+            InputStream in = Configuration.class.getClassLoader().getResourceAsStream(filename);
+            try {
+                properties.load(in);
+                return true;
+            }
+            catch (IOException e) {
+                return false;
+            }
+        }
+        return false;
     }
 
     public boolean isApplicationConfigured() {
