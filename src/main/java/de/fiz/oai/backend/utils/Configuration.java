@@ -15,7 +15,6 @@
  */
 package de.fiz.oai.backend.utils;
 
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -32,8 +31,6 @@ import org.slf4j.LoggerFactory;
 
 public class Configuration {
 
-   
-  
     private Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
 
     private static final String CONFIG_FILENAME = "fiz-oai-backend.properties";
@@ -43,16 +40,16 @@ public class Configuration {
     private Properties properties = new Properties();
 
     public Properties getProperties() {
-      return properties;
+        return properties;
     }
 
     public static SimpleDateFormat getDateformat() {
-      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-      dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-      
-      return dateFormat;
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+        return dateFormat;
     }
-    
+
     private boolean applicationConfigured = false;
 
     private Configuration() {
@@ -79,25 +76,29 @@ public class Configuration {
             printConfiguration();
             applicationConfigured = true;
         }
+        else {
+            LOGGER.error("Couldnt find configuration-file");
+        }
     }
 
     protected String getConfigFolder() {
         String confFolderPath = null;
-        
-        //Is a dedicated oai-backend conf folder defined?
+
+        // Is a dedicated oai-backend conf folder defined?
         String oaiBackendConfRoot = System.getProperty("oai.backend.conf.folder");
 
-        //Catalina conf is fallback
+        // Catalina conf is fallback
         String tomcatRoot = System.getProperty("catalina.base");
-        
+
         if (oaiBackendConfRoot != null && !oaiBackendConfRoot.isEmpty()) {
-          confFolderPath = new File(oaiBackendConfRoot).getAbsolutePath();
-        } else if (tomcatRoot != null && !tomcatRoot.isEmpty()) {
-          confFolderPath = new File(tomcatRoot, "conf").getAbsolutePath();
+            confFolderPath = new File(oaiBackendConfRoot).getAbsolutePath();
+        }
+        else if (tomcatRoot != null && !tomcatRoot.isEmpty()) {
+            confFolderPath = new File(tomcatRoot, "conf").getAbsolutePath();
         }
 
         LOGGER.info("Use confFolderPath: {}", confFolderPath);
-        
+
         return confFolderPath;
     }
 
@@ -109,25 +110,32 @@ public class Configuration {
             try {
                 properties.load(reader);
                 return true;
-            } finally {
+            }
+            finally {
                 reader.close();
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             LOGGER.error("Unable to read property file: {}", file.getAbsolutePath());
         }
-        InputStream in = Configuration.class.getClassLoader().getResourceAsStream(filename);
         try {
-            properties.load(in);
-            return true;
+            InputStream in = Configuration.class.getClassLoader().getResourceAsStream(filename);
+            if (in != null) {
+                properties.load(in);
+                return true;
+            }
         }
         catch (IOException e) {
             LOGGER.error("Unable to read properties from ClassLoader");
         }
         try {
-            in = new FileInputStream(filename);
-            properties.load(in);
-            return true;
-        } catch (IOException e) {
+            InputStream in = new FileInputStream(filename);
+            if (in != null) {
+                properties.load(in);
+                return true;
+            }
+        }
+        catch (IOException e) {
             LOGGER.warn("Could no open " + filename + ".");
         }
         return false;
