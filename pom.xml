@@ -14,7 +14,7 @@
     <javax.javaee.version>7.0</javax.javaee.version>
     <junit.version>4.12</junit.version>
     <elasticsearch.version>6.8.12</elasticsearch.version>
-    <solr.version>8.6.3</solr.version>
+    <solr.version>6.5.1</solr.version>
     <saxon.version>10.2</saxon.version>
     
     <!-- Artifacts -->
