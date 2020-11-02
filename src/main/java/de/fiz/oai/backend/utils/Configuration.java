@@ -115,15 +115,20 @@ public class Configuration {
         } catch (Exception e) {
             LOGGER.error("Unable to read property file: {}", file.getAbsolutePath());
         }
-        if (properties == null || properties.isEmpty()) {
-            InputStream in = Configuration.class.getClassLoader().getResourceAsStream(filename);
-            try {
-                properties.load(in);
-                return true;
-            }
-            catch (IOException e) {
-                return false;
-            }
+        InputStream in = Configuration.class.getClassLoader().getResourceAsStream(filename);
+        try {
+            properties.load(in);
+            return true;
+        }
+        catch (IOException e) {
+            LOGGER.error("Unable to read properties from ClassLoader");
+        }
+        try {
+            in = new FileInputStream(filename);
+            properties.load(in);
+            return true;
+        } catch (IOException e) {
+            LOGGER.warn("Could no open " + filename + ".");
         }
         return false;
     }
