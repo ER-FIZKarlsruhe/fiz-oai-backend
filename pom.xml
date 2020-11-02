@@ -159,7 +159,6 @@
         <configuration>
           <source>1.8</source>
           <target>1.8</target>
-          <fork>true</fork>
         </configuration>
       </plugin>
 
@@ -197,9 +196,6 @@
           <includes>
             <include>de.fiz.oai.backend.integration.*IT.java</include>
           </includes>
-          <argLine>
-            --illegal-access=permit
-          </argLine>
         </configuration>
       </plugin>
 
