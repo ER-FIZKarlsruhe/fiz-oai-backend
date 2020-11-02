@@ -136,7 +136,7 @@ public class Configuration {
             }
         }
         catch (IOException e) {
-            LOGGER.warn("Could no open " + filename + ".");
+            LOGGER.warn("Could not open " + filename);
         }
         return false;
     }
