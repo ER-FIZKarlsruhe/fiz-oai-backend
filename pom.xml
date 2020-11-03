@@ -16,6 +16,10 @@
     <elasticsearch.version>6.8.12</elasticsearch.version>
     <solr.version>8.6.3</solr.version>
     <saxon.version>10.2</saxon.version>
+    
+    <!-- Artifacts -->
+    <artifacts.snapshots.url>https://dev.fiz-karlsruhe.de/artifactory/libs-snapshot-local</artifacts.snapshots.url>
+    <artifacts.releases.url>https://dev.fiz-karlsruhe.de/artifactory/libs-release-local</artifacts.releases.url>
   </properties>
 
   <dependencies>
@@ -258,4 +262,19 @@
       </plugin>
     </plugins>
   </build>
+  
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ecs-marep</id>
+            <name>ecs-marep</name>
+            <uniqueVersion>true</uniqueVersion>
+            <url>${artifacts.snapshots.url}</url>
+        </snapshotRepository>
+        <repository>
+            <id>ecs-marep</id>
+            <name>ecs-marep</name>
+            <uniqueVersion>false</uniqueVersion>
+            <url>${artifacts.releases.url}</url>
+        </repository>
+    </distributionManagement>
 </project>

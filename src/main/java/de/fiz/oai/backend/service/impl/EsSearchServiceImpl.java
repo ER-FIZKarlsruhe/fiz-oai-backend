@@ -34,7 +34,7 @@ import javax.ws.rs.core.Context;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
-import org.eclipse.jetty.http.HttpStatus;
+import org.apache.http.HttpStatus;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
@@ -316,8 +316,8 @@ public class EsSearchServiceImpl implements SearchService {
           Request requestMapping = new Request("PUT", "/" + indexName + "/_mapping");
           requestMapping.setJsonEntity(mapping);
           Response responseMapping = lowLevelClient.performRequest(requestMapping);
-          if (responseMapping.getStatusLine().getStatusCode() == HttpStatus.OK_200
-              || responseMapping.getStatusLine().getStatusCode() == HttpStatus.NO_CONTENT_204) {
+          if (responseMapping.getStatusLine().getStatusCode() == HttpStatus.SC_OK
+              || responseMapping.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
             return true;
           }
         }
