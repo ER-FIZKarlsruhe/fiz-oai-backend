@@ -45,30 +45,33 @@ import de.fiz.oai.backend.utils.Configuration;
 import de.fiz.oai.backend.utils.TransformerServiceImpl;
 
 public class FizOAIBackendBinder extends AbstractBinder {
-  @SuppressWarnings("unchecked")
-@Override
-  protected void configure() {
-      Configuration config = Configuration.getInstance();
-      Class<SearchService> searchImpl;
-      try {
-          searchImpl = (Class<SearchService>)Class.forName(config.getProperty("class.impl.search"));
-      }
-      catch (ClassNotFoundException e) {
-          throw new RuntimeException(e.getMessage());
-      }
+    @SuppressWarnings("unchecked")
+    @Override
+    protected void configure() {
+        Configuration config = Configuration.getInstance();
+        Class<SearchService> searchImpl;
+        try {
+            searchImpl =
+                (Class<SearchService>) Class
+                    .forName(
+                        config.getProperty("class.impl.search", "de.fiz.oai.backend.service.impl.EsSearchServiceImpl"));
+        }
+        catch (ClassNotFoundException e) {
+            throw new RuntimeException(e.getMessage());
+        }
 
-      bind(CassandraDAOContent.class).to(DAOContent.class).in(Singleton.class);
-      bind(CassandraDAOCrosswalk.class).to(DAOCrosswalk.class).in(Singleton.class);
-      bind(CassandraDAOFormat.class).to(DAOFormat.class).in(Singleton.class);
-      bind(CassandraDAOItem.class).to(DAOItem.class).in(Singleton.class);
-      bind(CassandraDAOSet.class).to(DAOSet.class).in(Singleton.class);
+        bind(CassandraDAOContent.class).to(DAOContent.class).in(Singleton.class);
+        bind(CassandraDAOCrosswalk.class).to(DAOCrosswalk.class).in(Singleton.class);
+        bind(CassandraDAOFormat.class).to(DAOFormat.class).in(Singleton.class);
+        bind(CassandraDAOItem.class).to(DAOItem.class).in(Singleton.class);
+        bind(CassandraDAOSet.class).to(DAOSet.class).in(Singleton.class);
 
-      bind(ContentServiceImpl.class).to(ContentService.class).in(Singleton.class);
-      bind(CrosswalkServiceImpl.class).to(CrosswalkService.class).in(Singleton.class);
-      bind(FormatServiceImpl.class).to(FormatService.class).in(Singleton.class);
-      bind(ItemServiceImpl.class).to(ItemService.class).in(Singleton.class);
-      bind(searchImpl).to(SearchService.class).in(Singleton.class);
-      bind(SetServiceImpl.class).to(SetService.class).in(Singleton.class);
-      bind(TransformerServiceImpl.class).to(TransformerService.class).in(Singleton.class);
-  }
+        bind(ContentServiceImpl.class).to(ContentService.class).in(Singleton.class);
+        bind(CrosswalkServiceImpl.class).to(CrosswalkService.class).in(Singleton.class);
+        bind(FormatServiceImpl.class).to(FormatService.class).in(Singleton.class);
+        bind(ItemServiceImpl.class).to(ItemService.class).in(Singleton.class);
+        bind(searchImpl).to(SearchService.class).in(Singleton.class);
+        bind(SetServiceImpl.class).to(SetService.class).in(Singleton.class);
+        bind(TransformerServiceImpl.class).to(TransformerService.class).in(Singleton.class);
+    }
 }
