@@ -18,7 +18,9 @@ package de.fiz.oai.backend.service.impl;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -73,16 +75,20 @@ public class SolrSearchServiceImpl implements SearchService {
      */
     @Override
     public Map<String, Object> readDocument(Item item) throws IOException {
-        Map<String, Object> sourceAsMap;
+        Map<String, Object> resultMap = new HashMap<>();
         try {
             SolrDocument doc = solrClient.getById(item.getIdentifier());
-            sourceAsMap = doc.getFieldValueMap();
+            Collection<String> fieldNames = doc.getFieldNames();
+            for (String fieldName: fieldNames) {
+                Collection<Object> values = doc.getFieldValues(fieldName);
+                resultMap.put(fieldName, values);
+            }
         }
         catch (Exception e) {
             throw new IOException(e.getMessage());
         }
 
-        return sourceAsMap;
+        return resultMap;
     }
 
     /**
