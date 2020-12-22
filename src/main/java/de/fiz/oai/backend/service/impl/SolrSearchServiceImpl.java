@@ -18,7 +18,9 @@ package de.fiz.oai.backend.service.impl;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -32,6 +34,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.impl.HttpSolrClient.Builder;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -73,16 +76,20 @@ public class SolrSearchServiceImpl implements SearchService {
      */
     @Override
     public Map<String, Object> readDocument(Item item) throws IOException {
-        Map<String, Object> sourceAsMap;
+        Map<String, Object> resultMap = new HashMap<>();
         try {
             SolrDocument doc = solrClient.getById(item.getIdentifier());
-            sourceAsMap = doc.getFieldValueMap();
+            Collection<String> fieldNames = doc.getFieldNames();
+            for (String fieldName: fieldNames) {
+                Collection<Object> values = doc.getFieldValues(fieldName);
+                resultMap.put(fieldName, values);
+            }
         }
         catch (Exception e) {
             throw new IOException(e.getMessage());
         }
 
-        return sourceAsMap;
+        return resultMap;
     }
 
     /**
@@ -198,6 +205,17 @@ public class SolrSearchServiceImpl implements SearchService {
         catch (Exception e) {
             throw new IOException(e.getMessage());
         }
+    }
+    
+    @Override
+    public void commit() throws IOException {
+        try {
+            solrClient.commit();
+        }
+        catch (SolrServerException e) {
+            throw new IOException(e.getMessage());
+        }
+        
     }
 
     @Override

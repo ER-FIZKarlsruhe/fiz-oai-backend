@@ -40,6 +40,7 @@ import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
@@ -332,6 +333,12 @@ public class EsSearchServiceImpl implements SearchService {
         DeleteIndexRequest request = new DeleteIndexRequest(indexName);
         elasticsearchClient.indices().delete(request, RequestOptions.DEFAULT);
     }
+  }
+  
+  @Override
+  public void commit() throws IOException {
+      RefreshRequest request = new RefreshRequest(ITEMS_ALIAS_INDEX_NAME);
+      elasticsearchClient.indices().refresh(request, RequestOptions.DEFAULT);
   }
 
   @Override

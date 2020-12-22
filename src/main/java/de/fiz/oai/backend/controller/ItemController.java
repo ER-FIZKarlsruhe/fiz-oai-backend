@@ -72,7 +72,7 @@ public class ItemController extends AbstractController {
     }
 
     final Item item = itemService.read(identifier, format, content);
-    LOGGER.info("getItem: {} ", item);
+    LOGGER.info("getItem: format: {}, item: {} ", format, item);
 
     if (item == null) {
       throw new WebApplicationException(Status.NOT_FOUND);
