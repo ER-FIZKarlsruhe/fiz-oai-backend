@@ -89,5 +89,10 @@ public interface SearchService {
    */
   SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate, String searchMark)
       throws IOException;
+  
+  /**
+   * Commit Changes
+   */
+  void commit() throws IOException;
 
 }

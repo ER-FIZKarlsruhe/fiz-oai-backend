@@ -34,6 +34,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.impl.HttpSolrClient.Builder;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -204,6 +205,17 @@ public class SolrSearchServiceImpl implements SearchService {
         catch (Exception e) {
             throw new IOException(e.getMessage());
         }
+    }
+    
+    @Override
+    public void commit() throws IOException {
+        try {
+            solrClient.commit();
+        }
+        catch (SolrServerException e) {
+            throw new IOException(e.getMessage());
+        }
+        
     }
 
     @Override
