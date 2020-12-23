@@ -23,6 +23,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.text.SimpleDateFormat;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.TimeZone;
 
@@ -69,6 +70,18 @@ public class Configuration {
 
     public String getProperty(String name, String defaultValue) {
         return properties.getProperty(name, defaultValue);
+    }
+
+    public void setProperty(String name, String value) {
+        properties.setProperty(name, value);
+    }
+
+    public void setProperties(Map<String, String> additionalProperties) {
+        if (additionalProperties != null) {
+            for (Entry<String, String> additionalProperty : additionalProperties.entrySet()) {
+                properties.setProperty(additionalProperty.getKey(), additionalProperty.getValue());
+            }
+        }
     }
 
     private void loadConfiguration() {
