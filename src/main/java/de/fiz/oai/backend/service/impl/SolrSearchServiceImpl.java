@@ -38,6 +38,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.impl.HttpSolrClient.Builder;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CursorMarkParams;
@@ -153,10 +154,10 @@ public class SolrSearchServiceImpl implements SearchService {
             query.append("datestamp:[").append(Configuration.getDateformat().format(finalFromDate));
             query.append(" TO ").append(Configuration.getDateformat().format(finalUntilDate)).append("]");
             if (StringUtils.isNotBlank(format)) {
-                query.append(" AND formats:").append(format);
+                query.append(" AND formats:").append(ClientUtils.escapeQueryChars(format));
             }
             if (StringUtils.isNotBlank(set)) {
-                query.append(" AND sets:").append(set);
+                query.append(" AND sets:").append(ClientUtils.escapeQueryChars(set));
             }
             SolrQuery solrQuery = new SolrQuery();
             solrQuery.setQuery(query.toString());
