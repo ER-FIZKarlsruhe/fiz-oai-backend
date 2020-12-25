@@ -183,9 +183,13 @@ public class SolrSearchServiceImpl implements SearchService {
             idResult.setTotal(rsp.getResults().getNumFound());
             idResult.setData(idsRetrieved);
 
-            // Send the searchMark if there are elements after it
-            if (!searchMark.equals(rsp.getNextCursorMark())) {
-                idResult.setLastItemId(rsp.getNextCursorMark());
+            // Retry solrQuery with nextCursorMark. If there are results, send the searchMark
+            String nextCursorMark = rsp.getNextCursorMark();
+            solrQuery.set(CursorMarkParams.CURSOR_MARK_PARAM, nextCursorMark);
+            solrQuery.setRows(1);
+            rsp = solrClient.query(solrQuery);
+            if (!rsp.getResults().isEmpty()) {
+                idResult.setLastItemId(nextCursorMark);
             }
         }
         catch (Exception e) {
