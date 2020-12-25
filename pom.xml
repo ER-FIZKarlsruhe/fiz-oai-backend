@@ -54,6 +54,17 @@
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-core</artifactId>
       <version>4.9.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.tinkerpop</groupId>
+          <artifactId>gremlin-core</artifactId>
+        </exclusion>
+      </exclusions> 
+    </dependency>
+    <dependency>
+        <groupId>org.apache.tinkerpop</groupId>
+        <artifactId>gremlin-core</artifactId>
+        <version>3.4.9</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
