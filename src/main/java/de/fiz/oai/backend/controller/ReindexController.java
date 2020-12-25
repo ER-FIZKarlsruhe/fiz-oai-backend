@@ -1,6 +1,8 @@
 package de.fiz.oai.backend.controller;
 
 
+import java.io.IOException;
+
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -48,6 +50,12 @@ public class ReindexController extends AbstractController {
 
     return searchService.getReindexStatusVerbose();
     
+  }
+
+  @GET
+  @Path("/commit")
+  public void commit() throws IOException {
+    searchService.commit();
   }
 
 }
