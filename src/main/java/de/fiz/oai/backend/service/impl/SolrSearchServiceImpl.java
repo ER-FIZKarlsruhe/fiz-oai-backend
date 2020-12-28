@@ -16,8 +16,10 @@
 package de.fiz.oai.backend.service.impl;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -29,8 +31,6 @@ import java.util.concurrent.TimeUnit;
 import javax.servlet.ServletContext;
 import javax.ws.rs.core.Context;
 
-import org.apache.commons.codec.Charsets;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -142,12 +142,12 @@ public class SolrSearchServiceImpl implements SearchService {
         StringBuilder query = new StringBuilder();
         SearchResult<String> idResult = new SearchResult<>();
         try {
-            //Encode + decode searchMark to ensure it only contains digits and a-f characters.
+            //URL-Encode + decode searchMark.
             if (StringUtils.isBlank(searchMark)) {
                 decodedSearchMark = CursorMarkParams.CURSOR_MARK_START;
             }
             else {
-                decodedSearchMark = new String(Hex.decodeHex(searchMark), Charsets.UTF_8);
+                decodedSearchMark = new String(Base64.getUrlDecoder().decode(searchMark), StandardCharsets.UTF_8);
             }
             Date finalFromDate = new SimpleDateFormat("yyyy-MM-dd").parse("0001-01-01");
             Date finalUntilDate = new SimpleDateFormat("yyyy-MM-dd").parse("9999-12-31");
@@ -196,8 +196,8 @@ public class SolrSearchServiceImpl implements SearchService {
             solrQuery.setRows(1);
             rsp = solrClient.query(solrQuery);
             if (!rsp.getResults().isEmpty()) {
-                //Encode + decode searchMark to ensure it only contains digits and a-f characters.
-                idResult.setLastItemId(Hex.encodeHexString(nextCursorMark.getBytes(Charsets.UTF_8)));
+                //URL-Encode + decode searchMark.
+                idResult.setLastItemId(Base64.getUrlEncoder().encodeToString(nextCursorMark.getBytes()));
             }
         }
         catch (Exception e) {
