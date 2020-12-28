@@ -29,6 +29,8 @@ import java.util.concurrent.TimeUnit;
 import javax.servlet.ServletContext;
 import javax.ws.rs.core.Context;
 
+import org.apache.commons.codec.Charsets;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -129,6 +131,7 @@ public class SolrSearchServiceImpl implements SearchService {
     @Override
     public SearchResult<String> search(
         Integer rows, String set, String format, Date fromDate, Date untilDate, String searchMark) throws IOException {
+        String decodedSearchMark = null;
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("rows: {}", rows);
@@ -136,12 +139,16 @@ public class SolrSearchServiceImpl implements SearchService {
             LOGGER.debug("searchMark: {}", searchMark);
         }
 
-        if (StringUtils.isBlank(searchMark)) {
-            searchMark = CursorMarkParams.CURSOR_MARK_START;
-        }
         StringBuilder query = new StringBuilder();
         SearchResult<String> idResult = new SearchResult<>();
         try {
+            //Encode + decode searchMark to ensure it only contains digits and a-f characters.
+            if (StringUtils.isBlank(searchMark)) {
+                decodedSearchMark = CursorMarkParams.CURSOR_MARK_START;
+            }
+            else {
+                decodedSearchMark = new String(Hex.decodeHex(searchMark), Charsets.UTF_8);
+            }
             Date finalFromDate = new SimpleDateFormat("yyyy-MM-dd").parse("0001-01-01");
             Date finalUntilDate = new SimpleDateFormat("yyyy-MM-dd").parse("9999-12-31");
 
@@ -165,7 +172,7 @@ public class SolrSearchServiceImpl implements SearchService {
             solrQuery.setRows(rows);
             solrQuery.addSort("datestamp", ORDER.asc);
             solrQuery.addSort("identifier", ORDER.asc);
-            solrQuery.set(CursorMarkParams.CURSOR_MARK_PARAM, searchMark);
+            solrQuery.set(CursorMarkParams.CURSOR_MARK_PARAM, decodedSearchMark);
 
             LOGGER.debug("searchRequest: {}", solrQuery.toString());
 
@@ -189,7 +196,8 @@ public class SolrSearchServiceImpl implements SearchService {
             solrQuery.setRows(1);
             rsp = solrClient.query(solrQuery);
             if (!rsp.getResults().isEmpty()) {
-                idResult.setLastItemId(nextCursorMark);
+                //Encode + decode searchMark to ensure it only contains digits and a-f characters.
+                idResult.setLastItemId(Hex.encodeHexString(nextCursorMark.getBytes(Charsets.UTF_8)));
             }
         }
         catch (Exception e) {
