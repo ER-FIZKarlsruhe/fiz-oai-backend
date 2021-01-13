@@ -26,7 +26,6 @@ import org.jvnet.hk2.annotations.Service;
 
 import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.exceptions.AlreadyExistsException;
-import de.fiz.oai.backend.models.Crosswalk;
 import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.service.FormatService;
 

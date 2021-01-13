@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.exceptions.AlreadyExistsException;
-import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.service.SetService;

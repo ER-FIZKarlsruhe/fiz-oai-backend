@@ -26,7 +26,6 @@ import de.fiz.oai.backend.dao.DAOContent;
 import de.fiz.oai.backend.exceptions.AlreadyExistsException;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Content;
-import de.fiz.oai.backend.models.Crosswalk;
 import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.service.ContentService;
