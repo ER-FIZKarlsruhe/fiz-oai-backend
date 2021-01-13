@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.FizOaiExceptionMapper;
 import de.fiz.oai.backend.controller.SetController;
+import de.fiz.oai.backend.exceptions.AlreadyExistsException;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.service.SetService;
@@ -182,6 +183,16 @@ public class SetControllerIT extends JerseyTest {
         "{\"name\":\"iee\",\"spec\":\"fiz:iee\",\"description\":\"This set contains the organization unit IEE\"}"));
 
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+  }
+  
+  @Test
+  public void testCreateSetAlreadyExist() throws Exception {
+    doThrow(AlreadyExistsException.class).when(setService).create(any());
+
+    Response response = target("set").request().post(Entity.json(
+            "{\"name\":\"iee\",\"spec\":\"fiz:iee\",\"description\":\"This set contains the organization unit IEE\"}"));
+
+    assertEquals("Http Response should be 409: ", Status.CONFLICT.getStatusCode(), response.getStatus());
   }
 
   @Test

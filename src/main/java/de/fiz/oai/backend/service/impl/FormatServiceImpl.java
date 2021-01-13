@@ -25,6 +25,8 @@ import javax.ws.rs.core.Response.Status;
 import org.jvnet.hk2.annotations.Service;
 
 import de.fiz.oai.backend.dao.DAOFormat;
+import de.fiz.oai.backend.exceptions.AlreadyExistsException;
+import de.fiz.oai.backend.models.Crosswalk;
 import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.service.FormatService;
 
@@ -44,6 +46,12 @@ public class FormatServiceImpl implements FormatService {
 
   @Override
   public Format create(Format format) throws IOException {
+	// Does the Format already exists?
+    Format oldFormat = daoFormat.read(format.getMetadataPrefix());
+	if (oldFormat != null) {
+		throw new AlreadyExistsException("Format with metadataPrefix " + format.getMetadataPrefix() + " already exist.");
+	}
+		
     Format newFormat = daoFormat.create(format);
     return newFormat;
   }
