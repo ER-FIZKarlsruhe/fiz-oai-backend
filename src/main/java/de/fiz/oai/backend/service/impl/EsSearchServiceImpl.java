@@ -83,7 +83,7 @@ public class EsSearchServiceImpl implements SearchService {
 
   String elastisearchHost = Configuration.getInstance().getProperty("elasticsearch.host", "localhost");
 
-  int elastisearchPort = Integer.parseInt(Configuration.getInstance().getProperty("elasticsearch.port", "8200"));
+  int elastisearchPort = Integer.parseInt(Configuration.getInstance().getProperty("elasticsearch.port", "8082"));
 
   public static String ITEMS_ALIAS_INDEX_NAME = "items";
 
