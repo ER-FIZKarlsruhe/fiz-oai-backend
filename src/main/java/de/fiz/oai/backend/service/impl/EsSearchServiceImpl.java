@@ -81,9 +81,9 @@ public class EsSearchServiceImpl implements SearchService {
 
   private static Logger LOGGER = LoggerFactory.getLogger(EsSearchServiceImpl.class);
 
-  String elastisearchHost = Configuration.getInstance().getProperty("elasticsearch.host");
+  String elastisearchHost = Configuration.getInstance().getProperty("elasticsearch.host", "localhost");
 
-  int elastisearchPort = Integer.parseInt(Configuration.getInstance().getProperty("elasticsearch.port"));
+  int elastisearchPort = Integer.parseInt(Configuration.getInstance().getProperty("elasticsearch.port", "8200"));
 
   public static String ITEMS_ALIAS_INDEX_NAME = "items";
 
