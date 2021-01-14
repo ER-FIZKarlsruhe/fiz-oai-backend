@@ -55,7 +55,7 @@ public class SetServiceImpl implements SetService {
 	// Check for existing set
 	Set oldSet = read(set.getName());
 	if (oldSet != null) {
-		throw new AlreadyExistsException("item " + oldSet.getName() + " already exists");
+		throw new AlreadyExistsException("Set " + oldSet.getName() + " already exists");
 	}
 	
     daoSet.create(set);
