@@ -261,7 +261,7 @@ public class EsSearchServiceImpl implements SearchService {
 
       SearchResult<String> idResult = new SearchResult<>();
       idResult.setSize(idsRetrieved.size());
-      idResult.setTotal(searchResponse.getHits().getTotalHits());
+      idResult.setTotal(searchResponse.getHits().getTotalHits().value);
       idResult.setData(idsRetrieved);
 
       // Send the searchMark if there are elements after it
