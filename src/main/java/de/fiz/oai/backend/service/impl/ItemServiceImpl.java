@@ -181,12 +181,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     //Delete old content
-    List<Content> allContents = daoContent.readFormats(oldItem.getIdentifier());
-    if (allContents != null && !allContents.isEmpty()) {
-        for (final Content pickedContent : allContents) {
-            daoContent.delete(oldItem.getIdentifier(), pickedContent.getFormat());
-        }
-    }
+    deleteAllContent(oldItem);
 
     // Overwrite datestamp!
     item.setDatestamp(StringUtils.isNotEmpty(item.getDatestamp()) ? item.getDatestamp() : Configuration.getDateformat().format(new Date()));
@@ -205,7 +200,7 @@ public class ItemServiceImpl implements ItemService {
 
   @Override
   public SearchResult<Item> search(Integer rows, String setName, String format, Date from, Date until,
-      Boolean readContent, String lastItemId) throws IOException {
+      Boolean readContent, String searchMark) throws IOException {
     // TODO make this default setting configurable!
     if (rows == null) {
       rows = 100;
@@ -215,7 +210,7 @@ public class ItemServiceImpl implements ItemService {
       throw new IOException("rows parameter must NOT be greater than 1000!");
     }
 
-    final SearchResult<String> idResult = searchService.search(rows, setName, format, from, until, lastItemId);
+    final SearchResult<String> idResult = searchService.search(rows, setName, format, from, until, searchMark);
 
     List<Item> itemList = new ArrayList<>();
 
@@ -228,7 +223,7 @@ public class ItemServiceImpl implements ItemService {
     itemResult.setData(itemList);
     itemResult.setSize(itemList.size());
     itemResult.setTotal(idResult.getTotal());
-    itemResult.setLastItemId(idResult.getLastItemId());
+    itemResult.setSearchMark(idResult.getSearchMark());
 
     return itemResult;
   }
@@ -247,12 +242,7 @@ public class ItemServiceImpl implements ItemService {
 
     daoItem.create(itemToDelete);
 
-    List<Content> allContents = daoContent.readFormats(identifier);
-    if (allContents != null && !allContents.isEmpty()) {
-        for (final Content pickedContent : allContents) {
-            daoContent.delete(identifier, pickedContent.getFormat());
-        }
-    }
+    deleteAllContent(itemToDelete);
     
     addFormatsAndSets(itemToDelete);
     searchService.updateDocument(itemToDelete);
@@ -348,6 +338,16 @@ public class ItemServiceImpl implements ItemService {
             LOGGER.warn("XML IS EMPTY: " + currentWalk.getFormatTo() + ", " + item.getIdentifier());
         }
       }
+    }
+  }
+  
+  
+  private void deleteAllContent(Item item) throws IOException {
+    List<Content> allContents = daoContent.readFormats(item.getIdentifier());
+    if (allContents != null && !allContents.isEmpty()) {
+        for (final Content pickedContent : allContents) {
+            daoContent.delete(item.getIdentifier(), pickedContent.getFormat());
+        }
     }
   }
 
