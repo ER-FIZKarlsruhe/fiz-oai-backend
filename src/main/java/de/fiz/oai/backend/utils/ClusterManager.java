@@ -118,7 +118,7 @@ public class ClusterManager {
 
         // Check and create keyspace and tables if not exists
         CqlSession session = oiaBuilder.withConfigLoader(configLoader).build();
-        CassandraUtils.createKeyspace(session, replicationFactor, keyspace);
+        CassandraUtils.createTables(session, keyspace);
         session.close();
     }
 

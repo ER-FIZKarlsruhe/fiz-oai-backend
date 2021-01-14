@@ -42,20 +42,8 @@ public class CassandraUtils {
         return resultBuilder.toString();
     }
 
-    public static void createKeyspace(CqlSession session, String replicationFactor, String keyspace) {
-        if (StringUtils.isBlank(replicationFactor)) {
-            throw new IllegalArgumentException("Cannot create keyspace " + keyspace + " because the property cassandra.replication.factor is not set.");
-        }
-
-        final StringBuilder createStmt = new StringBuilder();
-        createStmt.append("CREATE KEYSPACE IF NOT EXISTS ");
-        createStmt.append(keyspace);
-        createStmt.append(" WITH REPLICATION = ");
-        createStmt.append(replicationFactor);
-        SimpleStatement statement =
-            SimpleStatement.newInstance(createStmt.toString());
-        session.execute(statement);
-
+    public static void createTables(CqlSession session, String keyspace) {
+    	
         // Create tables
         final StringBuilder useStmt = new StringBuilder();
         useStmt.append("USE ");
