@@ -197,7 +197,7 @@ public class SolrSearchServiceImpl implements SearchService {
             rsp = solrClient.query(solrQuery);
             if (!rsp.getResults().isEmpty()) {
                 //URL-Encode + decode searchMark.
-                idResult.setLastItemId(Base64.getUrlEncoder().encodeToString(nextCursorMark.getBytes()));
+                idResult.setSearchMark(Base64.getUrlEncoder().encodeToString(nextCursorMark.getBytes()));
             }
         }
         catch (Exception e) {

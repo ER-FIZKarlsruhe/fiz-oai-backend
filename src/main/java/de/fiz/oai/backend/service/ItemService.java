@@ -60,10 +60,10 @@ public interface ItemService {
    * @param from
    * @param until
    * @param content
-   * @param lastItemId
+   * @param searchMark
    * @return the items
    */
-  SearchResult<Item> search(Integer rows, String set, String format, Date from, Date until, Boolean content, String lastItemId) throws IOException;
+  SearchResult<Item> search(Integer rows, String set, String format, Date from, Date until, Boolean content, String searchMark) throws IOException;
 
   /**
    * Delete an Item.

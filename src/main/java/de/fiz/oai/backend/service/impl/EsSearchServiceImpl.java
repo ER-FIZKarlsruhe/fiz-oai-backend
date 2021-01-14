@@ -264,18 +264,18 @@ public class EsSearchServiceImpl implements SearchService {
       idResult.setTotal(searchResponse.getHits().getTotalHits());
       idResult.setData(idsRetrieved);
 
-      // Send the lastItemId if there are elements after it
-      String newLastItemId = null;
+      // Send the searchMark if there are elements after it
+      String newSearchMark = null;
       if (idsRetrieved.size() > 0) {
-        newLastItemId = idsRetrieved.get(idsRetrieved.size() - 1);
-        idResult.setLastItemId(newLastItemId);
+        newSearchMark = idsRetrieved.get(idsRetrieved.size() - 1);
+        idResult.setSearchMark(newSearchMark);
       }
       Item newLastItem = null;
-      if (StringUtils.isNotBlank(newLastItemId)) {
+      if (StringUtils.isNotBlank(newSearchMark)) {
 
-        newLastItem = daoItem.read(newLastItemId);
+        newLastItem = daoItem.read(newSearchMark);
         LOGGER.info("searchSourceBuilder: {}", searchSourceBuilder);
-        LOGGER.info("newLastItemId: {}", newLastItemId);
+        LOGGER.info("searchMark: {}", newSearchMark);
         LOGGER.info("newLastItem: {}", newLastItem);
 
         Long timestamp = null;
@@ -288,12 +288,12 @@ public class EsSearchServiceImpl implements SearchService {
         searchRequest.source(searchSourceBuilder);
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("currentLastItemId: {}", newLastItemId);
+            LOGGER.debug("newSearchMark: {}", newSearchMark);
             LOGGER.debug("searchRequest next elements?: {}", searchRequest.toString());
         }
         searchResponse = elasticsearchClient.search(searchRequest, RequestOptions.DEFAULT);
         if (searchResponse.getHits().getHits().length == 0) {
-          idResult.setLastItemId(null);
+          idResult.setSearchMark(null);
         }
       }
 
