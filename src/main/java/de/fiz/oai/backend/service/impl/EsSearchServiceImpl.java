@@ -426,20 +426,34 @@ public class EsSearchServiceImpl implements SearchService {
         reindexStatus.setNewIndexName(newIndexName.toString());
         LOGGER.info("REINDEX status: New index name: {}", reindexStatus.getNewIndexName());
 
-        if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())
-            || StringUtils.isBlank(reindexStatus.getNewIndexName())) {
-          LOGGER.error("Not able to determine index names: original (" + reindexStatus.getOriginalIndexName()
-              + ") or new (" + reindexStatus.getNewIndexName() + ")");
-          return false;
-        }
-
+        if (StringUtils.isBlank(reindexStatus.getNewIndexName())) {
+            LOGGER.error("Not able to determine index names: original (" + reindexStatus.getOriginalIndexName()
+                + ") or new (" + reindexStatus.getNewIndexName() + ")");
+            return false;
+          }
+                
         final String filenameItemsMapping = ITEMS_MAPPING_V7_FILENAME;
-
         final String mapping = ResourcesUtils.getResourceFileAsString(filenameItemsMapping, servletContext);
-
         if (StringUtils.isBlank(mapping)) {
-          LOGGER.error("REINDEX status: Not able to retrieve mapping {}", filenameItemsMapping);
+            LOGGER.error("REINDEX status: Not able to retrieve mapping {}", filenameItemsMapping);
         }
+        
+        RestClient lowLevelClient = elasticsearchClient.getLowLevelClient();
+        
+        if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())) {
+        	LOGGER.warn("No previous indices found.");
+        	reindexStatus.setOriginalIndexName(ITEMS_ALIAS_INDEX_NAME + "0");
+        	if (!createIndex(reindexStatus.getOriginalIndexName(), mapping)) {
+                LOGGER.error("REINDEX status: Something went wrong while creating the first index " + reindexStatus.getOriginalIndexName());
+                return false;
+            }
+        	Request requestNewAlias = new Request("POST", "/_aliases");
+            requestNewAlias.setJsonEntity(
+                "{\n" + "    \"actions\" : [\n" + "        { \"add\" : { \"index\" : \"" + reindexStatus.getOriginalIndexName()
+                    + "\", \"alias\" : \"" + ITEMS_ALIAS_INDEX_NAME + "\" } }\n" + "    ]\n" + "}");
+            lowLevelClient.performRequest(requestNewAlias);
+        }
+        
         if (!createIndex(reindexStatus.getNewIndexName(), mapping)) {
           LOGGER.error(
               "REINDEX status: Something went wrong while creating the new index " + reindexStatus.getNewIndexName());
@@ -494,8 +508,6 @@ public class EsSearchServiceImpl implements SearchService {
         if (!reindexStatus.isStopSignalReceived()) {
 
           // Switch alias from old index to new one
-          RestClient lowLevelClient = elasticsearchClient.getLowLevelClient();
-
           LOGGER.info("REINDEX status: Remove all old aliases of {}", ITEMS_ALIAS_INDEX_NAME);
           for (final String pickedIndex : allIndexes) {
             Request requestDeleteOldAlias = new Request("POST", "/_aliases");
