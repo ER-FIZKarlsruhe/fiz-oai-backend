@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.dao.DAOSet;
+import de.fiz.oai.backend.exceptions.AlreadyExistsException;
 import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.service.SetService;
@@ -50,6 +51,13 @@ public class SetServiceImpl implements SetService {
 
   @Override
   public Set create(Set set) throws IOException {
+	  
+	// Check for existing set
+	Set oldSet = read(set.getName());
+	if (oldSet != null) {
+		throw new AlreadyExistsException("Set " + oldSet.getName() + " already exists");
+	}
+	
     daoSet.create(set);
 
     LOGGER.info("Creating Set " + set.getName() + ". Triggering complete reindexing.");

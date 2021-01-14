@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.FizOaiExceptionMapper;
 import de.fiz.oai.backend.controller.CrosswalkController;
+import de.fiz.oai.backend.exceptions.AlreadyExistsException;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Crosswalk;
 import de.fiz.oai.backend.service.CrosswalkService;
@@ -195,6 +196,17 @@ public class CrosswalkControllerIT extends JerseyTest {
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
   }
 
+  
+  @Test
+  public void testCreateCrosswalkAlreadyExist() throws Exception {
+    doThrow(AlreadyExistsException.class).when(crosswalkService).create(any());
+
+    Response response = target("crosswalk").request().post(Entity.json(
+            "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
+
+    assertEquals("Http Response should be 409: ", Status.CONFLICT.getStatusCode(), response.getStatus());
+  }
+  
   @Test
   public void testCreateCrosswalkNoName() throws Exception {
    

@@ -180,11 +180,13 @@ public class ItemServiceImpl implements ItemService {
       throw new UnknownFormatException("Cannot find a Fomat for the given ingestFormat: " + item.getIngestFormat());
     }
 
-    // Validate xml against xsd
-    // validate(ingestFormat.getSchemaLocation(), new
-    // String(item.getContent().getContent(), "UTF-8"));
-
-    daoContent.delete(oldItem);
+    //Delete old content
+    List<Content> allContents = daoContent.readFormats(oldItem.getIdentifier());
+    if (allContents != null && !allContents.isEmpty()) {
+        for (final Content pickedContent : allContents) {
+            daoContent.delete(oldItem.getIdentifier(), pickedContent.getFormat());
+        }
+    }
 
     // Overwrite datestamp!
     item.setDatestamp(StringUtils.isNotEmpty(item.getDatestamp()) ? item.getDatestamp() : Configuration.getDateformat().format(new Date()));
@@ -194,7 +196,6 @@ public class ItemServiceImpl implements ItemService {
 
     Set<String> itemFormats = Stream.of(item.getIngestFormat()).collect(Collectors.toCollection(HashSet::new));
     createCrosswalks(item, itemFormats);
-//    updateItem.setFormats(itemFormats);
 
     addFormatsAndSets(updateItem);
     searchService.updateDocument(updateItem);
@@ -246,10 +247,15 @@ public class ItemServiceImpl implements ItemService {
 
     daoItem.create(itemToDelete);
 
+    List<Content> allContents = daoContent.readFormats(identifier);
+    if (allContents != null && !allContents.isEmpty()) {
+        for (final Content pickedContent : allContents) {
+            daoContent.delete(identifier, pickedContent.getFormat());
+        }
+    }
+    
     addFormatsAndSets(itemToDelete);
     searchService.updateDocument(itemToDelete);
-    
-    // DELETE Content in all formats? Or keep it?
   }
   
   public void addFormatsAndSets(Item item) throws IOException {
