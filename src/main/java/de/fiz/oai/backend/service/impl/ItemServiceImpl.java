@@ -246,10 +246,12 @@ public class ItemServiceImpl implements ItemService {
 
     daoItem.create(itemToDelete);
 
+    daoContent.delete(itemToDelete);
+    
     addFormatsAndSets(itemToDelete);
     searchService.updateDocument(itemToDelete);
     
-    // DELETE Content in all formats? Or keep it?
+    
   }
   
   public void addFormatsAndSets(Item item) throws IOException {
