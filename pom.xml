@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.fiz.oai.backend</groupId>
   <artifactId>oai-backend</artifactId>
-  <version>1.1.0-java8</version>
+  <version>java8-SNAPSHOT</version>
   <packaging>war</packaging>
 
   <name>oai-backend</name>
