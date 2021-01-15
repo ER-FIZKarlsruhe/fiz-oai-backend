@@ -398,6 +398,8 @@ public class EsSearchServiceImpl implements SearchService {
 
       try {
 
+    	  RestClient lowLevelClient = elasticsearchClient.getLowLevelClient();
+    	  
         ClusterHealthRequest requestAllIndexes = new ClusterHealthRequest();
         ClusterHealthResponse responseAllIndexes = elasticsearchClient.cluster().health(requestAllIndexes, RequestOptions.DEFAULT);
         java.util.Set<String> allIndexes = responseAllIndexes.getIndices().keySet();
@@ -438,7 +440,7 @@ public class EsSearchServiceImpl implements SearchService {
             LOGGER.error("REINDEX status: Not able to retrieve mapping {}", filenameItemsMapping);
         }
         
-        RestClient lowLevelClient = elasticsearchClient.getLowLevelClient();
+        
         
         if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())) {
         	LOGGER.warn("No previous indices found.");
