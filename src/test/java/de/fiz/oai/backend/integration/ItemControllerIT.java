@@ -271,7 +271,7 @@ public class ItemControllerIT extends JerseyTest {
     item.setIdentifier("65465456");
     item.setDatestamp("1972-05-20T20:33:18.772Z");
     item.setDeleteFlag(false);
-    item.setTags(List.of("foo", "bar", "baz"));
+    item.setTags(Arrays.asList("foo", "bar", "baz"));
     item.setIngestFormat("radar");
     String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
 
