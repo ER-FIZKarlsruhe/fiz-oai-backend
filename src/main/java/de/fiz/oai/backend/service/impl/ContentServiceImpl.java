@@ -23,6 +23,7 @@ import javax.inject.Inject;
 import org.jvnet.hk2.annotations.Service;
 
 import de.fiz.oai.backend.dao.DAOContent;
+import de.fiz.oai.backend.exceptions.AlreadyExistsException;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.models.Format;
@@ -65,6 +66,12 @@ public class ContentServiceImpl implements ContentService {
 	Format format = formatService.read(content.getFormat());
 	if (format == null) {
 		throw new NotFoundException("format " + content.getFormat() + " not found.");
+	}
+	
+	//Does the content already exists?
+	Content oldContent = daoContent.read(content.getIdentifier(), content.getFormat());
+	if (oldContent != null) {
+		throw new AlreadyExistsException("Content for item " + content.getIdentifier() + " with format " + content.getFormat() + " already exist.");
 	}
 	
 	//Save content

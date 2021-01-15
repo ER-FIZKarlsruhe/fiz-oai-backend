@@ -24,6 +24,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
@@ -40,6 +42,8 @@ import de.fiz.oai.backend.utils.ClusterManager;
 @Service
 public class CassandraDAOContent implements DAOContent {
 
+  private static Logger LOGGER = LoggerFactory.getLogger(CassandraDAOContent.class);
+	
   public static final String CONTENT_IDENTIFIER = "identifier";
   public static final String CONTENT_FORMAT = "format";
   public static final String CONTENT_CONTENT = "content";
@@ -190,14 +194,6 @@ public class CassandraDAOContent implements DAOContent {
       throw new NotFoundException("The deletion was not applied for the given identifier and format.");
     }
   }
-  
-  @Override
-  public void delete(Item item) throws IOException {
-	for (String format : item.getFormats()) {
-	    delete(item.getIdentifier(), format);
-	}
-  }
-  
   
 
 }

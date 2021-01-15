@@ -85,7 +85,7 @@ public class ItemController extends AbstractController {
   @Produces(MediaType.APPLICATION_JSON)
   public SearchResult<Item> searchItems(@QueryParam("rows") Integer rows,
       @QueryParam("set") String set, @QueryParam("format") String format, @QueryParam("from") String from,
-      @QueryParam("until") String until, @QueryParam("content") Boolean content, @QueryParam("lastItemId") String lastItemId, @Context HttpServletRequest request,
+      @QueryParam("until") String until, @QueryParam("content") Boolean content, @QueryParam("searchMark") String searchMark, @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
     LOGGER.info("rows: {}", rows);
@@ -94,7 +94,7 @@ public class ItemController extends AbstractController {
     LOGGER.info("from: {}", from);
     LOGGER.info("until: {}", until);
     LOGGER.info("content: {}", content);
-    LOGGER.info("lastItemId: {}", lastItemId);
+    LOGGER.info("searchMark: {}", searchMark);
     
     Date fromDate = null;
     Date untilDate = null;
@@ -123,7 +123,7 @@ public class ItemController extends AbstractController {
       content = false;
     }
 
-    SearchResult<Item> result = itemService.search(rows, set, format, fromDate, untilDate, content, lastItemId);
+    SearchResult<Item> result = itemService.search(rows, set, format, fromDate, untilDate, content, searchMark);
 
     return result;
   }

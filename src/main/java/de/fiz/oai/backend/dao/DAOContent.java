@@ -59,10 +59,4 @@ public interface DAOContent {
    */
   void delete(String identifier, String format) throws IOException;
   
-  /**
-   * Delete an Content.
-   *
-   * @param item the item
-   */
-  void delete(Item item) throws IOException;
 }

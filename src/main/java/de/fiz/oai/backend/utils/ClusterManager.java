@@ -75,7 +75,7 @@ public class ClusterManager {
 
         long requestTimeout = DEFAULT_REQUEST_TIMEOUT;
         try {
-            requestTimeout = Integer.parseInt(config.getProperty("cassandra.requesttimeout"));
+            requestTimeout = Integer.parseInt(config.getProperty("cassandra.requesttimeout", String.valueOf(DEFAULT_REQUEST_TIMEOUT)));
         }
         catch (NumberFormatException e) {
             LOGGER.warn("Invalid value of property: cassandra.requesttimeout", e);
@@ -118,7 +118,7 @@ public class ClusterManager {
 
         // Check and create keyspace and tables if not exists
         CqlSession session = oiaBuilder.withConfigLoader(configLoader).build();
-        CassandraUtils.createKeyspace(session, replicationFactor, keyspace);
+        CassandraUtils.createTables(session, keyspace);
         session.close();
     }
 

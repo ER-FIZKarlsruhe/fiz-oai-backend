@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.FizOaiExceptionMapper;
 import de.fiz.oai.backend.controller.ItemController;
+import de.fiz.oai.backend.exceptions.AlreadyExistsException;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.models.Item;
@@ -261,6 +262,35 @@ public class ItemControllerIT extends JerseyTest {
     Response response = target("/item").request().post(Entity.entity(form, form.getMediaType()));
 
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+  }
+  
+  @Test
+  public void testCreateItemAlreadyExist() throws Exception {
+    
+    Item item = new Item();
+    item.setIdentifier("65465456");
+    item.setDatestamp("1972-05-20T20:33:18.772Z");
+    item.setDeleteFlag(false);
+    item.setTags(List.of("foo", "bar", "baz"));
+    item.setIngestFormat("radar");
+    String json = "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\"}";
+
+    String xml = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n"
+        + "    <dc:title>testCreateItem</dc:title>\n" + "    <dc:date>2019-01-01T08:00:00Z</dc:date>\n"
+        + "    <dc:type>text</dc:type>\n" + "    <dc:format>application/pdf</dc:format>\n"
+        + "    <dc:identifier>65465456</dc:identifier>\n" + "    <dc:source>Some exmaple source</dc:source>\n"
+        + "    <dc:publisher>FIZ Karlsruhe</dc:publisher>\n" + "  </oai_dc:dc>";
+
+    FormDataMultiPart form = new FormDataMultiPart();
+    form.field("item", json, MediaType.APPLICATION_JSON_TYPE);
+    FormDataBodyPart fdp = new FormDataBodyPart("content", xml, MediaType.TEXT_XML_TYPE);
+    form.bodyPart(fdp);
+
+    doThrow(AlreadyExistsException.class).when(itemService).create(any());
+
+    Response response = target("/item").request().post(Entity.entity(form, form.getMediaType()));
+
+    assertEquals("Http Response should be 409: ", Status.CONFLICT.getStatusCode(), response.getStatus());
   }
 
   @Test

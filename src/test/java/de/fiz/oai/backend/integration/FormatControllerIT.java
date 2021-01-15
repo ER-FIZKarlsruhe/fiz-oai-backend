@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.FizOaiExceptionMapper;
 import de.fiz.oai.backend.controller.FormatController;
+import de.fiz.oai.backend.exceptions.AlreadyExistsException;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.service.FormatService;
@@ -186,6 +187,18 @@ public class FormatControllerIT extends JerseyTest {
 
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
   }
+  
+  
+  @Test
+  public void testCreateFormatAlreadyExist() throws Exception {
+    doThrow(AlreadyExistsException.class).when(formatService).create(any());
+
+    Response response = target("format").request().post(Entity.json(
+            "{\"metadataPrefix\":\"oai_dc\",\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\",\"identifierXpath\":\"/identifier\"}"));
+
+    assertEquals("Http Response should be 409: ", Status.CONFLICT.getStatusCode(), response.getStatus());
+  }
+  
 
   @Test
   public void testCreateFormatNoPrefix() throws Exception {

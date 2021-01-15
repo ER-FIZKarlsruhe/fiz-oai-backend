@@ -21,7 +21,7 @@ public class SearchResult<E> {
   
   private long total;
   private int size;
-  private String lastItemId;
+  private String searchMark;
   
   List<E> data;
 
@@ -49,12 +49,12 @@ public class SearchResult<E> {
     this.data = data;
   }
 
-  public String getLastItemId() {
-    return lastItemId;
+  public String getSearchMark() {
+    return searchMark;
   }
 
-  public void setLastItemId(String lastItemId) {
-    this.lastItemId = lastItemId;
+  public void setSearchMark(String searchMark) {
+    this.searchMark = searchMark;
   }
 
 }

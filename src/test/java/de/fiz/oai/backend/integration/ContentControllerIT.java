@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.FizOaiExceptionMapper;
 import de.fiz.oai.backend.controller.ContentController;
+import de.fiz.oai.backend.exceptions.AlreadyExistsException;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.service.ContentService;
@@ -232,6 +233,16 @@ public class ContentControllerIT extends JerseyTest {
         "{\"identifier\":\"123456\",\"format\":\"oai_dc\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
 
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+  }
+  
+  @Test
+  public void testCreateContentAlreadyExist() throws Exception {
+    doThrow(AlreadyExistsException.class).when(contentService).create(any());
+
+    Response response = target("content").request().post(Entity.json(
+            "{\"identifier\":\"123456\",\"format\":\"oai_dc\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
+    
+    assertEquals("Http Response should be 409: ", Status.CONFLICT.getStatusCode(), response.getStatus());
   }
 
   @Test
