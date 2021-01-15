@@ -35,11 +35,10 @@ import javax.ws.rs.core.Context;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
-import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
-import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.client.indices.GetIndexResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.get.GetRequest;
@@ -54,6 +53,7 @@ import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -397,16 +397,14 @@ public class EsSearchServiceImpl implements SearchService {
     reindexAllFuture = CompletableFuture.supplyAsync(() -> {
 
       try {
-
-    	RestClient lowLevelClient = elasticsearchClient.getLowLevelClient();
-
-    	ClusterHealthRequest requestAllIndexes = new ClusterHealthRequest();
-    	ClusterHealthResponse responseAllIndexes = elasticsearchClient.cluster().health(requestAllIndexes, RequestOptions.DEFAULT);
-    	java.util.Set<String> allIndexes = responseAllIndexes.getIndices().keySet();
-
-    	LOGGER.info("REINDEX status: Found " + allIndexes.size() + " indexes:");
+    	
+    	GetIndexRequest requestAllIndices = new GetIndexRequest("*");
+    	GetIndexResponse responseAllIndices = elasticsearchClient.indices().get(requestAllIndices, RequestOptions.DEFAULT);
+    	String[] allIndices = responseAllIndices.getIndices();
+    	
+    	LOGGER.info("REINDEX status: Found " + allIndices.length + " indexes:");
     	int maximumIndexFound = 0;
-    	for (final String pickedIndex : allIndexes) {
+    	for (final String pickedIndex : allIndices) {
     	  LOGGER.info("REINDEX status: {}", pickedIndex);
     	  if (pickedIndex.startsWith(ITEMS_ALIAS_INDEX_NAME)) {
     		final String suffixIndex = pickedIndex.substring(ITEMS_ALIAS_INDEX_NAME.length());
@@ -439,7 +437,9 @@ public class EsSearchServiceImpl implements SearchService {
     	if (StringUtils.isBlank(mapping)) {
     	  LOGGER.error("REINDEX status: Not able to retrieve mapping {}", filenameItemsMapping);
     	}
-
+    	
+    	RestClient lowLevelClient = elasticsearchClient.getLowLevelClient();
+    	
         if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())) {
         	LOGGER.warn("No previous indices found.");
         	reindexStatus.setOriginalIndexName(ITEMS_ALIAS_INDEX_NAME + "0");
@@ -509,7 +509,7 @@ public class EsSearchServiceImpl implements SearchService {
 
           // Switch alias from old index to new one
           LOGGER.info("REINDEX status: Remove all old aliases of {}", ITEMS_ALIAS_INDEX_NAME);
-          for (final String pickedIndex : allIndexes) {
+          for (final String pickedIndex : allIndices) {
             Request requestDeleteOldAlias = new Request("POST", "/_aliases");
             requestDeleteOldAlias
                 .setJsonEntity("{\n" + "    \"actions\" : [\n" + "        { \"remove\" : { \"index\" : \"" + pickedIndex
