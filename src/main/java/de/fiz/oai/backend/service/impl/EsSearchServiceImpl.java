@@ -398,50 +398,48 @@ public class EsSearchServiceImpl implements SearchService {
 
       try {
 
-    	  RestClient lowLevelClient = elasticsearchClient.getLowLevelClient();
-    	  
-        ClusterHealthRequest requestAllIndexes = new ClusterHealthRequest();
-        ClusterHealthResponse responseAllIndexes = elasticsearchClient.cluster().health(requestAllIndexes, RequestOptions.DEFAULT);
-        java.util.Set<String> allIndexes = responseAllIndexes.getIndices().keySet();
+    	RestClient lowLevelClient = elasticsearchClient.getLowLevelClient();
 
-        LOGGER.info("REINDEX status: Found " + allIndexes.size() + " indexes:");
-        int maximumIndexFound = 0;
-        for (final String pickedIndex : allIndexes) {
-          LOGGER.info("REINDEX status: {}", pickedIndex);
-          if (pickedIndex.startsWith(ITEMS_ALIAS_INDEX_NAME)) {
-            final String suffixIndex = pickedIndex.substring(ITEMS_ALIAS_INDEX_NAME.length());
-            LOGGER.info("REINDEX status: " + pickedIndex + " -> suffix: " + suffixIndex);
-            if (!StringUtils.isBlank(suffixIndex) && StringUtils.isNumeric(suffixIndex)) {
-              int pickedNumIndexFound = Integer.parseInt(suffixIndex);
-              if (pickedNumIndexFound > maximumIndexFound) {
-                maximumIndexFound = pickedNumIndexFound;
-                reindexStatus.setOriginalIndexName(pickedIndex);
-              }
-            }
-          }
-        }
+    	ClusterHealthRequest requestAllIndexes = new ClusterHealthRequest();
+    	ClusterHealthResponse responseAllIndexes = elasticsearchClient.cluster().health(requestAllIndexes, RequestOptions.DEFAULT);
+    	java.util.Set<String> allIndexes = responseAllIndexes.getIndices().keySet();
 
-        int newIndexVersion = maximumIndexFound + 1;
-        final StringBuilder newIndexName = new StringBuilder();
-        newIndexName.append(ITEMS_ALIAS_INDEX_NAME);
-        newIndexName.append(String.valueOf(newIndexVersion));
-        reindexStatus.setNewIndexName(newIndexName.toString());
-        LOGGER.info("REINDEX status: New index name: {}", reindexStatus.getNewIndexName());
+    	LOGGER.info("REINDEX status: Found " + allIndexes.size() + " indexes:");
+    	int maximumIndexFound = 0;
+    	for (final String pickedIndex : allIndexes) {
+    	  LOGGER.info("REINDEX status: {}", pickedIndex);
+    	  if (pickedIndex.startsWith(ITEMS_ALIAS_INDEX_NAME)) {
+    		final String suffixIndex = pickedIndex.substring(ITEMS_ALIAS_INDEX_NAME.length());
+    		LOGGER.info("REINDEX status: " + pickedIndex + " -> suffix: " + suffixIndex);
+    		if (!StringUtils.isBlank(suffixIndex) && StringUtils.isNumeric(suffixIndex)) {
+    		  int pickedNumIndexFound = Integer.parseInt(suffixIndex);
+    		  if (pickedNumIndexFound > maximumIndexFound) {
+    			maximumIndexFound = pickedNumIndexFound;
+    			reindexStatus.setOriginalIndexName(pickedIndex);
+    		  }
+    		}
+    	  }
+    	}
 
-        if (StringUtils.isBlank(reindexStatus.getNewIndexName())) {
-            LOGGER.error("Not able to determine index names: original (" + reindexStatus.getOriginalIndexName()
-                + ") or new (" + reindexStatus.getNewIndexName() + ")");
-            return false;
-          }
-                
-        final String filenameItemsMapping = ITEMS_MAPPING_V7_FILENAME;
-        final String mapping = ResourcesUtils.getResourceFileAsString(filenameItemsMapping, servletContext);
-        if (StringUtils.isBlank(mapping)) {
-            LOGGER.error("REINDEX status: Not able to retrieve mapping {}", filenameItemsMapping);
-        }
-        
-        
-        
+    	int newIndexVersion = maximumIndexFound + 1;
+    	final StringBuilder newIndexName = new StringBuilder();
+    	newIndexName.append(ITEMS_ALIAS_INDEX_NAME);
+    	newIndexName.append(String.valueOf(newIndexVersion));
+    	reindexStatus.setNewIndexName(newIndexName.toString());
+    	LOGGER.info("REINDEX status: New index name: {}", reindexStatus.getNewIndexName());
+
+    	if (StringUtils.isBlank(reindexStatus.getNewIndexName())) {
+    	  LOGGER.error("Not able to determine index names: original (" + reindexStatus.getOriginalIndexName()
+    	  + ") or new (" + reindexStatus.getNewIndexName() + ")");
+    	  return false;
+    	}
+
+    	final String filenameItemsMapping = ITEMS_MAPPING_V7_FILENAME;
+    	final String mapping = ResourcesUtils.getResourceFileAsString(filenameItemsMapping, servletContext);
+    	if (StringUtils.isBlank(mapping)) {
+    	  LOGGER.error("REINDEX status: Not able to retrieve mapping {}", filenameItemsMapping);
+    	}
+
         if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())) {
         	LOGGER.warn("No previous indices found.");
         	reindexStatus.setOriginalIndexName(ITEMS_ALIAS_INDEX_NAME + "0");
