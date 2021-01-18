@@ -243,9 +243,10 @@ public class ItemServiceImpl implements ItemService {
 
     daoItem.create(itemToDelete);
 
+    //first add all formats then delete content because formats are read from the content
+    addFormatsAndSets(itemToDelete);
     deleteAllContent(itemToDelete);
     
-    addFormatsAndSets(itemToDelete);
     searchService.updateDocument(itemToDelete);
   }
   
