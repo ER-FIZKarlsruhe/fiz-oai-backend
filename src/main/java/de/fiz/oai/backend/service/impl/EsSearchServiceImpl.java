@@ -72,6 +72,7 @@ import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.models.reindex.ReindexStatus;
+import de.fiz.oai.backend.service.ItemService;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.utils.Configuration;
 import de.fiz.oai.backend.utils.ResourcesUtils;
@@ -478,20 +479,19 @@ public class EsSearchServiceImpl implements SearchService {
         Item mostRecentItem = null;
 
         do {
-          List<Item> bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
-
-          for (final Item pickedItem : bufferListItems) {
-            indexDocument(pickedItem, reindexStatus.getNewIndexName(), elasticsearchClient);
+          List<Item> bufferListDAOItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
+          for (final Item pickedDAOItem : bufferListDAOItems) {
+            indexDocument(pickedDAOItem, reindexStatus.getNewIndexName(), elasticsearchClient);
             reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
 
             // Keep the most recent Item
             if (mostRecentItem == null) {
-              mostRecentItem = pickedItem;
+              mostRecentItem = pickedDAOItem;
             } else {
               try {
                 if (Configuration.getDateformat().parse(mostRecentItem.getDatestamp())
-                    .before(Configuration.getDateformat().parse(pickedItem.getDatestamp()))) {
-                  mostRecentItem = pickedItem;
+                    .before(Configuration.getDateformat().parse(pickedDAOItem.getDatestamp()))) {
+                  mostRecentItem = pickedDAOItem;
                 }
               } catch (ParseException e) {
                 // leave mostRecentItem as it is
