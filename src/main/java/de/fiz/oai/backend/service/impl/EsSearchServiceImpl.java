@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.ServletContext;
 import javax.ws.rs.core.Context;
 
@@ -97,7 +98,7 @@ public class EsSearchServiceImpl implements SearchService {
   ServletContext servletContext;
 
   @Inject
-  ItemService itemService;
+  Provider<ItemService> itemProvider;
   
   @Inject
   DAOItem daoItem;
@@ -484,6 +485,7 @@ public class EsSearchServiceImpl implements SearchService {
         do {
           List<Item> bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
           for (final Item pickedItem : bufferListItems) {
+            ItemService itemService = itemProvider.get();
         	itemService.addFormatsAndSets(pickedItem);
             indexDocument(pickedItem, reindexStatus.getNewIndexName(), elasticsearchClient);
             reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
