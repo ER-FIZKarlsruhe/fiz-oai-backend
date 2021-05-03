@@ -72,6 +72,7 @@ import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.models.reindex.ReindexStatus;
+import de.fiz.oai.backend.service.ItemService;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.utils.Configuration;
 import de.fiz.oai.backend.utils.ResourcesUtils;
@@ -95,6 +96,9 @@ public class EsSearchServiceImpl implements SearchService {
   @Context
   ServletContext servletContext;
 
+  @Inject
+  ItemService itemService;
+  
   @Inject
   DAOItem daoItem;
 
@@ -480,6 +484,7 @@ public class EsSearchServiceImpl implements SearchService {
         do {
           List<Item> bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
           for (final Item pickedItem : bufferListItems) {
+        	itemService.addFormatsAndSets(pickedItem);
             indexDocument(pickedItem, reindexStatus.getNewIndexName(), elasticsearchClient);
             reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
 
