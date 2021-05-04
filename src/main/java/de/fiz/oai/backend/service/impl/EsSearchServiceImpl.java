@@ -232,6 +232,7 @@ public class EsSearchServiceImpl implements SearchService {
       searchSourceBuilder.sort(identifierBuilder);
       searchSourceBuilder.size(rows);
       searchSourceBuilder.fetchSource(false);
+      searchSourceBuilder.trackTotalHits(true);
 
       
       if (StringUtils.isNotBlank(searchMark)) {
@@ -392,6 +393,8 @@ public class EsSearchServiceImpl implements SearchService {
       return false;
     }
 
+    ItemService itemService = itemProvider.get();
+
     reindexStatus = new ReindexStatus();
 
     reindexStatus.setStopSignalReceived(false);
@@ -488,7 +491,7 @@ public class EsSearchServiceImpl implements SearchService {
           for (final Item pickedItem : bufferListItems) {
             try {
                 LOGGER.info("Reindex now " + pickedItem.getIdentifier());
-                ItemService itemService = itemProvider.get();
+                
             	itemService.addFormatsAndSets(pickedItem);
                 indexDocument(pickedItem, reindexStatus.getNewIndexName(), elasticsearchClient);
                 reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
