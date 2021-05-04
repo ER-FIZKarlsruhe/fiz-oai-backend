@@ -31,14 +31,20 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import de.fiz.oai.backend.service.impl.ItemServiceImpl;
+
 public class XPathHelper {
 
-  public static Boolean isTextValueMatching(final String contentStr, final String xPathStr) {
+  private static Logger LOGGER = LoggerFactory.getLogger(XPathHelper.class);
+    
+  public static Boolean isTextValueMatching(final String contentStr, final String xPathStr) throws SAXException, XPathExpressionException {
 
     class NamespaceResolver implements NamespaceContext {
       //Store the source document to search the namespaces
@@ -89,8 +95,8 @@ public class XPathHelper {
           return true;
         }
 
-      } catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException e) {
-        e.printStackTrace();
+      } catch (ParserConfigurationException | IOException e) {
+          LOGGER.error("Error during isTextValueMatching for xpath" + xPathStr , e);
       }
     }
     return false;

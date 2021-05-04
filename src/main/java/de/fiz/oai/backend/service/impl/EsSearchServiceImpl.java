@@ -484,24 +484,26 @@ public class EsSearchServiceImpl implements SearchService {
 
         do {
           List<Item> bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
-          for (final Item pickedItem : bufferListItems) {
-            ItemService itemService = itemProvider.get();
-        	itemService.addFormatsAndSets(pickedItem);
-            indexDocument(pickedItem, reindexStatus.getNewIndexName(), elasticsearchClient);
-            reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
 
-            // Keep the most recent Item
-            if (mostRecentItem == null) {
-              mostRecentItem = pickedItem;
-            } else {
-              try {
-                if (Configuration.getDateformat().parse(mostRecentItem.getDatestamp())
-                    .before(Configuration.getDateformat().parse(pickedItem.getDatestamp()))) {
+          for (final Item pickedItem : bufferListItems) {
+            try {
+                LOGGER.info("Reindex now " + pickedItem.getIdentifier());
+                ItemService itemService = itemProvider.get();
+            	itemService.addFormatsAndSets(pickedItem);
+                indexDocument(pickedItem, reindexStatus.getNewIndexName(), elasticsearchClient);
+                reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
+                // Keep the most recent Item
+                if (mostRecentItem == null) {
                   mostRecentItem = pickedItem;
+                } else {
+                    if (Configuration.getDateformat().parse(mostRecentItem.getDatestamp())
+                        .before(Configuration.getDateformat().parse(pickedItem.getDatestamp()))) {
+                      mostRecentItem = pickedItem;
+                    }
                 }
-              } catch (ParseException e) {
+            } catch (Exception e) {
                 // leave mostRecentItem as it is
-              }
+                  LOGGER.error("Reindex fails for " + pickedItem.getIdentifier() , e);
             }
           }
 
