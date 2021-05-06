@@ -490,7 +490,7 @@ public class EsSearchServiceImpl implements SearchService {
 
           for (final Item pickedItem : bufferListItems) {
             try {
-                LOGGER.info("Reindex now " + pickedItem.getIdentifier());
+                LOGGER.debug("Reindex now " + pickedItem.getIdentifier());
                 
             	itemService.addFormatsAndSets(pickedItem);
                 indexDocument(pickedItem, reindexStatus.getNewIndexName(), elasticsearchClient);
