@@ -51,7 +51,9 @@ public class ClusterManager {
 
     private int rrSessionCounter = 0;
 
-    CqlSessionBuilder oiaBuilder;
+    CqlSessionBuilder sessionBuilder;
+    
+    private DriverConfigLoader configLoader;
 
     private Logger LOGGER = LoggerFactory.getLogger(ClusterManager.class);
 
@@ -73,26 +75,12 @@ public class ClusterManager {
         LOGGER.info("Found username {}", username);
         LOGGER.info("Found password {}", "***");
 
-        long requestTimeout = DEFAULT_REQUEST_TIMEOUT;
-        try {
-            requestTimeout = Integer.parseInt(config.getProperty("cassandra.requesttimeout", String.valueOf(DEFAULT_REQUEST_TIMEOUT)));
-        }
-        catch (NumberFormatException e) {
-            LOGGER.warn("Invalid value of property: cassandra.requesttimeout", e);
-        }
-        LOGGER.info("Found requesttimeout {}", requestTimeout);
-
-        oiaBuilder = CqlSession.builder();
-        oiaBuilder.withKeyspace(keyspace);
-        oiaBuilder.withLocalDatacenter(datacenter);
-
-        DriverConfigLoader configLoader =
-            DriverConfigLoader
-                .programmaticBuilder().withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(requestTimeout))
-                .build();
+        sessionBuilder = CqlSession.builder();
+        sessionBuilder.withKeyspace(keyspace);
+        sessionBuilder.withLocalDatacenter(datacenter);
 
         if (!StringUtils.isBlank(username) && !StringUtils.isBlank(password)) {
-            oiaBuilder.withAuthCredentials(username, password);
+            sessionBuilder.withAuthCredentials(username, password);
         }
 
         for (InetSocketAddress address : addresses) {
@@ -100,7 +88,7 @@ public class ClusterManager {
             int containerPort = address.getPort();
             LOGGER.info("Found containerPort {}", containerPort);
 
-            oiaBuilder.addContactPoint(new InetSocketAddress(address.getHostString(), containerPort));
+            sessionBuilder.addContactPoint(new InetSocketAddress(address.getHostString(), containerPort));
         }
 
         String cassandraSessionsStr = config.getProperty("cassandra.sessions");
@@ -117,11 +105,37 @@ public class ClusterManager {
         sessions = new CqlSession[numberOfCassandraSessions];
 
         // Check and create keyspace and tables if not exists
-        CqlSession session = oiaBuilder.withConfigLoader(configLoader).build();
+        CqlSession session = sessionBuilder.withConfigLoader(getConfigLoader()).build();
         CassandraUtils.createTables(session, keyspace);
         session.close();
     }
 
+    private DriverConfigLoader getConfigLoader() {
+        if (configLoader == null) {
+            Configuration config = Configuration.getInstance();
+            
+            long requestTimeout = DEFAULT_REQUEST_TIMEOUT;
+            try {
+                requestTimeout = Integer.parseInt(config.getProperty("cassandra.requesttimeout", String.valueOf(DEFAULT_REQUEST_TIMEOUT)));
+            }
+            catch (NumberFormatException e) {
+                LOGGER.warn("Invalid value of property: cassandra.requesttimeout", e);
+            }
+            LOGGER.info("Found requesttimeout {}", requestTimeout);
+            
+             configLoader =
+                DriverConfigLoader
+                    .programmaticBuilder()
+                    .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(requestTimeout))
+                    .withString(DefaultDriverOption.RECONNECTION_POLICY_CLASS, "ExponentialReconnectionPolicy")
+                    .withDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY, Duration.ofSeconds(1))
+                    .withDuration(DefaultDriverOption.RECONNECTION_MAX_DELAY, Duration.ofSeconds(60))
+                    .build();
+        }
+
+        return configLoader;
+    }
+    
     public static ClusterManager getInstance() {
         if (instance == null) {
             instance = new ClusterManager();
@@ -139,7 +153,7 @@ public class ClusterManager {
         }
         CqlSession session = sessions[currentSession];
         if (session == null || session.isClosed()) {
-            session = oiaBuilder.build();
+            session = sessionBuilder.withConfigLoader(getConfigLoader()).build();
             sessions[currentSession] = session;
         }
         return session;
