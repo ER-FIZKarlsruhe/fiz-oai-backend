@@ -173,6 +173,17 @@
 
   <build>
     <finalName>oai-backend</finalName>
+    <resources>
+       <resource>
+            <directory>src/main/resources</directory>
+            <filtering>true</filtering>
+            <excludes>
+                <exclude>elasticsearch/**</exclude>
+                <exclude>solr/**</exclude>
+                <exclude>xsd/**</exclude>
+            </excludes>
+        </resource>
+    </resources>
     <plugins>
 
       <plugin>
