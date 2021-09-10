@@ -6,8 +6,8 @@
                 pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%c{1}] - %msg%n" />
         </Console>
         <RollingFile name="File"
-            fileName="../logs/oai-backend.log"
-            filePattern="../logs/oai-backend.log.%d{yyyy-MM-dd}">
+            fileName="${sys:catalina.home}/logs/oai-backend.log"
+            filePattern="${sys:catalina.home}/logs/oai-backend.log.%d{yyyy-MM-dd}">
             <PatternLayout>
                 <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%c{1}] - %msg%n</Pattern>
             </PatternLayout>
