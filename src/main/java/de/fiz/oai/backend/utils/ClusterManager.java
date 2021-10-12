@@ -173,4 +173,12 @@ public class ClusterManager {
         }
         return result;
     }
+
+    public void shutdown() {
+        for (CqlSession session : sessions) {
+            if (session != null) {
+                session.close();
+            }
+        }
+    }
 }
