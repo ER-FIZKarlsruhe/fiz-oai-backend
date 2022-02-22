@@ -16,93 +16,214 @@
 package de.fiz.oai.backend.service.impl;
 
 import java.io.IOException;
+import java.security.InvalidParameterException;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.inject.Inject;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.tinkerpop.shaded.minlog.Log;
 import org.jvnet.hk2.annotations.Service;
 
+import de.fiz.oai.backend.dao.DAOContent;
 import de.fiz.oai.backend.dao.DAOCrosswalk;
+import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.exceptions.AlreadyExistsException;
 import de.fiz.oai.backend.exceptions.NotFoundException;
+import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.models.Crosswalk;
 import de.fiz.oai.backend.models.Format;
+import de.fiz.oai.backend.models.Item;
+import de.fiz.oai.backend.models.SearchResult;
+import de.fiz.oai.backend.service.ContentService;
 import de.fiz.oai.backend.service.CrosswalkService;
 import de.fiz.oai.backend.service.FormatService;
+import de.fiz.oai.backend.service.ItemService;
+import de.fiz.oai.backend.service.TransformerService;
+import de.fiz.oai.backend.utils.Configuration;
 
 @Service
 public class CrosswalkServiceImpl implements CrosswalkService {
 
-	@Inject
-	DAOCrosswalk daoCrosswalk;
+    @Inject
+    DAOItem daoItem;
 
-	@Inject
-	FormatService formatService;
+    @Inject
+    DAOContent daoContent;
+    
+    @Inject
+    DAOCrosswalk daoCrosswalk;
 
-	@Override
-	public Crosswalk read(String name) throws IOException {
-		Crosswalk crosswalk = daoCrosswalk.read(name);
-		return crosswalk;
-	}
+    @Inject
+    FormatService formatService;
+    
+    @Inject
+    ItemService itemService;
+    
+    @Inject
+    ContentService contentService;
+    
+    @Inject
+    TransformerService transformerService;
 
-	@Override
-	public Crosswalk create(Crosswalk crosswalk) throws IOException {
-		// Does the crosswalk already exists?
-		Crosswalk oldCrosswalk = daoCrosswalk.read(crosswalk.getName());
-		if (oldCrosswalk != null) {
-			throw new AlreadyExistsException("Crosswalk with name " + crosswalk.getName() + " already exist.");
-		}
+    @Override
+    public Crosswalk read(String name) throws IOException {
+        Crosswalk crosswalk = daoCrosswalk.read(name);
+        return crosswalk;
+    }
 
-		// Does the from format (referenced by crosswalk) exists?
-		Format from = formatService.read(crosswalk.getFormatFrom());
-		if (from == null) {
-			throw new NotFoundException("Format from " + crosswalk.getFormatFrom() + " not found.");
-		}
+    @Override
+    public Crosswalk create(Crosswalk crosswalk) throws IOException {
+        // Does the crosswalk already exists?
+        Crosswalk oldCrosswalk = daoCrosswalk.read(crosswalk.getName());
+        if (oldCrosswalk != null) {
+            throw new AlreadyExistsException("Crosswalk with name " + crosswalk.getName() + " already exist.");
+        }
 
-		// Does the to format (referenced by crosswalk) exists?
-		Format to = formatService.read(crosswalk.getFormatTo());
-		if (to == null) {
-			throw new NotFoundException("Forma to " + crosswalk.getFormatTo() + " not found.");
-		}
+        // Does the from format (referenced by crosswalk) exists?
+        Format from = formatService.read(crosswalk.getFormatFrom());
+        if (from == null) {
+            throw new NotFoundException("Format from " + crosswalk.getFormatFrom() + " not found.");
+        }
 
-		Crosswalk newCrosswalk = daoCrosswalk.create(crosswalk);
-		return newCrosswalk;
-	}
+        // Does the to format (referenced by crosswalk) exists?
+        Format to = formatService.read(crosswalk.getFormatTo());
+        if (to == null) {
+            throw new NotFoundException("Forma to " + crosswalk.getFormatTo() + " not found.");
+        }
 
-	@Override
-	public Crosswalk update(Crosswalk crosswalk) throws IOException {
-		// Does the format (referenced by crosswalk) exists?
-		Crosswalk oldCrosswalk = daoCrosswalk.read(crosswalk.getName());
-		if (oldCrosswalk == null) {
-			throw new NotFoundException("Crosswalk with name " + crosswalk.getName() + " not found.");
-		}
+        Crosswalk newCrosswalk = daoCrosswalk.create(crosswalk);
+        return newCrosswalk;
+    }
 
-		// Does the format (referenced by crosswalk) exists?
-		Format from = formatService.read(crosswalk.getFormatFrom());
-		if (from == null) {
-			throw new NotFoundException("Format from " + crosswalk.getFormatFrom() + " not found.");
-		}
+    @Override
+    public Crosswalk update(Crosswalk crosswalk) throws IOException {
+        // Does the format (referenced by crosswalk) exists?
+        Crosswalk oldCrosswalk = daoCrosswalk.read(crosswalk.getName());
+        if (oldCrosswalk == null) {
+            throw new NotFoundException("Crosswalk with name " + crosswalk.getName() + " not found.");
+        }
 
-		// Does the format (referenced by crosswalk) exists?
-		Format to = formatService.read(crosswalk.getFormatTo());
-		if (to == null) {
-			throw new NotFoundException("Forma to " + crosswalk.getFormatTo() + " not found.");
-		}
+        // Does the format (referenced by crosswalk) exists?
+        Format from = formatService.read(crosswalk.getFormatFrom());
+        if (from == null) {
+            throw new NotFoundException("Format from " + crosswalk.getFormatFrom() + " not found.");
+        }
 
-		daoCrosswalk.delete(crosswalk.getName());
-		return daoCrosswalk.create(crosswalk);
-	}
+        // Does the format (referenced by crosswalk) exists?
+        Format to = formatService.read(crosswalk.getFormatTo());
+        if (to == null) {
+            throw new NotFoundException("Forma to " + crosswalk.getFormatTo() + " not found.");
+        }
 
-	@Override
-	public List<Crosswalk> readAll() throws IOException {
-		List<Crosswalk> crosswalks = daoCrosswalk.readAll();
+        daoCrosswalk.delete(crosswalk.getName());
+        Crosswalk newCrosswalk = daoCrosswalk.create(crosswalk);
+        
+        //TODO update TransformerService
+        
+        return newCrosswalk;
+    }
 
-		return crosswalks;
-	}
+    @Override
+    public List<Crosswalk> readAll() throws IOException {
+        List<Crosswalk> crosswalks = daoCrosswalk.readAll();
 
-	@Override
-	public void delete(String name) throws IOException {
-		daoCrosswalk.delete(name);
-	}
+        return crosswalks;
+    }
 
+    @Override
+    public void delete(String name) throws IOException {
+        daoCrosswalk.delete(name);
+    }
+
+    /**
+     * Process a Crosswalk for a set of items
+     *
+     * @param content  String name of the Crosswalk to process
+     * @param updateItemTimestamp <code>true</true> if the related item timestamp should be updated
+     * @param from     together with the until parameter, it defines a time range for searching items by the datestamp,
+     *                 where the related crosswalkshould be processed
+     * @param until    together with the from parameter, it defines a time range for searching item by the datestamps,
+     *                 where the related crosswalkshould be processed
+     * 
+     */
+    public void process(String name, boolean updateItemTimestamp, Date from, Date until) throws IOException {
+        Log.info("Start process crosswalk for " + name);
+        Log.info("updateItemTimestamp " + updateItemTimestamp);
+        Log.info("from " + from);
+        Log.info("until " + until);
+        
+        Crosswalk crosswalk = read(name);
+        if (crosswalk == null) {
+            throw new InvalidParameterException("Cannot find crosswalk by the given name");
+        }
+
+        Boolean searchMore = true;
+        String searchMark = "";
+        
+        while (searchMore) {
+            Log.info("search more items to process with searchMark " + searchMark);
+            //TODO set rows to 1000
+            SearchResult<Item> result = itemService.search(10, null, crosswalk.getFormatFrom(), from, until, false, searchMark);
+            Log.info("result.getTotal() " + result.getTotal());
+            Log.info("result.getSize() " + result.getSize());
+            Log.info("result.getSearchMark() " + result.getSearchMark());
+            
+            if (result.getSize() > 0) {
+                Iterator<Item> itemIterator = result.getData().iterator();
+                Item item = null;
+                while (itemIterator.hasNext()) {
+                    item = itemIterator.next();
+                    processCrosswalkForItem(crosswalk, item, updateItemTimestamp);
+                }
+                //set searchMark to last item in the resultList
+                searchMark = item.getIdentifier();
+            } else {
+                searchMore = false;
+            }
+        } 
+        
+        //TODO reindex
+        Log.info("End process crosswalk for " + name);
+        
+        if (updateItemTimestamp) {
+            Log.warn("You have to reindex your search index manually to refresh the items timestamps!");
+        }
+        
+        return;
+    }
+
+    private void processCrosswalkForItem(Crosswalk crosswalk, Item item, boolean updateItemTimestamp) throws IOException {
+        Log.info("processCrosswalkForItem " + item);
+        try {
+        //Update content
+        Content content = contentService.read(item.getIdentifier(), crosswalk.getFormatFrom());
+        String newXml = transformerService.transform(content.getContent(), crosswalk.getName());
+        Log.debug("newXml " + newXml);
+        if (StringUtils.isNotBlank(newXml)) {
+            Content crosswalkConten = new Content();
+            crosswalkConten.setContent(newXml);
+            crosswalkConten.setIdentifier(item.getIdentifier());
+            crosswalkConten.setFormat(crosswalk.getFormatTo());
+            //daoContent.create(crosswalkConten);
+        }
+
+        //Update item timestamp
+        //Do NOT update the index document here
+        //This should be done after all items are processed
+        if (updateItemTimestamp) {
+            String datestamp = Configuration.getDateformat().format(new Date());
+            Log.info("Updateing item datestamp " + datestamp);
+            item.setDatestamp(datestamp);
+            //daoItem.create(item);
+        }
+        } catch (Exception e) {
+            Log.error("Exception", e);
+            throw e;
+        }
+    }
+    
+    
 }
