@@ -44,7 +44,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.models.Crosswalk;
-import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.service.CrosswalkService;
 import de.fiz.oai.backend.utils.Configuration;

@@ -26,7 +26,10 @@ import javax.inject.Inject;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tinkerpop.shaded.minlog.Log;
 import org.jvnet.hk2.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import de.fiz.oai.backend.controller.CrosswalkController;
 import de.fiz.oai.backend.dao.DAOContent;
 import de.fiz.oai.backend.dao.DAOCrosswalk;
 import de.fiz.oai.backend.dao.DAOItem;
@@ -47,6 +50,8 @@ import de.fiz.oai.backend.utils.Configuration;
 @Service
 public class CrosswalkServiceImpl implements CrosswalkService {
 
+    private static Logger LOGGER = LoggerFactory.getLogger(CrosswalkServiceImpl.class);
+    
     @Inject
     DAOItem daoItem;
 
@@ -121,8 +126,14 @@ public class CrosswalkServiceImpl implements CrosswalkService {
         daoCrosswalk.delete(crosswalk.getName());
         Crosswalk newCrosswalk = daoCrosswalk.create(crosswalk);
 
-        // TODO update TransformerService
-
+        //Update pool entry in TransformerService
+        try {
+            LOGGER.error("Update Crosswalk in transformerService pool " + crosswalk.getName());
+            transformerService.updateTransformer(crosswalk.getName());
+        } catch (Exception e) {
+            LOGGER.error("Cannot update Crosswalk in transformerService pool", e);
+        }
+        
         return newCrosswalk;
     }
 
