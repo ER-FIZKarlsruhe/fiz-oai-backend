@@ -52,19 +52,19 @@ public class CrosswalkServiceImpl implements CrosswalkService {
 
     @Inject
     DAOContent daoContent;
-    
+
     @Inject
     DAOCrosswalk daoCrosswalk;
 
     @Inject
     FormatService formatService;
-    
+
     @Inject
     ItemService itemService;
-    
+
     @Inject
     ContentService contentService;
-    
+
     @Inject
     TransformerService transformerService;
 
@@ -120,9 +120,9 @@ public class CrosswalkServiceImpl implements CrosswalkService {
 
         daoCrosswalk.delete(crosswalk.getName());
         Crosswalk newCrosswalk = daoCrosswalk.create(crosswalk);
-        
-        //TODO update TransformerService
-        
+
+        // TODO update TransformerService
+
         return newCrosswalk;
     }
 
@@ -141,12 +141,12 @@ public class CrosswalkServiceImpl implements CrosswalkService {
     /**
      * Process a Crosswalk for a set of items
      *
-     * @param content  String name of the Crosswalk to process
+     * @param content             String name of the Crosswalk to process
      * @param updateItemTimestamp <code>true</true> if the related item timestamp should be updated
-     * @param from     together with the until parameter, it defines a time range for searching items by the datestamp,
-     *                 where the related crosswalkshould be processed
-     * @param until    together with the from parameter, it defines a time range for searching item by the datestamps,
-     *                 where the related crosswalkshould be processed
+     * @param from                together with the until parameter, it defines a time range for searching items by the
+     *                            datestamp, where the related crosswalkshould be processed
+     * @param until               together with the from parameter, it defines a time range for searching item by the
+     *                            datestamps, where the related crosswalkshould be processed
      * 
      */
     public void process(String name, boolean updateItemTimestamp, Date from, Date until) throws IOException {
@@ -154,7 +154,7 @@ public class CrosswalkServiceImpl implements CrosswalkService {
         Log.info("updateItemTimestamp " + updateItemTimestamp);
         Log.info("from " + from);
         Log.info("until " + until);
-        
+
         Crosswalk crosswalk = read(name);
         if (crosswalk == null) {
             throw new InvalidParameterException("Cannot find crosswalk by the given name");
@@ -162,15 +162,12 @@ public class CrosswalkServiceImpl implements CrosswalkService {
 
         Boolean searchMore = true;
         String searchMark = "";
-        
-        while (searchMore) {
+
+        do {
             Log.info("search more items to process with searchMark " + searchMark);
-            //TODO set rows to 1000
-            SearchResult<Item> result = itemService.search(10, null, crosswalk.getFormatFrom(), from, until, false, searchMark);
-            Log.info("result.getTotal() " + result.getTotal());
-            Log.info("result.getSize() " + result.getSize());
-            Log.info("result.getSearchMark() " + result.getSearchMark());
-            
+            SearchResult<Item> result = itemService.search(100, null, crosswalk.getFormatFrom(), from, until, false,
+                    searchMark);
+
             if (result.getSize() > 0) {
                 Iterator<Item> itemIterator = result.getData().iterator();
                 Item item = null;
@@ -178,52 +175,49 @@ public class CrosswalkServiceImpl implements CrosswalkService {
                     item = itemIterator.next();
                     processCrosswalkForItem(crosswalk, item, updateItemTimestamp);
                 }
-                //set searchMark to last item in the resultList
-                searchMark = item.getIdentifier();
-            } else {
-                searchMore = false;
             }
-        } 
-        
-        //TODO reindex
+
+            searchMark = result.getSearchMark();
+        } while (searchMark != null);
+
         Log.info("End process crosswalk for " + name);
-        
+
         if (updateItemTimestamp) {
             Log.warn("You have to reindex your search index manually to refresh the items timestamps!");
         }
-        
+
         return;
     }
 
-    private void processCrosswalkForItem(Crosswalk crosswalk, Item item, boolean updateItemTimestamp) throws IOException {
+    private void processCrosswalkForItem(Crosswalk crosswalk, Item item, boolean updateItemTimestamp)
+            throws IOException {
         Log.info("processCrosswalkForItem " + item);
         try {
-        //Update content
-        Content content = contentService.read(item.getIdentifier(), crosswalk.getFormatFrom());
-        String newXml = transformerService.transform(content.getContent(), crosswalk.getName());
-        Log.debug("newXml " + newXml);
-        if (StringUtils.isNotBlank(newXml)) {
-            Content crosswalkConten = new Content();
-            crosswalkConten.setContent(newXml);
-            crosswalkConten.setIdentifier(item.getIdentifier());
-            crosswalkConten.setFormat(crosswalk.getFormatTo());
-            //daoContent.create(crosswalkConten);
-        }
+            // Update content
+            Content content = contentService.read(item.getIdentifier(), crosswalk.getFormatFrom());
+            String newXml = transformerService.transform(content.getContent(), crosswalk.getName());
+            Log.debug("newXml " + newXml);
+            if (StringUtils.isNotBlank(newXml)) {
+                Content crosswalkConten = new Content();
+                crosswalkConten.setContent(newXml);
+                crosswalkConten.setIdentifier(item.getIdentifier());
+                crosswalkConten.setFormat(crosswalk.getFormatTo());
+                daoContent.create(crosswalkConten); //In Cassandra create and update are the same!
+            }
 
-        //Update item timestamp
-        //Do NOT update the index document here
-        //This should be done after all items are processed
-        if (updateItemTimestamp) {
-            String datestamp = Configuration.getDateformat().format(new Date());
-            Log.info("Updateing item datestamp " + datestamp);
-            item.setDatestamp(datestamp);
-            //daoItem.create(item);
-        }
+            // Update item timestamp
+            // Do NOT update the index document here. Otherwise the changed item will popup again during paginated search!
+            // Reindex must be done after all items are processed
+            if (updateItemTimestamp) {
+                String datestamp = Configuration.getDateformat().format(new Date());
+                Log.info("Updateing item datestamp " + datestamp);
+                item.setDatestamp(datestamp);
+                daoItem.create(item); //In Cassandra create and update are the same!
+            }
         } catch (Exception e) {
             Log.error("Exception", e);
             throw e;
         }
     }
-    
-    
+
 }
