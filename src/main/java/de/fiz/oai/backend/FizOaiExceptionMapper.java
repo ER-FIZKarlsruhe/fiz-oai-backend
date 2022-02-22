@@ -26,7 +26,7 @@ public class FizOaiExceptionMapper implements ExceptionMapper<Throwable>, Respon
     @Override
     public Response toResponse(Throwable t) {
         String errorMessage = buildErrorMessage(request, t);
-        LOGGER.error(errorMessage);
+        LOGGER.error(errorMessage, t);
         if (t instanceof WebApplicationException) {
             return ((WebApplicationException) t).getResponse();
         }
