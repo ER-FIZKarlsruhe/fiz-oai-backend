@@ -1,8 +1,8 @@
 package de.fiz.oai.backend.service;
 
-import org.jvnet.hk2.annotations.Contract;
-
 import java.io.IOException;
+
+import org.jvnet.hk2.annotations.Contract;
 
 @Contract
 public interface TransformerService {
@@ -21,4 +21,11 @@ public interface TransformerService {
      * @return Information about pool
      */
     public String info();
+
+    /**
+     * Updates the XSLT transformer in the pool
+     * 
+     * @param name the name of the transformer
+     */
+    public void updateTransformer(String name)  throws Exception;
 }
