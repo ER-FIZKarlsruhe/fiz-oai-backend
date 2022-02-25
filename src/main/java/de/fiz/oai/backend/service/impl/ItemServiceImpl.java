@@ -124,7 +124,10 @@ public class ItemServiceImpl implements ItemService {
         LOGGER.warn("Couldn't find item ${item} in index.");
         item = null;
       }
-    }
+    } else {
+        LOGGER.warn("Couldn't find item ${item} in backend.");
+      }
+
     return item;
   }
 
@@ -217,7 +220,9 @@ public class ItemServiceImpl implements ItemService {
 
     for (String s : idResult.getData()) {
       Item item = read(s, format, readContent);
-      itemList.add(item);
+      if (item != null) {
+          itemList.add(item);
+      }
     }
 
     SearchResult<Item> itemResult = new SearchResult<>();
