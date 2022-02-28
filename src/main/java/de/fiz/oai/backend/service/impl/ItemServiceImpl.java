@@ -291,7 +291,8 @@ public class ItemServiceImpl implements ItemService {
     
                   if (setTags != null && !setTags.isEmpty()) {
                       for (String setTag : setTags) {
-                          if (item.getTags().contains(setTag)) {
+                          LOGGER.debug("item.getTags() " + item.getTags());
+                          if (item.getTags() != null && item.getTags().contains(setTag)) {
                               itemSets.add(pickedSet.getName());
                           }
                       }
