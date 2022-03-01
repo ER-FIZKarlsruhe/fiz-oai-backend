@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.fiz.oai.backend</groupId>
   <artifactId>oai-backend</artifactId>
-  <version>1.2.0</version>
+  <version>1.2.1</version>
   <packaging>war</packaging>
 
   <name>oai-backend</name>
@@ -178,7 +178,6 @@
             <directory>src/main/resources</directory>
             <filtering>true</filtering>
             <excludes>
-                <exclude>elasticsearch/**</exclude>
                 <exclude>solr/**</exclude>
                 <exclude>xsd/**</exclude>
             </excludes>
