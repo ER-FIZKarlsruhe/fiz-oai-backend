@@ -44,6 +44,7 @@ import de.fiz.oai.backend.service.ContentService;
 import de.fiz.oai.backend.service.CrosswalkService;
 import de.fiz.oai.backend.service.FormatService;
 import de.fiz.oai.backend.service.ItemService;
+import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.service.TransformerService;
 import de.fiz.oai.backend.utils.Configuration;
 
@@ -66,6 +67,9 @@ public class CrosswalkServiceImpl implements CrosswalkService {
 
     @Inject
     ItemService itemService;
+    
+    @Inject
+    SearchService searchService;
 
     @Inject
     ContentService contentService;
@@ -171,25 +175,26 @@ public class CrosswalkServiceImpl implements CrosswalkService {
             throw new InvalidParameterException("Cannot find crosswalk by the given name");
         }
 
-        Boolean searchMore = true;
         String searchMark = "";
 
         do {
             Log.info("search more items to process with searchMark " + searchMark);
-            SearchResult<Item> result = itemService.search(100, null, crosswalk.getFormatFrom(), from, until, false,
-                    searchMark);
 
+            final SearchResult<String> result = searchService.search(100, null, crosswalk.getFormatFrom(), from, until, searchMark);
+            Log.info("result total: " + result.getTotal());
+            Log.info("result size: " + result.getSize());
+            
             if (result.getSize() > 0) {
-                Iterator<Item> itemIterator = result.getData().iterator();
-                Item item = null;
+                Iterator<String> itemIterator = result.getData().iterator();
+                String itemId = null;
                 while (itemIterator.hasNext()) {
-                    item = itemIterator.next();
-                    processCrosswalkForItem(crosswalk, item, updateItemTimestamp);
+                    itemId = itemIterator.next();
+                    processCrosswalkForItem(crosswalk, itemId, updateItemTimestamp);
                 }
             }
 
             searchMark = result.getSearchMark();
-        } while (searchMark != null);
+        } while (StringUtils.isNotBlank(searchMark));
 
         Log.info("End process crosswalk for " + name);
 
@@ -200,18 +205,18 @@ public class CrosswalkServiceImpl implements CrosswalkService {
         return;
     }
 
-    private void processCrosswalkForItem(Crosswalk crosswalk, Item item, boolean updateItemTimestamp)
+    private void processCrosswalkForItem(Crosswalk crosswalk, String itemId, boolean updateItemTimestamp)
             throws IOException {
-        Log.info("processCrosswalkForItem " + item);
+        Log.info("processCrosswalkForItem " + itemId);
         try {
             // Update content
-            Content content = contentService.read(item.getIdentifier(), crosswalk.getFormatFrom());
+            Content content = contentService.read(itemId, crosswalk.getFormatFrom());
             String newXml = transformerService.transform(content.getContent(), crosswalk.getName());
             Log.debug("newXml " + newXml);
             if (StringUtils.isNotBlank(newXml)) {
                 Content crosswalkConten = new Content();
                 crosswalkConten.setContent(newXml);
-                crosswalkConten.setIdentifier(item.getIdentifier());
+                crosswalkConten.setIdentifier(itemId);
                 crosswalkConten.setFormat(crosswalk.getFormatTo());
                 daoContent.create(crosswalkConten); //In Cassandra create and update are the same!
             }
@@ -220,6 +225,7 @@ public class CrosswalkServiceImpl implements CrosswalkService {
             // Do NOT update the index document here. Otherwise the changed item will popup again during paginated search!
             // Reindex must be done after all items are processed
             if (updateItemTimestamp) {
+                Item item = itemService.read(itemId, null, false);
                 String datestamp = Configuration.getDateformat().format(new Date());
                 Log.info("Updateing item datestamp " + datestamp);
                 item.setDatestamp(datestamp);

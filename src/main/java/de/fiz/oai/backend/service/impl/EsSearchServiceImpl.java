@@ -237,9 +237,15 @@ public class EsSearchServiceImpl implements SearchService {
       
       if (StringUtils.isNotBlank(searchMark)) {
         Item lastItem = daoItem.read(searchMark);
+        
+        //Read the timestamp from the Index!!! Reading the timestamp from the cassandra item can return adifferent value 
+        //and than search_after will not work any more
+        Map<String,Object> itemDoc = readDocument(lastItem);
+        LOGGER.info("itemDoc: " + itemDoc);
+        
         Long timestamp = null;
         try {
-          timestamp = Configuration.getDateformat().parse(lastItem.getDatestamp()).getTime();
+          timestamp = Configuration.getDateformat().parse((String)itemDoc.get("datestamp")).getTime();
         } catch (ParseException e) {
           LOGGER.warn(e.getMessage());
         }
