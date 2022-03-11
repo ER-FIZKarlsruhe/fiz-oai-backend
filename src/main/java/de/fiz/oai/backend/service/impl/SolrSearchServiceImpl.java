@@ -82,6 +82,9 @@ public class SolrSearchServiceImpl implements SearchService {
         Map<String, Object> resultMap = new HashMap<>();
         try {
             SolrDocument doc = solrClient.getById(item.getIdentifier());
+            if (doc == null) {
+                return null;
+            }
             Collection<String> fieldNames = doc.getFieldNames();
             for (String fieldName: fieldNames) {
                 Collection<Object> values = doc.getFieldValues(fieldName);
