@@ -16,6 +16,7 @@
 package de.fiz.oai.backend.service;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 import org.jvnet.hk2.annotations.Contract;
@@ -48,6 +49,20 @@ public interface CrosswalkService {
    * @return the Crosswalk created
    */
   Crosswalk update(Crosswalk content) throws IOException;
+
+  
+  /**
+   * Process a Crosswalk for a set of items
+   *
+   * @param content String name of the Crosswalk to process
+   * @param updateItemTimestamp <code>true</true> if the related item timestamp should be updated
+   * @param from together with the until parameter, it defines a time range for searching items by the datestamp, where the related crosswalk should be processed
+   * @param until together with the from parameter, it defines a time range for searching item by the datestamps, where the related crosswalk should be processed
+   * 
+   * @return the Crosswalk created
+   */
+  void process(String name, boolean keepItemTimestamp, Date from, Date until) throws IOException;
+
   
   /**
    * Read all Crosswalks.

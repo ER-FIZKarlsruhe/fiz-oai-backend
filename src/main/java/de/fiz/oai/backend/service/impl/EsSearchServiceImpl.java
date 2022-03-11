@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.ServletContext;
 import javax.ws.rs.core.Context;
 
@@ -72,6 +73,7 @@ import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.models.reindex.ReindexStatus;
+import de.fiz.oai.backend.service.ItemService;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.utils.Configuration;
 import de.fiz.oai.backend.utils.ResourcesUtils;
@@ -95,6 +97,9 @@ public class EsSearchServiceImpl implements SearchService {
   @Context
   ServletContext servletContext;
 
+  @Inject
+  Provider<ItemService> itemProvider;
+  
   @Inject
   DAOItem daoItem;
 
@@ -227,13 +232,20 @@ public class EsSearchServiceImpl implements SearchService {
       searchSourceBuilder.sort(identifierBuilder);
       searchSourceBuilder.size(rows);
       searchSourceBuilder.fetchSource(false);
+      searchSourceBuilder.trackTotalHits(true);
 
       
       if (StringUtils.isNotBlank(searchMark)) {
         Item lastItem = daoItem.read(searchMark);
+        
+        //Read the timestamp from the Index!!! Reading the timestamp from the cassandra item can return adifferent value 
+        //and than search_after will not work any more
+        Map<String,Object> itemDoc = readDocument(lastItem);
+        LOGGER.info("itemDoc: " + itemDoc);
+        
         Long timestamp = null;
         try {
-          timestamp = Configuration.getDateformat().parse(lastItem.getDatestamp()).getTime();
+          timestamp = Configuration.getDateformat().parse((String)itemDoc.get("datestamp")).getTime();
         } catch (ParseException e) {
           LOGGER.warn(e.getMessage());
         }
@@ -387,6 +399,8 @@ public class EsSearchServiceImpl implements SearchService {
       return false;
     }
 
+    ItemService itemService = itemProvider.get();
+
     reindexStatus = new ReindexStatus();
 
     reindexStatus.setStopSignalReceived(false);
@@ -479,22 +493,26 @@ public class EsSearchServiceImpl implements SearchService {
 
         do {
           List<Item> bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
-          for (final Item pickedItem : bufferListItems) {
-            indexDocument(pickedItem, reindexStatus.getNewIndexName(), elasticsearchClient);
-            reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
 
-            // Keep the most recent Item
-            if (mostRecentItem == null) {
-              mostRecentItem = pickedItem;
-            } else {
-              try {
-                if (Configuration.getDateformat().parse(mostRecentItem.getDatestamp())
-                    .before(Configuration.getDateformat().parse(pickedItem.getDatestamp()))) {
+          for (final Item pickedItem : bufferListItems) {
+            try {
+                LOGGER.debug("Reindex now " + pickedItem.getIdentifier());
+                
+            	itemService.addFormatsAndSets(pickedItem);
+                indexDocument(pickedItem, reindexStatus.getNewIndexName(), elasticsearchClient);
+                reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
+                // Keep the most recent Item
+                if (mostRecentItem == null) {
                   mostRecentItem = pickedItem;
+                } else {
+                    if (Configuration.getDateformat().parse(mostRecentItem.getDatestamp())
+                        .before(Configuration.getDateformat().parse(pickedItem.getDatestamp()))) {
+                      mostRecentItem = pickedItem;
+                    }
                 }
-              } catch (ParseException e) {
+            } catch (Exception e) {
                 // leave mostRecentItem as it is
-              }
+                  LOGGER.error("Reindex fails for " + pickedItem.getIdentifier() , e);
             }
           }
 

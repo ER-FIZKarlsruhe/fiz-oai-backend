@@ -16,6 +16,8 @@
 package de.fiz.oai.backend.controller;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -31,15 +33,20 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.models.Crosswalk;
+import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.service.CrosswalkService;
+import de.fiz.oai.backend.utils.Configuration;
 
 @Path("/crosswalk")
 public class CrosswalkController extends AbstractController {
@@ -47,6 +54,8 @@ public class CrosswalkController extends AbstractController {
   @Inject
   CrosswalkService crosswalkService;
 
+  private static Logger LOGGER = LoggerFactory.getLogger(CrosswalkController.class);
+  
   @GET
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
@@ -133,6 +142,55 @@ public class CrosswalkController extends AbstractController {
       if (!Pattern.matches("[A-Za-z0-9\\-_\\.!~\\*'\\(\\)]+", crosswalk.getFormatTo())) {
         throw new WebApplicationException("Crosswalk formatTo does not match regex!", Status.BAD_REQUEST);
       }
+  }
+
+  
+  @PUT
+  @Path("/{name}/process")
+  public void process(@PathParam("name") String name, @QueryParam("updateItemTimestamp") String updateItemTimestampParam, @QueryParam("from") String from, @QueryParam("until") String until, @Context HttpServletRequest request,
+      @Context HttpServletResponse response) throws IOException {
+
+    LOGGER.info("name: {}", name);
+    LOGGER.info("from: {}", from);
+    LOGGER.info("until: {}", until);
+  
+    
+    Date fromDate = null;
+    Date untilDate = null;
+    Boolean updateItemTimestamp = null;
+
+    if (StringUtils.isBlank(name)) {
+      throw new BadRequestException("name PathParam cannot be empty!");
+    }
+    
+    if (StringUtils.isBlank(updateItemTimestampParam)) {
+        throw new BadRequestException("updateItemTimestamp QueryParam cannot be empty!");
+    } else {
+        updateItemTimestamp = Boolean.valueOf(updateItemTimestampParam);
+    }
+    
+
+    try {
+      if (!StringUtils.isBlank(from)) {
+        fromDate = Configuration.getDateformat().parse(from);
+      }
+    } catch (ParseException e) {
+      throw new BadRequestException("Invalid from QueryParam!");
+    }
+
+    try {
+      if (!StringUtils.isBlank(until)) {
+        untilDate = Configuration.getDateformat().parse(until);
+      }
+    } catch (ParseException e) {
+      throw new BadRequestException("Invalid until QueryParam!");
+    }
+
+
+
+    crosswalkService.process(name, updateItemTimestamp, fromDate, untilDate);
+
+    return;
   }
   
 }

@@ -18,6 +18,8 @@ package de.fiz.oai.backend.models;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class Set {
 
   private String name;
@@ -38,6 +40,15 @@ public class Set {
     this.name = name;
   }
 
+  @JsonIgnore
+  public String getFullName() {
+      if (spec != null) {
+          return spec + ":" + name;
+      } else {
+          return name;
+      }
+  }
+  
   public String getSpec() {
     return spec;
   }

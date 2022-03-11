@@ -23,8 +23,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import javax.xml.xpath.XPathExpressionException;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.xml.sax.SAXException;
 
 public class XPathHelperTest {
 
@@ -41,7 +44,7 @@ public class XPathHelperTest {
   }
 
   @Test
-  public void testEmptyParams() {
+  public void testEmptyParams() throws XPathExpressionException, SAXException {
     assertFalse(XPathHelper.isTextValueMatching(null, null));
     assertFalse(XPathHelper.isTextValueMatching(null, ""));
     assertFalse(XPathHelper.isTextValueMatching("", null));
@@ -53,7 +56,7 @@ public class XPathHelperTest {
   }
 
   @Test
-  public void testWrong() {
+  public void testWrong() throws XPathExpressionException, SAXException {
     assertFalse(XPathHelper.isTextValueMatching(content,
         "/article/front/article-meta/contrib-group/contrib/name[surname='Giulio']"));
     assertFalse(
@@ -63,7 +66,7 @@ public class XPathHelperTest {
   }
 
   @Test
-  public void testOK() {
+  public void testOK() throws XPathExpressionException, SAXException {
     assertTrue(XPathHelper.isTextValueMatching(content,
         "/article/front/article-meta/contrib-group/contrib/name[surname='Blume']"));
     assertTrue(
@@ -73,7 +76,7 @@ public class XPathHelperTest {
   }
 
   @Test
-  public void testOaiDc() {
+  public void testOaiDc() throws XPathExpressionException, SAXException {
     String contentStr = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<qualifieddc xsi:noNamespaceSchemaLocation=\"http://dublincore.org/schemas/xmls/qdc/2008/02/11/qualifieddc.xsd\" " +
             "xmlns:dc=\"http://purl.org/dc/elements/1.1/\" " +
@@ -95,7 +98,7 @@ public class XPathHelperTest {
   }
 
   @Test
-  public void testMarc() {
+  public void testMarc() throws XPathExpressionException, SAXException {
     String contentStr = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
             "<collection xmlns=\"http://www.loc.gov/MARC21/slim\"\n" +
             "            xmlns:marc=\"http://www.loc.gov/MARC21/slim\"\n" +

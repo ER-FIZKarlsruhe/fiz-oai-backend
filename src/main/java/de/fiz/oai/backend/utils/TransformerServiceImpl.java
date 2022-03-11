@@ -3,10 +3,22 @@
  */
 package de.fiz.oai.backend.utils;
 
-import de.fiz.oai.backend.dao.DAOCrosswalk;
-import de.fiz.oai.backend.models.Crosswalk;
-import de.fiz.oai.backend.service.TransformerService;
-import net.sf.saxon.lib.FeatureKeys;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.NoSuchElementException;
+
+import javax.inject.Inject;
+import javax.xml.XMLConstants;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -17,24 +29,11 @@ import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.jvnet.hk2.annotations.Service;
-import org.xml.sax.InputSource;
 
-import javax.inject.Inject;
-import javax.xml.XMLConstants;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.sax.SAXSource;
-import javax.xml.transform.sax.SAXTransformerFactory;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import de.fiz.oai.backend.dao.DAOCrosswalk;
+import de.fiz.oai.backend.models.Crosswalk;
+import de.fiz.oai.backend.service.TransformerService;
+import net.sf.saxon.lib.FeatureKeys;
 
 /** Crosswalk transformations. */
 @Service
@@ -181,6 +180,19 @@ public class TransformerServiceImpl implements TransformerService, KeyedObjectPo
         }
     }
 
+    /** ${@inheritDoc} 
+     * @throws Exception */
+    @Override
+    public void updateTransformer(String key) throws Exception {
+        try {
+            this.pool.addObject(key);
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage(), ex);
+            throw ex;
+        }
+    }
+    
+    
     /** ${@inheritDoc} */
     @Override
     public void addObject(String key) throws Exception, IllegalStateException, UnsupportedOperationException {

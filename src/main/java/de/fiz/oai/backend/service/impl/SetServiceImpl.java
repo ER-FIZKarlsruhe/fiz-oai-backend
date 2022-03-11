@@ -16,6 +16,7 @@
 package de.fiz.oai.backend.service.impl;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -80,6 +81,8 @@ public class SetServiceImpl implements SetService {
   @Override
   public List<Set> readAll() throws IOException {
     final List<Set> setList = daoSet.readAll();
+    setList.sort(Comparator.comparing(Set::getFullName));
+
     return setList;
   }
 

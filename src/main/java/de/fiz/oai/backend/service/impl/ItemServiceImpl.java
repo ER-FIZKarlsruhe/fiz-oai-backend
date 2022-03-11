@@ -38,6 +38,7 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
+import javax.xml.xpath.XPathExpressionException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
@@ -124,7 +125,10 @@ public class ItemServiceImpl implements ItemService {
         LOGGER.warn("Couldn't find item ${item} in index.");
         item = null;
       }
-    }
+    } else {
+        LOGGER.warn("Couldn't find item ${item} in backend.");
+      }
+
     return item;
   }
 
@@ -217,7 +221,9 @@ public class ItemServiceImpl implements ItemService {
 
     for (String s : idResult.getData()) {
       Item item = read(s, format, readContent);
-      itemList.add(item);
+      if (item != null) {
+          itemList.add(item);
+      }
     }
 
     SearchResult<Item> itemResult = new SearchResult<>();
@@ -251,49 +257,55 @@ public class ItemServiceImpl implements ItemService {
   }
   
   public void addFormatsAndSets(Item item) throws IOException {
-      // Add all available formats
-      List<Content> allContents = daoContent.readFormats(item.getIdentifier());
-      List<String> itemFormats = new ArrayList<>();
-      if (allContents != null && !allContents.isEmpty()) {
-          for (final Content pickedContent : allContents) {
-              itemFormats.add(pickedContent.getFormat());
+      try {
+          // Add all available formats
+          List<Content> allContents = daoContent.readFormats(item.getIdentifier());
+          List<String> itemFormats = new ArrayList<>();
+          if (allContents != null && !allContents.isEmpty()) {
+              for (final Content pickedContent : allContents) {
+                  itemFormats.add(pickedContent.getFormat());
+              }
           }
-      }
-      item.setFormats(itemFormats);
-
-      // Add all the matching sets
-      List<de.fiz.oai.backend.models.Set> allSets = daoSet.readAll();
-      List<String> itemSets = new ArrayList<>();
-      if (allSets != null && !allSets.isEmpty()) {
-
-          for (final de.fiz.oai.backend.models.Set pickedSet : allSets) {
-              // Check set membership via xPath
-              Map<String, String> xPaths = pickedSet.getxPaths();
-              if (allContents != null && !allContents.isEmpty()) {
-                  for (final Content pickedContent : allContents) {
-                      if (xPaths.containsKey(pickedContent.getFormat())) {
-                          final String xPathToCheck = xPaths.get(pickedContent.getFormat());
-                          if (XPathHelper.isTextValueMatching(pickedContent.getContent(), xPathToCheck)) {
+          item.setFormats(itemFormats);
+    
+          // Add all the matching sets
+          List<de.fiz.oai.backend.models.Set> allSets = daoSet.readAll();
+          List<String> itemSets = new ArrayList<>();
+          if (allSets != null && !allSets.isEmpty()) {
+    
+              for (final de.fiz.oai.backend.models.Set pickedSet : allSets) {
+                  // Check set membership via xPath
+                  Map<String, String> xPaths = pickedSet.getxPaths();
+                  if (allContents != null && !allContents.isEmpty()) {
+                      for (final Content pickedContent : allContents) {
+                          if (xPaths.containsKey(pickedContent.getFormat())) {
+                              final String xPathToCheck = xPaths.get(pickedContent.getFormat());
+                              if (XPathHelper.isTextValueMatching(pickedContent.getContent(), xPathToCheck)) {
+                                  itemSets.add(pickedSet.getName());
+                              }
+                          }
+                      }
+                  }
+    
+                  // Check set membership via item tags
+                  List<String> setTags = pickedSet.getTags();
+    
+                  if (setTags != null && !setTags.isEmpty()) {
+                      for (String setTag : setTags) {
+                          LOGGER.debug("item.getTags() " + item.getTags());
+                          if (item.getTags() != null && item.getTags().contains(setTag)) {
                               itemSets.add(pickedSet.getName());
                           }
                       }
                   }
               }
-
-              // Check set membership via item tags
-              List<String> setTags = pickedSet.getTags();
-
-              if (setTags != null && !setTags.isEmpty()) {
-                  for (String setTag : setTags) {
-                      if (item.getTags().contains(setTag)) {
-                          itemSets.add(pickedSet.getName());
-                      }
-                  }
-              }
+    
           }
-
+          item.setSets(itemSets);
+      } catch(SAXException| XPathExpressionException e) {
+          //Rethrow Exceptions from XPathHelper as IOException
+          throw new IOException(e);
       }
-      item.setSets(itemSets);
   }
 
   /**
