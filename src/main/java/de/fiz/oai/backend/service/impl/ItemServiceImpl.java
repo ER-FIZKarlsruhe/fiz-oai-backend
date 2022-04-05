@@ -293,7 +293,7 @@ public class ItemServiceImpl implements ItemService {
                       for (String setTag : setTags) {
                           LOGGER.debug("item.getTags() " + item.getTags());
                           if (item.getTags() != null && item.getTags().contains(setTag)) {
-                              itemSets.add(pickedSet.getName());
+                              itemSets.add(pickedSet.getSpec());
                           }
                       }
                   }
