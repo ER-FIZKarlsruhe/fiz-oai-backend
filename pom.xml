@@ -1,17 +1,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>de.fiz.oai.backend</groupId>
-  <artifactId>oai-backend</artifactId>
-
-  <version>1.3-SNAPSHOT</version>
-
-  <packaging>war</packaging>
-
-  <name>oai-backend</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    
+    <project_version>1.3-SNAPSHOT</project_version>
+    
     <jersey.version>2.32</jersey.version>
     <javax.javaee.version>7.0</javax.javaee.version>
     <junit.version>4.12</junit.version>
@@ -25,6 +20,13 @@
     <artifacts.snapshots.url>https://dev.fiz-karlsruhe.de/artifactory/libs-snapshot-local</artifacts.snapshots.url>
     <artifacts.releases.url>https://dev.fiz-karlsruhe.de/artifactory/libs-release-local</artifacts.releases.url>
   </properties>
+
+  <groupId>de.fiz.oai.backend</groupId>
+  <artifactId>oai-backend</artifactId>
+  <version>${project_version}</version>
+  <packaging>war</packaging>
+
+  <name>oai-backend</name>
 
 
   <parent>
@@ -188,6 +190,26 @@
     </resources>
     <plugins>
 
+
+    <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
+        <version>1.1.0</version>
+        <executions>
+          <execution>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>write-project-properties</goal>
+            </goals>
+            <configuration>
+              <outputFile>
+                ${project.build.directory}/maven.properties
+              </outputFile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+          
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
