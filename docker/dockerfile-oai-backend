@@ -1,0 +1,20 @@
+FROM tomcat:9-jre11-openjdk-slim
+MAINTAINER "FIZ-Karlsruhe"
+
+ARG UNAME=oai_backend
+ARG UID=8007
+ARG GID=8007
+
+#ARG UNAME=admin
+#ARG UID=1000
+#ARG GID=1000
+
+RUN groupadd -g $GID -o $UNAME
+RUN useradd -m -u $UID -g $GID -o -s /bin/bash $UNAME
+
+RUN chown -R ${UNAME}:${UNAME} /usr/local/tomcat/
+RUN chmod -R 770 /usr/local/tomcat/
+
+USER $UNAME
+
+COPY target/oai.war /usr/local/tomcat/webapps
