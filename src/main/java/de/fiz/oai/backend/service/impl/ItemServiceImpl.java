@@ -249,10 +249,8 @@ public class ItemServiceImpl implements ItemService {
 
     daoItem.create(itemToDelete);
 
-    //first add all formats then delete content because formats are read from the content
     addFormatsAndSets(itemToDelete);
-    deleteAllContent(itemToDelete);
-    
+
     searchService.updateDocument(itemToDelete);
   }
   
@@ -294,7 +292,7 @@ public class ItemServiceImpl implements ItemService {
                       for (String setTag : setTags) {
                           LOGGER.debug("item.getTags() " + item.getTags());
                           if (item.getTags() != null && item.getTags().contains(setTag)) {
-                              itemSets.add(pickedSet.getName());
+                              itemSets.add(pickedSet.getSpec());
                           }
                       }
                   }
