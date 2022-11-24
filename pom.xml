@@ -12,7 +12,7 @@
     <junit.version>4.12</junit.version>
     <elasticsearch.version>7.10.1</elasticsearch.version>
     <solr.version>8.11.1</solr.version>
-    <saxon.version>11.1</saxon.version>
+    <saxon.version>10.2</saxon.version>
     <log4j.version>2.17.2</log4j.version>
     <dependencyCheckSuppressionFile>src/test/resources/suppress.xml</dependencyCheckSuppressionFile>
     
