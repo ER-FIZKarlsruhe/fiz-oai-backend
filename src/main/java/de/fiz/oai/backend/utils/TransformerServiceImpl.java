@@ -70,7 +70,7 @@ public class TransformerServiceImpl implements TransformerService, KeyedObjectPo
         LOGGER.info("Initialize TransformerPool ...");
 
         // Create transformerFactory as singleton.
-        TransformerFactory tf = TransformerFactory.newInstance("com.saxonica.config.EnterpriseTransformerFactory", null);
+        TransformerFactory tf = TransformerFactory.newInstance("net.sf.saxon.TransformerFactoryImpl", null);
         if (tf.getFeature(SAXTransformerFactory.FEATURE)) {
             try {
                 tf.setAttribute(
