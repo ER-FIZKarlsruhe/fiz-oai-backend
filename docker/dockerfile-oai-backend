@@ -18,3 +18,5 @@ RUN chmod -R 770 /usr/local/tomcat/
 USER $UNAME
 
 COPY target/oai-backend.war /usr/local/tomcat/webapps
+
+RUN curl -SL https://groovy.jfrog.io/artifactory/dist-release-local/groovy-zips/apache-groovy-binary-3.0.13.zip | unzip apache-groovy-binary-3.0.10.zip -d /usr/local/
