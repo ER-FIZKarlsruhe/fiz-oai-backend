@@ -1,4 +1,4 @@
-FROM tomcat:9-jre11-openjdk-slim
+FROM tomcat:9-jre11-temurin-focal
 MAINTAINER "FIZ-Karlsruhe"
 
 ARG UNAME=oai_backend
@@ -9,10 +9,10 @@ ARG GID=8007
 #ARG UID=1000
 #ARG GID=1000
 
-RUN apt-get update && apt-get install -y unzip
+RUN apt-get install -y groovy
 
-COPY docker/apache-groovy-binary-3.0.10.zip /usr/local/
-RUN unzip /usr/local/apache-groovy-binary-3.0.10.zip -d /usr/local/
+#COPY docker/apache-groovy-binary-3.0.10.zip /usr/local/
+#RUN unzip /usr/local/apache-groovy-binary-3.0.10.zip -d /usr/local/
 
 RUN groupadd -g $GID -o $UNAME
 RUN useradd -m -u $UID -g $GID -o -s /bin/bash $UNAME
