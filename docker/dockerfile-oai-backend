@@ -10,7 +10,7 @@ ARG GID=8007
 #ARG GID=1000
 
 COPY docker/apache-groovy-binary-3.0.10.zip /usr/local/
-RUN unzip -d /usr/local/ /usr/local/apache-groovy-binary-3.0.10.zip
+RUN tar xvf /usr/local/apache-groovy-binary-3.0.10.zip -C /usr/local/
 
 RUN groupadd -g $GID -o $UNAME
 RUN useradd -m -u $UID -g $GID -o -s /bin/bash $UNAME
