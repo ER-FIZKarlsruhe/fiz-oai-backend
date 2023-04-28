@@ -1,0 +1,440 @@
+Lists of 151 third-party dependencies.
+     (The Apache Software License, Version 2.0) HPPC Collections (com.carrotsearch:hppc:0.7.1 - http://labs.carrotsearch.com/hppc.html/hppc)
+     (Apache 2) DataStax Java driver for Apache Cassandra(R) - core (com.datastax.oss:java-driver-core:4.9.0 - https://github.com/datastax/java-driver/java-driver-core)
+     (Apache 2) Shaded Guava artifact for use in the DataStax Java driver for Apache Cassandra® (com.datastax.oss:java-driver-shaded-guava:25.1-jre-graal-sub-1 - https://github.com/datastax/java-driver-shaded-guava)
+     (Apache 2) An implementation of the Apache Cassandra® native protocol (com.datastax.oss:native-protocol:1.4.11 - https://github.com/datastax/native-protocol)
+     (The Apache Software License, Version 2.0) Esri Geometry API for Java (com.esri.geometry:esri-geometry-api:1.2.1 - https://github.com/Esri/geometry-api-java)
+     (The Apache Software License, Version 2.0) Jackson-annotations (com.fasterxml.jackson.core:jackson-annotations:2.10.1 - http://github.com/FasterXML/jackson)
+     (The Apache Software License, Version 2.0) Jackson-core (com.fasterxml.jackson.core:jackson-core:2.11.0 - https://github.com/FasterXML/jackson-core)
+     (The Apache Software License, Version 2.0) jackson-databind (com.fasterxml.jackson.core:jackson-databind:2.11.0 - http://github.com/FasterXML/jackson)
+     (The Apache Software License, Version 2.0) Jackson dataformat: CBOR (com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.10.4 - http://github.com/FasterXML/jackson-dataformats-binary)
+     (The Apache Software License, Version 2.0) Jackson dataformat: Smile (com.fasterxml.jackson.dataformat:jackson-dataformat-smile:2.10.4 - http://github.com/FasterXML/jackson-dataformats-binary)
+     (The Apache Software License, Version 2.0) Jackson-dataformat-XML (com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.10.1 - https://github.com/FasterXML/jackson-dataformat-xml)
+     (The Apache Software License, Version 2.0) Jackson-dataformat-YAML (com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.10.4 - https://github.com/FasterXML/jackson-dataformats-text)
+     (The Apache Software License, Version 2.0) Jackson module: JAXB Annotations (com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.10.1 - https://github.com/FasterXML/jackson-modules-base)
+     (The Apache License, Version 2.0) Woodstox (com.fasterxml.woodstox:woodstox-core:6.2.4 - https://github.com/FasterXML/woodstox)
+     (The Apache Software License, Version 2.0) jffi (com.github.jnr:jffi:1.2.19 - http://github.com/jnr/jffi)
+     (The Apache Software License, Version 2.0) jnr-a64asm (com.github.jnr:jnr-a64asm:1.0.0 - http://nexus.sonatype.org/oss-repository-hosting.html/jnr-a64asm)
+     (The Apache Software License, Version 2.0) jnr-constants (com.github.jnr:jnr-constants:0.9.12 - http://github.com/jnr/jnr-constants)
+     (The Apache Software License, Version 2.0) jnr-ffi (com.github.jnr:jnr-ffi:2.1.10 - http://github.com/jnr/jnr-ffi)
+     (Eclipse Public License - v 2.0) (GNU General Public License Version 2) (GNU Lesser General Public License Version 2.1) jnr-posix (com.github.jnr:jnr-posix:3.0.50 - http://nexus.sonatype.org/oss-repository-hosting.html/jnr-posix)
+     (MIT License) jnr-x86asm (com.github.jnr:jnr-x86asm:1.0.2 - http://github.com/jnr/jnr-x86asm)
+     (GNU LESSER GENERAL PUBLIC LICENSE, Version 2.1) SpotBugs Annotations (com.github.spotbugs:spotbugs-annotations:3.1.12 - https://spotbugs.github.io/)
+     (Apache License 2.0) compiler (com.github.spullara.mustache.java:compiler:0.9.6 - http://github.com/spullara/mustache.java)
+     (The Apache Software License, Version 2.0) JCIP Annotations under Apache License (com.github.stephenc.jcip:jcip-annotations:1.0-1 - http://stephenc.github.com/jcip-annotations)
+     (The Apache Software License, Version 2.0) FindBugs-jsr305 (com.google.code.findbugs:jsr305:3.0.2 - http://findbugs.sourceforge.net/)
+     (BSD) jcabi-log (com.jcabi:jcabi-log:0.14 - http://www.jcabi.com/jcabi-log)
+     (BSD) jcabi-manifests (com.jcabi:jcabi-manifests:1.1 - http://www.jcabi.com/jcabi-manifests)
+     (Apache 2.0) JavaPoet (com.squareup:javapoet:1.8.0 - http://github.com/square/javapoet/)
+     (EDL 1.0) JavaBeans Activation Framework (com.sun.activation:jakarta.activation:1.2.1 - https://github.com/eclipse-ee4j/jaf/jakarta.activation)
+     (Eclipse Distribution License - v 1.0) istack common utility code runtime (com.sun.istack:istack-commons-runtime:3.0.8 - https://projects.eclipse.org/projects/ee4j/istack-commons/istack-commons-runtime)
+     (Eclipse Distribution License - v 1.0) (The Apache Software License, Version 2.0) fastinfoset (com.sun.xml.fastinfoset:FastInfoset:1.2.16 - https://projects.eclipse.org/projects/ee4j.jaxb-impl/FastInfoset)
+     (The Apache Software License, Version 2.0) T-Digest (com.tdunning:t-digest:3.2 - https://github.com/tdunning/t-digest)
+     (Apache-2.0) config (com.typesafe:config:1.3.4 - https://github.com/lightbend/config)
+     (The Apache Software License, Version 2.0) Apache Commons Codec (commons-codec:commons-codec:1.11 - http://commons.apache.org/proper/commons-codec/)
+     (The Apache Software License, Version 2.0) Apache Commons Collections (commons-collections:commons-collections:3.2.2 - http://commons.apache.org/collections/)
+     (The Apache Software License, Version 2.0) Apache Commons Configuration (commons-configuration:commons-configuration:1.10 - http://commons.apache.org/configuration/)
+     (The Apache Software License, Version 2.0) Apache Commons IO (commons-io:commons-io:2.8.0 - https://commons.apache.org/proper/commons-io/)
+     (The Apache Software License, Version 2.0) Commons Lang (commons-lang:commons-lang:2.6 - http://commons.apache.org/lang/)
+     (The Apache Software License, Version 2.0) Apache Commons Logging (commons-logging:commons-logging:1.2 - http://commons.apache.org/proper/commons-logging/)
+     (Apache License 2.0) Metrics Core (io.dropwizard.metrics:metrics-core:4.0.5 - http://metrics.dropwizard.io/metrics-core)
+     (The Apache Software License, Version 2.0) Netty/Buffer (io.netty:netty-buffer:4.1.68.Final - https://netty.io/netty-buffer/)
+     (The Apache Software License, Version 2.0) Netty/Codec (io.netty:netty-codec:4.1.68.Final - https://netty.io/netty-codec/)
+     (The Apache Software License, Version 2.0) Netty/Common (io.netty:netty-common:4.1.68.Final - https://netty.io/netty-common/)
+     (The Apache Software License, Version 2.0) Netty/Handler (io.netty:netty-handler:4.1.51.Final - https://netty.io/netty-handler/)
+     (The Apache Software License, Version 2.0) Netty/Resolver (io.netty:netty-resolver:4.1.68.Final - https://netty.io/netty-resolver/)
+     (The Apache Software License, Version 2.0) Netty/Transport (io.netty:netty-transport:4.1.68.Final - https://netty.io/netty-transport/)
+     (The Apache Software License, Version 2.0) Netty/Transport/Native/Epoll (io.netty:netty-transport-native-epoll:4.1.68.Final - https://netty.io/netty-transport-native-epoll/)
+     (The Apache Software License, Version 2.0) Netty/Transport/Native/Unix/Common (io.netty:netty-transport-native-unix-common:4.1.68.Final - https://netty.io/netty-transport-native-unix-common/)
+     (EDL 1.0) JavaBeans Activation Framework API jar (jakarta.activation:jakarta.activation-api:1.2.1 - https://github.com/eclipse-ee4j/jaf/jakarta.activation-api)
+     (EPL 2.0) (GPL2 w/ CPE) Jakarta Annotations API (jakarta.annotation:jakarta.annotation-api:1.3.5 - https://projects.eclipse.org/projects/ee4j.ca)
+     (Apache License 2.0) Jakarta Bean Validation API (jakarta.validation:jakarta.validation-api:2.0.2 - https://beanvalidation.org)
+     (EPL 2.0) (GPL2 w/ CPE) jakarta.ws.rs-api (jakarta.ws.rs:jakarta.ws.rs-api:2.1.6 - https://github.com/eclipse-ee4j/jaxrs-api)
+     (Eclipse Distribution License - v 1.0) jakarta.xml.bind-api (jakarta.xml.bind:jakarta.xml.bind-api:2.3.2 - https://github.com/eclipse-ee4j/jaxb-api/jakarta.xml.bind-api)
+     (COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0) JavaBeans(TM) Activation Framework (javax.activation:activation:1.1.1 - http://java.sun.com/javase/technologies/desktop/javabeans/jaf/index.jsp)
+     (CDDL + GPLv2 with classpath exception) Java Servlet API (javax.servlet:javax.servlet-api:3.0.1 - http://servlet-spec.java.net)
+     (CDDL 1.1) (GPL2 w/ CPE) jaxb-api (javax.xml.bind:jaxb-api:2.3.0 - https://github.com/javaee/jaxb-spec/jaxb-api)
+     (The Apache Software License, Version 2.0) Joda-Time (joda-time:joda-time:2.10.10 - https://www.joda.org/joda-time/)
+     (Apache-2.0) (LGPL-2.1-or-later) Java Native Access (net.java.dev.jna:jna:5.10.0 - https://github.com/java-native-access/jna)
+     (Apache License 2.0) exp4j (net.objecthunter:exp4j:0.4.8 - http://www.objecthunter.net/exp4j)
+     (The MIT License) JOpt Simple (net.sf.jopt-simple:jopt-simple:5.0.2 - http://pholser.github.io/jopt-simple)
+     (Mozilla Public License Version 2.0) Saxon-HE (net.sf.saxon:Saxon-HE:10.2 - http://www.saxonica.com/)
+     (The Apache Software License, Version 2.0) Apache Commons Lang (org.apache.commons:commons-lang3:3.7 - http://commons.apache.org/proper/commons-lang/)
+     (The Apache Software License, Version 2.0) Apache Commons Math (org.apache.commons:commons-math3:3.6.1 - http://commons.apache.org/proper/commons-math/)
+     (The Apache Software License, Version 2.0) Apache Commons Pool (org.apache.commons:commons-pool2:2.8.0 - https://commons.apache.org/proper/commons-pool/)
+     (The Apache Software License, Version 2.0) Apache HttpAsyncClient (org.apache.httpcomponents:httpasyncclient:4.1.4 - http://hc.apache.org/httpcomponents-asyncclient)
+     (The Apache Software License, Version 2.0) Apache HttpClient (org.apache.httpcomponents:httpclient:4.5.8 - http://hc.apache.org/httpcomponents-client)
+     (The Apache Software License, Version 2.0) Apache HttpCore (org.apache.httpcomponents:httpcore:4.4.11 - http://hc.apache.org/httpcomponents-core-ga)
+     (The Apache Software License, Version 2.0) Apache HttpCore NIO (org.apache.httpcomponents:httpcore-nio:4.4.12 - http://hc.apache.org/httpcomponents-core-ga)
+     (The Apache Software License, Version 2.0) Apache HttpClient Mime (org.apache.httpcomponents:httpmime:4.5.13 - http://hc.apache.org/httpcomponents-client)
+     (The Apache Software License, Version 2.0) Apache Log4j API (org.apache.logging.log4j:log4j-api:2.17.2 - https://logging.apache.org/log4j/2.x/log4j-api/)
+     (The Apache Software License, Version 2.0) Apache Log4j Core (org.apache.logging.log4j:log4j-core:2.17.2 - https://logging.apache.org/log4j/2.x/log4j-core/)
+     (The Apache Software License, Version 2.0) Apache Log4j SLF4J Binding (org.apache.logging.log4j:log4j-slf4j-impl:2.17.2 - https://logging.apache.org/log4j/2.x/log4j-slf4j-impl/)
+     (The Apache Software License, Version 2.0) Lucene Common Analyzers (org.apache.lucene:lucene-analyzers-common:8.11.1 - https://lucene.apache.org/lucene-parent/lucene-analyzers-common)
+     (The Apache Software License, Version 2.0) Lucene Memory (org.apache.lucene:lucene-backward-codecs:8.11.1 - https://lucene.apache.org/lucene-parent/lucene-backward-codecs)
+     (The Apache Software License, Version 2.0) Lucene Core (org.apache.lucene:lucene-core:8.11.1 - https://lucene.apache.org/lucene-parent/lucene-core)
+     (The Apache Software License, Version 2.0) Lucene Grouping (org.apache.lucene:lucene-grouping:8.11.1 - https://lucene.apache.org/lucene-parent/lucene-grouping)
+     (The Apache Software License, Version 2.0) Lucene Highlighter (org.apache.lucene:lucene-highlighter:8.11.1 - https://lucene.apache.org/lucene-parent/lucene-highlighter)
+     (The Apache Software License, Version 2.0) Lucene Join (org.apache.lucene:lucene-join:8.11.1 - https://lucene.apache.org/lucene-parent/lucene-join)
+     (The Apache Software License, Version 2.0) Lucene Memory (org.apache.lucene:lucene-memory:8.11.1 - https://lucene.apache.org/lucene-parent/lucene-memory)
+     (The Apache Software License, Version 2.0) Lucene Miscellaneous (org.apache.lucene:lucene-misc:8.11.1 - https://lucene.apache.org/lucene-parent/lucene-misc)
+     (The Apache Software License, Version 2.0) Lucene Queries (org.apache.lucene:lucene-queries:8.11.1 - https://lucene.apache.org/lucene-parent/lucene-queries)
+     (The Apache Software License, Version 2.0) Lucene QueryParsers (org.apache.lucene:lucene-queryparser:8.11.1 - https://lucene.apache.org/lucene-parent/lucene-queryparser)
+     (The Apache Software License, Version 2.0) Lucene Sandbox (org.apache.lucene:lucene-sandbox:8.11.1 - https://lucene.apache.org/lucene-parent/lucene-sandbox)
+     (The Apache Software License, Version 2.0) Lucene Spatial 3D (org.apache.lucene:lucene-spatial3d:8.11.1 - https://lucene.apache.org/lucene-parent/lucene-spatial3d)
+     (The Apache Software License, Version 2.0) Lucene Suggest (org.apache.lucene:lucene-suggest:8.11.1 - https://lucene.apache.org/lucene-parent/lucene-suggest)
+     (The Apache Software License, Version 2.0) Apache Solr Solrj (org.apache.solr:solr-solrj:8.11.1 - https://lucene.apache.org/solr-parent/solr-solrj)
+     (Apache 2) Apache TinkerPop :: Gremlin Core (org.apache.tinkerpop:gremlin-core:3.4.9 - http://tinkerpop.apache.org/gremlin-core/)
+     (Apache 2) Apache TinkerPop :: Gremlin Shaded (org.apache.tinkerpop:gremlin-shaded:3.4.9 - http://tinkerpop.apache.org/gremlin-shaded/)
+     (Apache 2) Apache TinkerPop :: TinkerGraph Gremlin (org.apache.tinkerpop:tinkergraph-gremlin:3.4.8 - http://tinkerpop.apache.org/tinkergraph-gremlin/)
+     (The Apache Software License, Version 2.0) Apache ZooKeeper - Server (org.apache.zookeeper:zookeeper:3.6.2 - http://zookeeper.apache.org/zookeeper)
+     (The Apache Software License, Version 2.0) Apache ZooKeeper - Jute (org.apache.zookeeper:zookeeper-jute:3.6.2 - http://zookeeper.apache.org/zookeeper-jute)
+     (The Apache Software License, Version 2.0) Jackson (org.codehaus.jackson:jackson-core-asl:1.9.12 - http://jackson.codehaus.org)
+     (The BSD License) Stax2 API (org.codehaus.woodstox:stax2-api:4.2.1 - http://github.com/FasterXML/stax2-api)
+     (Apache Software License - Version 2.0) (Eclipse Public License - Version 1.0) Jetty :: ALPN :: Client (org.eclipse.jetty:jetty-alpn-client:9.4.44.v20210927 - https://eclipse.org/jetty/jetty-alpn-parent/jetty-alpn-client)
+     (Apache Software License - Version 2.0) (Eclipse Public License - Version 1.0) Jetty :: ALPN :: JDK9 Client Implementation (org.eclipse.jetty:jetty-alpn-java-client:9.4.44.v20210927 - https://eclipse.org/jetty/jetty-alpn-parent/jetty-alpn-java-client)
+     (Apache Software License - Version 2.0) (Eclipse Public License - Version 1.0) Jetty :: Asynchronous HTTP Client (org.eclipse.jetty:jetty-client:9.4.44.v20210927 - https://eclipse.org/jetty/jetty-client)
+     (Apache Software License - Version 2.0) (Eclipse Public License - Version 1.0) Jetty :: Http Utility (org.eclipse.jetty:jetty-http:9.4.44.v20210927 - https://eclipse.org/jetty/jetty-http)
+     (Apache Software License - Version 2.0) (Eclipse Public License - Version 1.0) Jetty :: IO Utility (org.eclipse.jetty:jetty-io:9.4.44.v20210927 - https://eclipse.org/jetty/jetty-io)
+     (Apache Software License - Version 2.0) (Eclipse Public License - Version 1.0) Jetty :: Utilities (org.eclipse.jetty:jetty-util:9.4.44.v20210927 - https://eclipse.org/jetty/jetty-util)
+     (Apache Software License - Version 2.0) (Eclipse Public License - Version 1.0) Jetty :: HTTP2 :: Client (org.eclipse.jetty.http2:http2-client:9.4.44.v20210927 - https://eclipse.org/jetty/http2-parent/http2-client)
+     (Apache Software License - Version 2.0) (Eclipse Public License - Version 1.0) Jetty :: HTTP2 :: Common (org.eclipse.jetty.http2:http2-common:9.4.44.v20210927 - https://eclipse.org/jetty/http2-parent/http2-common)
+     (Apache Software License - Version 2.0) (Eclipse Public License - Version 1.0) Jetty :: HTTP2 :: HPACK (org.eclipse.jetty.http2:http2-hpack:9.4.44.v20210927 - https://eclipse.org/jetty/http2-parent/http2-hpack)
+     (Apache Software License - Version 2.0) (Eclipse Public License - Version 1.0) Jetty :: HTTP2 :: HTTP Client Transport (org.eclipse.jetty.http2:http2-http-client-transport:9.4.44.v20210927 - https://eclipse.org/jetty/http2-parent/http2-http-client-transport)
+     (Elastic License 2.0) (Server Side Public License, v 1) server (org.elasticsearch:elasticsearch:7.17.4 - https://github.com/elastic/elasticsearch)
+     (Elastic License 2.0) (Server Side Public License, v 1) elasticsearch-cli (org.elasticsearch:elasticsearch-cli:7.17.4 - https://github.com/elastic/elasticsearch)
+     (Elastic License 2.0) (Server Side Public License, v 1) elasticsearch-core (org.elasticsearch:elasticsearch-core:7.17.4 - https://github.com/elastic/elasticsearch)
+     (Elastic License 2.0) (Server Side Public License, v 1) elasticsearch-geo (org.elasticsearch:elasticsearch-geo:7.17.4 - https://github.com/elastic/elasticsearch)
+     (Elastic License 2.0) (Server Side Public License, v 1) elasticsearch-lz4 (org.elasticsearch:elasticsearch-lz4:7.17.4 - https://github.com/elastic/elasticsearch)
+     (Elastic License 2.0) (Server Side Public License, v 1) elasticsearch-plugin-classloader (org.elasticsearch:elasticsearch-plugin-classloader:7.17.4 - https://github.com/elastic/elasticsearch)
+     (Elastic License 2.0) (Server Side Public License, v 1) elasticsearch-secure-sm (org.elasticsearch:elasticsearch-secure-sm:7.17.4 - https://github.com/elastic/elasticsearch)
+     (Elastic License 2.0) (Server Side Public License, v 1) elasticsearch-x-content (org.elasticsearch:elasticsearch-x-content:7.17.4 - https://github.com/elastic/elasticsearch)
+     (The Apache Software License, Version 2.0) rest (org.elasticsearch.client:elasticsearch-rest-client:7.17.4 - https://github.com/elastic/elasticsearch)
+     (Elastic License 2.0) rest-high-level (org.elasticsearch.client:elasticsearch-rest-high-level-client:7.17.4 - https://github.com/elastic/elasticsearch)
+     (Elastic License 2.0) (Server Side Public License, v 1) aggs-matrix-stats (org.elasticsearch.plugin:aggs-matrix-stats-client:7.17.4 - https://github.com/elastic/elasticsearch)
+     (Elastic License 2.0) (Server Side Public License, v 1) lang-mustache (org.elasticsearch.plugin:lang-mustache-client:7.17.4 - https://github.com/elastic/elasticsearch)
+     (Elastic License 2.0) (Server Side Public License, v 1) mapper-extras (org.elasticsearch.plugin:mapper-extras-client:7.17.4 - https://github.com/elastic/elasticsearch)
+     (Elastic License 2.0) (Server Side Public License, v 1) parent-join (org.elasticsearch.plugin:parent-join-client:7.17.4 - https://github.com/elastic/elasticsearch)
+     (Elastic License 2.0) (Server Side Public License, v 1) rank-eval (org.elasticsearch.plugin:rank-eval-client:7.17.4 - https://github.com/elastic/elasticsearch)
+     (EPL 2.0) (GPL2 w/ CPE) HK2 API module (org.glassfish.hk2:hk2-api:2.6.1 - https://github.com/eclipse-ee4j/glassfish-hk2/hk2-api)
+     (EPL 2.0) (GPL2 w/ CPE) ServiceLocator Default Implementation (org.glassfish.hk2:hk2-locator:2.6.1 - https://github.com/eclipse-ee4j/glassfish-hk2/hk2-locator)
+     (EPL 2.0) (GPL2 w/ CPE) HK2 Implementation Utilities (org.glassfish.hk2:hk2-utils:2.6.1 - https://github.com/eclipse-ee4j/glassfish-hk2/hk2-utils)
+     (EPL 2.0) (GPL2 w/ CPE) OSGi resource locator (org.glassfish.hk2:osgi-resource-locator:1.0.3 - https://projects.eclipse.org/projects/ee4j/osgi-resource-locator)
+     (EPL 2.0) (GPL2 w/ CPE) aopalliance version 1.0 repackaged as a module (org.glassfish.hk2.external:aopalliance-repackaged:2.6.1 - https://github.com/eclipse-ee4j/glassfish-hk2/external/aopalliance-repackaged)
+     (EPL 2.0) (GPL2 w/ CPE) javax.inject:1 as OSGi bundle (org.glassfish.hk2.external:jakarta.inject:2.6.1 - https://github.com/eclipse-ee4j/glassfish-hk2/external/jakarta.inject)
+     (Eclipse Distribution License - v 1.0) JAXB Runtime (org.glassfish.jaxb:jaxb-runtime:2.3.2 - https://javaee.github.io/jaxb-v2/jaxb-runtime-parent/jaxb-runtime/)
+     (Eclipse Distribution License - v 1.0) TXW2 Runtime (org.glassfish.jaxb:txw2:2.3.2 - https://javaee.github.io/jaxb-v2/jaxb-txw-parent/txw2/)
+     (Apache License, 2.0) (BSD 2-Clause) (EDL 1.0) (EPL 2.0) (GPL2 w/ CPE) (MIT license) (Modified BSD) (Public Domain) (W3C license) (jQuery license) jersey-container-servlet-core (org.glassfish.jersey.containers:jersey-container-servlet-core:2.32 - https://projects.eclipse.org/projects/ee4j.jersey/project/jersey-container-servlet-core)
+     (Apache License, 2.0) (BSD 2-Clause) (EDL 1.0) (EPL 2.0) (GPL2 w/ CPE) (MIT license) (Modified BSD) (Public Domain) (W3C license) (jQuery license) jersey-core-client (org.glassfish.jersey.core:jersey-client:2.32 - https://projects.eclipse.org/projects/ee4j.jersey/jersey-client)
+     (Apache License, 2.0) (EPL 2.0) (Public Domain) (The GNU General Public License (GPL), Version 2, With Classpath Exception) jersey-core-common (org.glassfish.jersey.core:jersey-common:2.32 - https://projects.eclipse.org/projects/ee4j.jersey/jersey-common)
+     (Apache License, 2.0) (EPL 2.0) (Modified BSD) (The GNU General Public License (GPL), Version 2, With Classpath Exception) jersey-core-server (org.glassfish.jersey.core:jersey-server:2.32 - https://projects.eclipse.org/projects/ee4j.jersey/jersey-server)
+     (Apache License, 2.0) (BSD 2-Clause) (EDL 1.0) (EPL 2.0) (GPL2 w/ CPE) (MIT license) (Modified BSD) (Public Domain) (W3C license) (jQuery license) jersey-ext-entity-filtering (org.glassfish.jersey.ext:jersey-entity-filtering:2.32 - https://projects.eclipse.org/projects/ee4j.jersey/project/jersey-entity-filtering)
+     (Apache License, 2.0) (BSD 2-Clause) (EDL 1.0) (EPL 2.0) (GPL2 w/ CPE) (MIT license) (Modified BSD) (Public Domain) (W3C license) (jQuery license) jersey-inject-hk2 (org.glassfish.jersey.inject:jersey-hk2:2.32 - https://projects.eclipse.org/projects/ee4j.jersey/project/jersey-hk2)
+     (Apache License, 2.0) (BSD 2-Clause) (EDL 1.0) (EPL 2.0) (GPL2 w/ CPE) (MIT license) (Modified BSD) (Public Domain) (W3C license) (jQuery license) jersey-media-jaxb (org.glassfish.jersey.media:jersey-media-jaxb:2.32 - https://projects.eclipse.org/projects/ee4j.jersey/project/jersey-media-jaxb)
+     (Apache License, 2.0) (EPL 2.0) (The GNU General Public License (GPL), Version 2, With Classpath Exception) jersey-media-json-jackson (org.glassfish.jersey.media:jersey-media-json-jackson:2.32 - https://projects.eclipse.org/projects/ee4j.jersey/project/jersey-media-json-jackson)
+     (Apache License, 2.0) (BSD 2-Clause) (EDL 1.0) (EPL 2.0) (GPL2 w/ CPE) (MIT license) (Modified BSD) (Public Domain) (W3C license) (jQuery license) jersey-media-multipart (org.glassfish.jersey.media:jersey-media-multipart:2.32 - https://projects.eclipse.org/projects/ee4j.jersey/project/jersey-media-multipart)
+     (BSD-2-Clause) (Public Domain, per Creative Commons CC0) HdrHistogram (org.hdrhistogram:HdrHistogram:2.1.11 - http://hdrhistogram.github.io/HdrHistogram/)
+     (Apache License 2.0) (LGPL 2.1) (MPL 1.1) Javassist (org.javassist:javassist:3.25.0-GA - http://www.javassist.org/)
+     (The Apache Software License, Version 2.0) javatuples (org.javatuples:javatuples:1.2 - http://www.javatuples.org)
+     (provided without support or warranty) JSON (JavaScript Object Notation) (org.json:json:20090211 - http://www.json.org/java/index.html)
+     (Eclipse Distribution License - v 1.0) MIME streaming extension (org.jvnet.mimepull:mimepull:1.9.13 - https://github.com/eclipse-ee4j/metro-mimepull)
+     (Eclipse Distribution License - v 1.0) Extended StAX API (org.jvnet.staxex:stax-ex:1.8.1 - https://projects.eclipse.org/projects/ee4j/stax-ex)
+     (The Apache Software License, Version 2.0) LZ4 and xxHash (org.lz4:lz4-java:1.8.0 - https://github.com/lz4/lz4-java)
+     (BSD) asm (org.ow2.asm:asm:7.1 - http://asm.ow2.org/)
+     (BSD) asm-analysis (org.ow2.asm:asm-analysis:7.1 - http://asm.ow2.org/)
+     (BSD) asm-commons (org.ow2.asm:asm-commons:7.1 - http://asm.ow2.org/)
+     (BSD) asm-tree (org.ow2.asm:asm-tree:7.1 - http://asm.ow2.org/)
+     (BSD) asm-util (org.ow2.asm:asm-util:7.1 - http://asm.ow2.org/)
+     (CC0) reactive-streams (org.reactivestreams:reactive-streams:1.0.2 - http://www.reactive-streams.org/)
+     (MIT License) JCL 1.2 implemented over SLF4J (org.slf4j:jcl-over-slf4j:1.7.25 - http://www.slf4j.org)
+     (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.26 - http://www.slf4j.org)
+     (Apache-2.0) snappy-java (org.xerial.snappy:snappy-java:1.1.7.6 - https://github.com/xerial/snappy-java)
+     (The Apache Software License, Version 2.0) SnakeYAML (org.yaml:snakeyaml:1.33 - https://bitbucket.org/snakeyaml/snakeyaml)
+
+ * agpl_v3     : GNU Affero General Public License (AGPL) version 3.0
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+ * apache_v2   : Apache License version 2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+ * bsd_2       : BSD 2-Clause License
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+
+ * bsd_3       : BSD 3-Clause License
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the ${organizationName} nor the names of its contributors
+   may be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+
+ * cddl_v1     : COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0
+
+COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the Common Development and Distrubtion License as
+published by the Sun Microsystems, either version 1.0 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Lesser Public License for more details.
+
+You should have received a copy of the Common Development and Distrubtion
+License along with this program.  If not, see
+<http://www.gnu.org/licenses/gpl-1.0.html>.
+
+
+ * epl_only_v1 : Eclipse Public License - v 1.0
+
+All rights reserved. This program and the accompanying materials
+are made available under the terms of the Eclipse Public License v1.0
+which accompanies this distribution, and is available at
+http://www.eclipse.org/legal/epl-v10.html
+
+
+ * epl_only_v2 : Eclipse Public License - v 2.0
+
+This program and the accompanying materials are made
+available under the terms of the Eclipse Public License 2.0
+which is available at https://www.eclipse.org/legal/epl-2.0/
+
+SPDX-License-Identifier: EPL-2.0
+
+ * epl_v1      : Eclipse Public + Distribution License - v 1.0
+
+This program and the accompanying materials are made available under the terms of the Eclipse Public License v1.0
+and Eclipse Distribution License v. 1.0 which accompanies this distribution.
+The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+and the Eclipse Distribution License is available at
+http://www.eclipse.org/org/documents/edl-v10.php.
+
+ * epl_v2      : Eclipse Public License - v 2.0 with Secondary License
+
+This program and the accompanying materials are made available under the
+terms of the Eclipse Public License 2.0 which is available at
+http://www.eclipse.org/legal/epl-2.0.
+
+This Source Code may also be made available under the following Secondary
+Licenses when the conditions for such availability set forth in the Eclipse
+Public License, v. 2.0 are satisfied: GNU General Public License, version 2
+with the GNU Classpath Exception which is
+available at https://www.gnu.org/software/classpath/license.html.
+
+SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+
+ * eupl_v1_1   : European Union Public License v1.1
+
+Licensed under the EUPL, Version 1.1 or � as soon they will be
+approved by the European Commission - subsequent versions of the
+EUPL (the "Licence");
+
+You may not use this work except in compliance with the Licence.
+You may obtain a copy of the Licence at:
+
+http://ec.europa.eu/idabc/eupl5
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the Licence is distributed on an "AS IS" basis,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the Licence for the specific language governing permissions and
+limitations under the Licence.
+
+
+ * fdl_v1_3    : GNU Free Documentation License (FDL) version 1.3
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Free Documentation License as published by
+the Free Software Foundation, either version 1.3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU Free Documentation License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+ * gpl_v1      : GNU General Public License (GPL) version 1.0
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as
+published by the Free Software Foundation, either version 1 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public
+License along with this program.  If not, see
+<http://www.gnu.org/licenses/gpl-1.0.html>.
+
+
+ * gpl_v2      : GNU General Public License (GPL) version 2.0
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as
+published by the Free Software Foundation, either version 2 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public
+License along with this program.  If not, see
+<http://www.gnu.org/licenses/gpl-2.0.html>.
+
+
+ * gpl_v3      : GNU General Public License (GPL) version 3.0
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public
+License along with this program.  If not, see
+<http://www.gnu.org/licenses/gpl-3.0.html>.
+
+
+ * lgpl_v2_1   : GNU General Lesser Public License (LGPL) version 2.1
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as
+published by the Free Software Foundation, either version 2.1 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Lesser Public License for more details.
+
+You should have received a copy of the GNU General Lesser Public
+License along with this program.  If not, see
+<http://www.gnu.org/licenses/lgpl-2.1.html>.
+
+
+ * lgpl_v3     : GNU General Lesser Public License (LGPL) version 3.0
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Lesser Public License for more details.
+
+You should have received a copy of the GNU General Lesser Public
+License along with this program.  If not, see
+<http://www.gnu.org/licenses/lgpl-3.0.html>.
+
+
+ * mit         : MIT-License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+
+
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.060 s
+[INFO] Finished at: 2023-04-28T10:42:28+02:00
+[INFO] ------------------------------------------------------------------------
+
