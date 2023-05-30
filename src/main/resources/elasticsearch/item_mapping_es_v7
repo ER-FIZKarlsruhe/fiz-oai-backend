@@ -1,4 +1,5 @@
 {
+  "mappings": {
     "properties": {
         "datestamp": {
             "type": "date",
@@ -21,4 +22,5 @@
             "type": "keyword"
         }
     }
+  }
 }
