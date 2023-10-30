@@ -13,7 +13,6 @@ RUN  apt-get update -y && apt-get install -y groovy
 
 RUN groupadd -g $GID -o $UNAME
 RUN useradd -m -u $UID -g $GID -o -s /bin/bash $UNAME
-
 RUN chown -R ${UNAME}:${UNAME} /usr/local/tomcat/
 RUN chmod -R 770 /usr/local/tomcat/
 
