@@ -7,7 +7,7 @@
     
     <project_version>1.2.10</project_version>
     
-    <jersey.version>2.41</jersey.version>
+    <jersey.version>2.32</jersey.version>
     <javax.javaee.version>7.0</javax.javaee.version>
     <junit.version>4.12</junit.version>
     <elasticsearch.version>7.17.14</elasticsearch.version>
