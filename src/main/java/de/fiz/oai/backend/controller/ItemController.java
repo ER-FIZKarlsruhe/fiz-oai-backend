@@ -148,7 +148,10 @@ public class ItemController extends AbstractController {
     LOGGER.info("createItem item: {}", item.toString());
     LOGGER.debug("content: {}", content);
     
-    if (!content.contains(item.getIdentifier())) {
+    Configuration config = Configuration.getInstance();
+    boolean checkItemIdentifierInContent = Boolean.valueOf(config.getProperty("checkItemIdentifierInContent", "true"));
+    
+    if (checkItemIdentifierInContent && !content.contains(item.getIdentifier())) {
       throw new WebApplicationException("Cannot find the identifier in the content!", Status.BAD_REQUEST);
     }
 
@@ -174,7 +177,11 @@ public class ItemController extends AbstractController {
   public Item updateItem(@PathParam("identifier") String identifier, @FormDataParam("content") String content,
       @FormDataParam("item") Item item, @Context HttpServletRequest request, @Context HttpServletResponse response) throws IOException {
 
-    if (!identifier.equals(item.getIdentifier())) {
+    Configuration config = Configuration.getInstance();
+    boolean checkItemIdentifierInContent = Boolean.valueOf(config.getProperty("checkItemIdentifierInContent", "true"));
+
+
+    if (checkItemIdentifierInContent &&!identifier.equals(item.getIdentifier())) {
       throw new WebApplicationException("The identifier in the path and the item json does not match!",
           Status.BAD_REQUEST);
     }
