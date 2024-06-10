@@ -45,7 +45,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>2.23.4</version>
+      <version>2.28.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -194,7 +194,7 @@
     <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>properties-maven-plugin</artifactId>
-        <version>1.1.0</version>
+        <version>1.2.1</version>
         <executions>
           <execution>
             <phase>generate-resources</phase>
@@ -213,7 +213,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.13.0</version>
         <configuration>
           <release>11</release>
         </configuration>
@@ -223,7 +223,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-war-plugin</artifactId>
-        <version>3.2.3</version>
+        <version>3.4.0</version>
         <configuration>
           <filteringDeploymentDescriptors>true</filteringDeploymentDescriptors>
           <attachClasses>true</attachClasses>
@@ -239,7 +239,7 @@
 
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.22.0</version>
+        <version>2.22.2</version>
         <executions>
           <execution>
             <goals>
@@ -277,7 +277,7 @@
       
         <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.1.1</version>
+        <version>3.6.1</version>
         <dependencies>
           <dependency>
             <groupId>org.apache.maven.shared</groupId>
