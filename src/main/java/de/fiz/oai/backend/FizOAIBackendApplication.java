@@ -71,7 +71,7 @@ public class FizOAIBackendApplication extends ResourceConfig {
       this.register(SwaggerSerializers.class);
       BeanConfig config = new BeanConfig();
       config.setTitle("FizOaiBackend REST API");
-      config.setBasePath("/");
+      config.setBasePath("/oai-backend");
       config.setResourcePackage("de.fiz.oai.backend");
       config.setPrettyPrint(true);
       config.setScan(true);
