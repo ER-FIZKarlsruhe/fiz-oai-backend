@@ -48,8 +48,19 @@ import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.service.ItemService;
 import de.fiz.oai.backend.utils.Configuration;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.annotations.Tag;
 
 @Path("/item")
+@Api(value = "/item", tags = {"Item Management"})
+@SwaggerDefinition(tags = {
+    @Tag(name = "Item Management", description = "Operations related to managing items")
+})
 public class ItemController extends AbstractController {
 
   @Context
@@ -60,11 +71,19 @@ public class ItemController extends AbstractController {
 
   private static Logger LOGGER = LoggerFactory.getLogger(ItemController.class);
 
+
   @GET
   @Path("/{identifier}")
   @Produces(MediaType.APPLICATION_JSON)
-  public Item getItem(@PathParam("identifier") String identifier, @QueryParam("format") String format,
-      @QueryParam("content") Boolean content, @Context HttpServletRequest request,
+  @ApiOperation(value = "Get Item by Identifier", notes = "Retrieve an item using its identifier", response = Item.class)
+  @ApiResponses(value = {
+      @ApiResponse(code = 200, message = "Successful retrieval of item", response = Item.class),
+      @ApiResponse(code = 404, message = "Item not found")
+  })
+  public Item getItem(@ApiParam(value = "Identifier of the item", required = true) @PathParam("identifier") String identifier, 
+          @ApiParam(value = "Format of the item", required = false) @QueryParam("format") String format,
+          @ApiParam(value = "Include content in the response", required = false) @QueryParam("content") Boolean content, 
+          @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
     if (content == null) {
@@ -83,9 +102,20 @@ public class ItemController extends AbstractController {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public SearchResult<Item> searchItems(@QueryParam("rows") Integer rows,
-      @QueryParam("set") String set, @QueryParam("format") String format, @QueryParam("from") String from,
-      @QueryParam("until") String until, @QueryParam("content") Boolean content, @QueryParam("searchMark") String searchMark, @Context HttpServletRequest request,
+  @ApiOperation(value = "Search Items", notes = "Search for items based on various parameters", response = SearchResult.class)
+  @ApiResponses(value = {
+      @ApiResponse(code = 200, message = "Successful retrieval of search results", response = SearchResult.class),
+      @ApiResponse(code = 400, message = "Invalid search parameters")
+  })
+  public SearchResult<Item> searchItems(
+      @ApiParam(value = "Number of rows to retrieve", required = false) @QueryParam("rows") Integer rows,
+      @ApiParam(value = "Set to search within", required = false) @QueryParam("set") String set,
+      @ApiParam(value = "Format of the items", required = true) @QueryParam("format") String format,
+      @ApiParam(value = "Start date for search", required = false) @QueryParam("from") String from,
+      @ApiParam(value = "End date for search", required = false) @QueryParam("until") String until,
+      @ApiParam(value = "Include content in the response", required = false) @QueryParam("content") Boolean content,
+      @ApiParam(value = "Search mark for pagination", required = false) @QueryParam("searchMark") String searchMark,
+      @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
     LOGGER.info("rows: {}", rows);
@@ -130,7 +160,14 @@ public class ItemController extends AbstractController {
 
   @DELETE
   @Path("/{identifier}")
-  public void deleteItem(@PathParam("identifier") String identifier, @Context HttpServletRequest request,
+  @ApiOperation(value = "Delete Item by Identifier", notes = "Delete an item using its identifier")
+  @ApiResponses(value = {
+      @ApiResponse(code = 204, message = "Successful deletion of item"),
+      @ApiResponse(code = 400, message = "Invalid identifier")
+  })
+  public void deleteItem(
+      @ApiParam(value = "Identifier of the item", required = true) @PathParam("identifier") String identifier,
+      @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
     if (StringUtils.isBlank(identifier)) {
@@ -143,8 +180,16 @@ public class ItemController extends AbstractController {
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
-  public Item createItem(@FormDataParam("content") String content, @FormDataParam("item") Item item,
-      @Context HttpServletRequest request, @Context HttpServletResponse response) throws IOException {
+  @ApiOperation(value = "Create Item", notes = "Create a new item", response = Item.class)
+  @ApiResponses(value = {
+      @ApiResponse(code = 201, message = "Item successfully created", response = Item.class),
+      @ApiResponse(code = 400, message = "Invalid item data")
+  })
+  public Item createItem(
+      @ApiParam(value = "Content of the item", required = true) @FormDataParam("content") String content,
+      @ApiParam(value = "Item object", required = true) @FormDataParam("item") Item item,
+      @Context HttpServletRequest request,
+      @Context HttpServletResponse response) throws IOException {
     LOGGER.info("createItem item: {}", item.toString());
     LOGGER.debug("content: {}", content);
     
@@ -174,8 +219,17 @@ public class ItemController extends AbstractController {
   @Path("/{identifier}")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
-  public Item updateItem(@PathParam("identifier") String identifier, @FormDataParam("content") String content,
-      @FormDataParam("item") Item item, @Context HttpServletRequest request, @Context HttpServletResponse response) throws IOException {
+  @ApiOperation(value = "Update Item", notes = "Update an existing item", response = Item.class)
+  @ApiResponses(value = {
+      @ApiResponse(code = 200, message = "Item successfully updated", response = Item.class),
+      @ApiResponse(code = 400, message = "Invalid item data")
+  })
+  public Item updateItem(
+      @ApiParam(value = "Identifier of the item", required = true) @PathParam("identifier") String identifier,
+      @ApiParam(value = "Content of the item", required = true) @FormDataParam("content") String content,
+      @ApiParam(value = "Item object", required = true) @FormDataParam("item") Item item,
+      @Context HttpServletRequest request,
+      @Context HttpServletResponse response) throws IOException {
 
     Configuration config = Configuration.getInstance();
     boolean checkItemIdentifierInContent = Boolean.valueOf(config.getProperty("checkItemIdentifierInContent", "true"));

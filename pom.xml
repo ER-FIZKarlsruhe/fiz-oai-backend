@@ -182,6 +182,14 @@
         <artifactId>Saxon-HE</artifactId>
         <version>${saxon.version}</version>
     </dependency>
+    
+    <dependency>
+        <groupId>io.swagger</groupId>
+        <artifactId>swagger-jersey2-jaxrs</artifactId>
+        <version>1.6.5</version>
+    </dependency>
+    
+    
   </dependencies>
 
   <build>
