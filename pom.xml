@@ -4,16 +4,19 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
     <project_version>1.3-SNAPSHOT</project_version>
+
     <jersey.version>2.32</jersey.version>
 
     <javax.javaee.version>7.0</javax.javaee.version>
     <junit.version>4.12</junit.version>
-    <elasticsearch.version>7.17.14</elasticsearch.version>
-    <solr.version>8.11.1</solr.version>
+    <elasticsearch.version>7.17.21</elasticsearch.version>
+    <solr.version>8.11.3</solr.version>
     <saxon.version>10.2</saxon.version>
     <log4j.version>2.17.2</log4j.version>
     <dependencyCheckSuppressionFile>src/test/resources/suppress.xml</dependencyCheckSuppressionFile>
+    <jackson.version>2.17.1</jackson.version>
     
     <!-- Artifacts -->
     <artifacts.snapshots.url>https://dev.fiz-karlsruhe.de/artifactory/libs-snapshot-local</artifacts.snapshots.url>
@@ -29,9 +32,9 @@
 
 
   <parent>
-	<groupId>de.fiz.iee</groupId>
-	<artifactId>common</artifactId>
-	<version>develop-SNAPSHOT</version>
+    <groupId>de.fiz.iee</groupId>
+    <artifactId>common</artifactId>
+    <version>develop-SNAPSHOT</version>
   </parent>
 
   <dependencies>
@@ -44,7 +47,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>2.23.4</version>
+      <version>2.28.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -57,7 +60,7 @@
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-core</artifactId>
-      <version>4.9.0</version>
+      <version>4.17.0</version>
       <exclusions>
         <exclusion>
           <groupId>org.apache.tinkerpop</groupId>
@@ -73,7 +76,7 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.7</version>
+      <version>3.14.0</version>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.containers</groupId>
@@ -145,17 +148,23 @@
         <artifactId>solr-solrj</artifactId>
         <version>${solr.version}</version>
     </dependency>
+    
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>${jackson.version}</version>
+    </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-xml</artifactId>
-      <version>2.10.1</version>
+      <version>${jackson.version}</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-pool2 -->
-	<dependency>
+    <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-pool2</artifactId>
       <version>2.8.0</version>
-	</dependency>
+    </dependency>
 
     <dependency>
        <groupId>org.apache.logging.log4j</groupId>
@@ -193,7 +202,7 @@
     <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>properties-maven-plugin</artifactId>
-        <version>1.1.0</version>
+        <version>1.2.1</version>
         <executions>
           <execution>
             <phase>generate-resources</phase>
@@ -212,7 +221,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.13.0</version>
         <configuration>
           <release>11</release>
         </configuration>
@@ -222,7 +231,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-war-plugin</artifactId>
-        <version>3.2.3</version>
+        <version>3.4.0</version>
         <configuration>
           <filteringDeploymentDescriptors>true</filteringDeploymentDescriptors>
           <attachClasses>true</attachClasses>
@@ -238,7 +247,7 @@
 
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.22.0</version>
+        <version>2.22.2</version>
         <executions>
           <execution>
             <goals>
@@ -276,7 +285,7 @@
       
         <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.1.1</version>
+        <version>3.6.1</version>
         <dependencies>
           <dependency>
             <groupId>org.apache.maven.shared</groupId>
