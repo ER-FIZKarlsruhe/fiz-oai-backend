@@ -43,7 +43,18 @@ import org.slf4j.LoggerFactory;
 import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.service.ContentService;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.annotations.Tag;
+
+
+
 @Path("/content")
+@Api(value = "/content", tags = "ContentController", description = "Controller for managing content")
 public class ContentController extends AbstractController {
 
   @Inject
@@ -54,7 +65,19 @@ public class ContentController extends AbstractController {
   @GET
   @Path("/{identifier}/{format}")
   @Produces(MediaType.APPLICATION_JSON)
-  public Content getContent(@PathParam("identifier") String identifier, @PathParam("format") String format , @Context HttpServletRequest request,
+  @ApiOperation(
+      value = "Get content by identifier and format",
+      response = Content.class
+  )
+  @ApiResponses({
+      @ApiResponse(code = 200, message = "Content retrieved successfully", response = Content.class),
+      @ApiResponse(code = 404, message = "Content not found"),
+      @ApiResponse(code = 400, message = "Bad request")
+  })
+  public Content getContent(
+      @ApiParam(value = "Identifier of the content", required = true) @PathParam("identifier") String identifier,
+      @ApiParam(value = "Format of the content", required = true) @PathParam("format") String format,
+      @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
     if (StringUtils.isBlank(identifier)) {
@@ -77,7 +100,19 @@ public class ContentController extends AbstractController {
   @GET
   @Path("/{identifier}")
   @Produces(MediaType.APPLICATION_JSON)
-  public List<Content> getAllContentFormats(@PathParam("identifier") String identifier, @Context HttpServletRequest request,
+  @ApiOperation(
+      value = "Get all content formats by identifier",
+      response = Content.class,
+      responseContainer = "List"
+  )
+  @ApiResponses({
+      @ApiResponse(code = 200, message = "Content formats retrieved successfully", response = Content.class, responseContainer = "List"),
+      @ApiResponse(code = 404, message = "Content not found"),
+      @ApiResponse(code = 400, message = "Bad request")
+  })
+  public List<Content> getAllContentFormats(
+      @ApiParam(value = "Identifier of the content", required = true) @PathParam("identifier") String identifier,
+      @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
     if (StringUtils.isBlank(identifier)) {
@@ -97,7 +132,17 @@ public class ContentController extends AbstractController {
 
   @DELETE
   @Path("/{identifier}/{format}")
-  public void deleteContent(@PathParam("identifier") String identifier, @PathParam("format") String format , @Context HttpServletRequest request,
+  @ApiOperation(
+      value = "Delete content by identifier and format"
+  )
+  @ApiResponses({
+      @ApiResponse(code = 204, message = "Content deleted successfully"),
+      @ApiResponse(code = 400, message = "Bad request")
+  })
+  public void deleteContent(
+      @ApiParam(value = "Identifier of the content", required = true) @PathParam("identifier") String identifier,
+      @ApiParam(value = "Format of the content", required = true) @PathParam("format") String format,
+      @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
     if (StringUtils.isBlank(identifier)) {
@@ -114,7 +159,17 @@ public class ContentController extends AbstractController {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Content createContent(Content content, @Context HttpServletRequest request,
+  @ApiOperation(
+      value = "Create new content",
+      response = Content.class
+  )
+  @ApiResponses({
+      @ApiResponse(code = 201, message = "Content created successfully", response = Content.class),
+      @ApiResponse(code = 400, message = "Bad request")
+  })
+  public Content createContent(
+      @ApiParam(value = "Content to create", required = true) Content content,
+      @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
 	  LOGGER.info("createContent " + content.toString());
@@ -128,7 +183,17 @@ public class ContentController extends AbstractController {
   @PUT
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Content updateContent(Content content, @Context HttpServletRequest request,
+  @ApiOperation(
+      value = "Update existing content",
+      response = Content.class
+  )
+  @ApiResponses({
+      @ApiResponse(code = 200, message = "Content updated successfully", response = Content.class),
+      @ApiResponse(code = 400, message = "Bad request")
+  })
+  public Content updateContent(
+      @ApiParam(value = "Content to update", required = true) Content content,
+      @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
     validate(content);

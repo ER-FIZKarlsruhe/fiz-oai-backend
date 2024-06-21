@@ -186,7 +186,7 @@
     <dependency>
         <groupId>io.swagger</groupId>
         <artifactId>swagger-jersey2-jaxrs</artifactId>
-        <version>1.6.5</version>
+        <version>1.6.14</version>
     </dependency>
     
     

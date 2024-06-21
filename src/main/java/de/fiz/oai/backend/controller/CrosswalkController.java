@@ -16,6 +16,7 @@
 package de.fiz.oai.backend.controller;
 
 import java.io.IOException;
+
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
@@ -48,7 +49,16 @@ import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.service.CrosswalkService;
 import de.fiz.oai.backend.utils.Configuration;
 
+import de.fiz.oai.backend.utils.Configuration;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+
 @Path("/crosswalk")
+@Api(value = "/crosswalk", tags = "CrosswalkController", description = "Controller for managing crosswalks")
 public class CrosswalkController extends AbstractController {
 
   @Inject
@@ -59,7 +69,18 @@ public class CrosswalkController extends AbstractController {
   @GET
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
-  public Crosswalk getFormat(@PathParam("name") String name, @Context HttpServletRequest request,
+  @ApiOperation(
+      value = "Get crosswalk by name",
+      response = Crosswalk.class
+  )
+  @ApiResponses({
+      @ApiResponse(code = 200, message = "Crosswalk retrieved successfully", response = Crosswalk.class),
+      @ApiResponse(code = 404, message = "Crosswalk not found"),
+      @ApiResponse(code = 400, message = "Bad request")
+  })
+  public Crosswalk getFormat(
+      @ApiParam(value = "Name of the crosswalk", required = true) @PathParam("name") String name,
+      @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
     if (StringUtils.isBlank(name)) {
@@ -77,7 +98,19 @@ public class CrosswalkController extends AbstractController {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public List<Crosswalk> getAllCrosswalks(@Context HttpServletRequest request, @Context HttpServletResponse response) throws IOException {
+  @ApiOperation(
+      value = "Get all crosswalks",
+      response = Crosswalk.class,
+      responseContainer = "List"
+  )
+  @ApiResponses({
+      @ApiResponse(code = 200, message = "Crosswalks retrieved successfully", response = Crosswalk.class, responseContainer = "List"),
+      @ApiResponse(code = 400, message = "Bad request")
+  })
+  public List<Crosswalk> getAllCrosswalks(
+      @Context HttpServletRequest request,
+      @Context HttpServletResponse response) throws IOException {
+      
     List<Crosswalk> crosswalks = crosswalkService.readAll();
 
     return crosswalks;
@@ -85,7 +118,16 @@ public class CrosswalkController extends AbstractController {
 
   @DELETE
   @Path("/{name}")
-  public void deleteCrosswalk(@PathParam("name") String name, @Context HttpServletRequest request,
+  @ApiOperation(
+      value = "Delete crosswalk by name"
+  )
+  @ApiResponses({
+      @ApiResponse(code = 204, message = "Crosswalk deleted successfully"),
+      @ApiResponse(code = 400, message = "Bad request")
+  })
+  public void deleteCrosswalk(
+      @ApiParam(value = "Name of the crosswalk", required = true) @PathParam("name") String name,
+      @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
     if (StringUtils.isBlank(name)) {
@@ -98,7 +140,17 @@ public class CrosswalkController extends AbstractController {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Crosswalk createCrosswalk(Crosswalk crosswalk, @Context HttpServletRequest request,
+  @ApiOperation(
+      value = "Create new crosswalk",
+      response = Crosswalk.class
+  )
+  @ApiResponses({
+      @ApiResponse(code = 201, message = "Crosswalk created successfully", response = Crosswalk.class),
+      @ApiResponse(code = 400, message = "Bad request")
+  })
+  public Crosswalk createCrosswalk(
+      @ApiParam(value = "Crosswalk to create", required = true) Crosswalk crosswalk,
+      @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
     validate(crosswalk);
@@ -110,7 +162,17 @@ public class CrosswalkController extends AbstractController {
   @PUT
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Crosswalk updateCrosswalk(Crosswalk crosswalk, @Context HttpServletRequest request,
+  @ApiOperation(
+      value = "Update existing crosswalk",
+      response = Crosswalk.class
+  )
+  @ApiResponses({
+      @ApiResponse(code = 200, message = "Crosswalk updated successfully", response = Crosswalk.class),
+      @ApiResponse(code = 400, message = "Bad request")
+  })
+  public Crosswalk updateCrosswalk(
+      @ApiParam(value = "Crosswalk to update", required = true) Crosswalk crosswalk,
+      @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
     validate(crosswalk);
@@ -147,7 +209,19 @@ public class CrosswalkController extends AbstractController {
   
   @PUT
   @Path("/{name}/process")
-  public void process(@PathParam("name") String name, @QueryParam("updateItemTimestamp") String updateItemTimestampParam, @QueryParam("from") String from, @QueryParam("until") String until, @Context HttpServletRequest request,
+  @ApiOperation(
+      value = "Process crosswalk by name"
+  )
+  @ApiResponses({
+      @ApiResponse(code = 204, message = "Crosswalk processed successfully"),
+      @ApiResponse(code = 400, message = "Bad request")
+  })
+  public void process(
+      @ApiParam(value = "Name of the crosswalk", required = true) @PathParam("name") String name,
+      @ApiParam(value = "Update item timestamp", required = true) @QueryParam("updateItemTimestamp") String updateItemTimestampParam,
+      @ApiParam(value = "Start date for processing") @QueryParam("from") String from,
+      @ApiParam(value = "End date for processing") @QueryParam("until") String until,
+      @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
     LOGGER.info("name: {}", name);
