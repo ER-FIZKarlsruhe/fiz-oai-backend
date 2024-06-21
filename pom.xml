@@ -66,6 +66,10 @@
           <groupId>org.apache.tinkerpop</groupId>
           <artifactId>gremlin-core</artifactId>
         </exclusion>
+       <exclusion>
+         <groupId>com.esri.geometry</groupId>
+         <artifactId>*</artifactId>
+       </exclusion>
       </exclusions> 
     </dependency>
     <dependency>
