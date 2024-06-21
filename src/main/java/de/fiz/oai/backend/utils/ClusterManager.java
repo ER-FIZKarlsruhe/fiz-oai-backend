@@ -116,7 +116,7 @@ public class ClusterManager {
             
             long requestTimeout = DEFAULT_REQUEST_TIMEOUT;
             try {
-                requestTimeout = Integer.parseInt(config.getProperty("cassandra.requesttimeout", String.valueOf(DEFAULT_REQUEST_TIMEOUT)));
+                requestTimeout = Long.parseLong(config.getProperty("cassandra.requesttimeout", String.valueOf(DEFAULT_REQUEST_TIMEOUT)));
             }
             catch (NumberFormatException e) {
                 LOGGER.warn("Invalid value of property: cassandra.requesttimeout", e);
@@ -136,7 +136,7 @@ public class ClusterManager {
         return configLoader;
     }
     
-    public static ClusterManager getInstance() {
+    public static synchronized ClusterManager getInstance() {
         if (instance == null) {
             instance = new ClusterManager();
         }
@@ -153,8 +153,10 @@ public class ClusterManager {
         }
         CqlSession session = sessions[currentSession];
         if (session == null || session.isClosed()) {
-            session = sessionBuilder.withConfigLoader(getConfigLoader()).build();
-            sessions[currentSession] = session;
+            synchronized (this) {
+                session = sessionBuilder.withConfigLoader(getConfigLoader()).build();
+                sessions[currentSession] = session;
+            }
         }
         return session;
     }
@@ -167,7 +169,11 @@ public class ClusterManager {
             String[] server = split.split(":");
             int port = CASSANDRA_DEFAULT_PORT;
             if (server.length > 1) {
-                port = Integer.parseInt(server[1]);
+                try {
+                    port = Integer.parseInt(server[1]);
+                } catch (NumberFormatException e) {
+                    LOGGER.warn("Invalid port in Cassandra host configuration: {}", split, e);
+                }
             }
             result.add(new InetSocketAddress(server[0], port));
         }
@@ -176,7 +182,7 @@ public class ClusterManager {
 
     public void shutdown() {
         for (CqlSession session : sessions) {
-            if (session != null) {
+            if (session != null && !session.isClosed()) {
                 session.close();
             }
         }
