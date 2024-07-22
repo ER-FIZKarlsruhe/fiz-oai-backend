@@ -14,7 +14,13 @@ import javax.ws.rs.core.Response.Status;
 
 import de.fiz.oai.backend.service.SearchService;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+
 @Path("/reindex")
+@Api(value = "/reindex", tags = "ReindexController", description = "Controller for managing reindex operations")
 public class ReindexController extends AbstractController {
 
   @Inject
@@ -22,6 +28,13 @@ public class ReindexController extends AbstractController {
 
   @POST
   @Path("/stop")
+  @ApiOperation(
+      value = "Stop reindexing process"
+  )
+  @ApiResponses({
+      @ApiResponse(code = 200, message = "Reindexing process stopped successfully"),
+      @ApiResponse(code = 500, message = "Not able to stop reindex process")
+  })
   public void stopReindexAll() {
 
     if (searchService.stopReindexAll(3, 1000)) {
@@ -34,6 +47,13 @@ public class ReindexController extends AbstractController {
   
   @POST
   @Path("/start")
+  @ApiOperation(
+      value = "Start reindexing process"
+  )
+  @ApiResponses({
+      @ApiResponse(code = 200, message = "Reindexing process started successfully"),
+      @ApiResponse(code = 500, message = "Not able to start reindex process, maybe is already started. Please check with /status command.")
+  })
   public void startReindexAll() {
 
       if (searchService.reindexAll()) {
@@ -46,7 +66,14 @@ public class ReindexController extends AbstractController {
   @GET
   @Path("/status")
   @Produces(MediaType.TEXT_PLAIN)
-  public String getStatus(){
+  @ApiOperation(
+      value = "Get reindexing status",
+      response = String.class
+  )
+  @ApiResponses({
+      @ApiResponse(code = 200, message = "Reindexing status retrieved successfully", response = String.class)
+  })
+  public String getStatus() {
 
     return searchService.getReindexStatusVerbose();
     
@@ -54,6 +81,13 @@ public class ReindexController extends AbstractController {
 
   @GET
   @Path("/commit")
+  @ApiOperation(
+      value = "Commit reindexing changes"
+  )
+  @ApiResponses({
+      @ApiResponse(code = 200, message = "Reindexing changes committed successfully"),
+      @ApiResponse(code = 500, message = "Failed to commit reindexing changes")
+  })
   public void commit() throws IOException {
     searchService.commit();
   }

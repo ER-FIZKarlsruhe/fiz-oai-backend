@@ -42,7 +42,16 @@ import org.apache.commons.lang3.StringUtils;
 import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.service.SetService;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+
+
+
 @Path("/set")
+@Api(value = "/set", tags = "SetController", description = "Controller for managing sets")
 public class SetController extends AbstractController {
 
   @Context
@@ -54,7 +63,18 @@ public class SetController extends AbstractController {
   @GET
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
-  public Set getSet(@PathParam("name") String name ,  @Context HttpServletRequest request,
+  @ApiOperation(
+      value = "Get set by name",
+      response = Set.class
+  )
+  @ApiResponses({
+      @ApiResponse(code = 200, message = "Set retrieved successfully", response = Set.class),
+      @ApiResponse(code = 404, message = "Set not found"),
+      @ApiResponse(code = 400, message = "Bad request")
+  })
+  public Set getSet(
+      @ApiParam(value = "Name of the set", required = true) @PathParam("name") String name,
+      @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
     if (name == null || StringUtils.isBlank(name)) {
@@ -72,16 +92,37 @@ public class SetController extends AbstractController {
   
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public List<Set> getAllSets( @Context HttpServletRequest request,
+  @ApiOperation(
+      value = "Get all sets",
+      response = Set.class,
+      responseContainer = "List"
+  )
+  @ApiResponses({
+      @ApiResponse(code = 200, message = "Sets retrieved successfully", response = Set.class, responseContainer = "List"),
+      @ApiResponse(code = 400, message = "Bad request")
+  })
+  public List<Set> getAllSets(
+      @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
+      
     final List<Set> setList = setService.readAll();
     
     return setList;
   }
   
+  
   @DELETE
   @Path("/{name}")
-  public void deleteSet(@PathParam("name") String name, @Context HttpServletRequest request,
+  @ApiOperation(
+      value = "Delete set by name"
+  )
+  @ApiResponses({
+      @ApiResponse(code = 204, message = "Set deleted successfully"),
+      @ApiResponse(code = 400, message = "Bad request")
+  })
+  public void deleteSet(
+      @ApiParam(value = "Name of the set to delete", required = true) @PathParam("name") String name,
+      @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
     if (StringUtils.isBlank(name)) {
@@ -95,7 +136,18 @@ public class SetController extends AbstractController {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Set createSet( Set set, @Context HttpServletRequest request, @Context HttpServletResponse response) throws IOException {
+  @ApiOperation(
+      value = "Create new set",
+      response = Set.class
+  )
+  @ApiResponses({
+      @ApiResponse(code = 201, message = "Set created successfully", response = Set.class),
+      @ApiResponse(code = 400, message = "Bad request")
+  })
+  public Set createSet(
+      @ApiParam(value = "Set to create", required = true) Set set,
+      @Context HttpServletRequest request,
+      @Context HttpServletResponse response) throws IOException {
     
     if (StringUtils.isBlank( set.getName())) {
       throw new WebApplicationException("Set name cannot be empty!", Status.BAD_REQUEST);
@@ -115,12 +167,24 @@ public class SetController extends AbstractController {
     return newSet;
   }
   
+  
   @PUT
   @Path("/{name}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Set updateSet(@PathParam("name") String name, Set set,
-      @Context HttpServletRequest request, @Context HttpServletResponse response) throws IOException {
+  @ApiOperation(
+      value = "Update existing set",
+      response = Set.class
+  )
+  @ApiResponses({
+      @ApiResponse(code = 200, message = "Set updated successfully", response = Set.class),
+      @ApiResponse(code = 400, message = "Bad request")
+  })
+  public Set updateSet(
+      @ApiParam(value = "Name of the set", required = true) @PathParam("name") String name,
+      @ApiParam(value = "Set to update", required = true) Set set,
+      @Context HttpServletRequest request,
+      @Context HttpServletResponse response) throws IOException {
 
     if (StringUtils.isBlank( set.getName())) {
       throw new WebApplicationException("Set name cannot be empty!", Status.BAD_REQUEST);

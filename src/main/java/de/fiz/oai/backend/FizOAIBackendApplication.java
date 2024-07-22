@@ -25,6 +25,9 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import de.fiz.oai.backend.utils.CassandraUtils;
 import de.fiz.oai.backend.utils.ClusterManager;
 import de.fiz.oai.backend.utils.Configuration;
+import io.swagger.jaxrs.config.BeanConfig;
+import io.swagger.jaxrs.listing.ApiListingResource;
+import io.swagger.jaxrs.listing.SwaggerSerializers;
 
 public class FizOAIBackendApplication extends ResourceConfig {
 
@@ -56,7 +59,22 @@ public class FizOAIBackendApplication extends ResourceConfig {
         }
         
         register(MultiPartFeature.class);
-        register(new FizOAIBackendBinder());  
+        register(new FizOAIBackendBinder()); 
+        
+        this.configureSwagger();
+    }
+    
+    
+
+    private void configureSwagger() {
+      this.register(ApiListingResource.class);
+      this.register(SwaggerSerializers.class);
+      BeanConfig config = new BeanConfig();
+      config.setTitle("FizOaiBackend REST API");
+      config.setBasePath("/oai-backend");
+      config.setResourcePackage("de.fiz.oai.backend");
+      config.setPrettyPrint(true);
+      config.setScan(true);
     }
 
     public static FizOAIBackendApplication getInstance() {
