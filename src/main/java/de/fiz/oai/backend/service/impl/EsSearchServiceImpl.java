@@ -90,6 +90,7 @@ public class EsSearchServiceImpl implements SearchService {
   public static String ITEMS_ALIAS_INDEX_NAME = "items";
 
   public static String ITEMS_MAPPING_V7_FILENAME = "/WEB-INF/classes/elasticsearch/item_mapping_es_v7";
+  public static String ITEMS_MAPPING_V7_FILENAME_UPDATE_MAPPING = "/WEB-INF/classes/elasticsearch/item_mapping_es_v7_update_mapping";
   
   private RestHighLevelClient elasticsearchClient = new RestHighLevelClient(
       RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
@@ -446,7 +447,7 @@ public class EsSearchServiceImpl implements SearchService {
     	  return false;
     	}
 
-    	final String filenameItemsMapping = ITEMS_MAPPING_V7_FILENAME;
+    	final String filenameItemsMapping = ITEMS_MAPPING_V7_FILENAME_UPDATE_MAPPING;
     	final String mapping = ResourcesUtils.getResourceFileAsString(filenameItemsMapping, servletContext);
     	if (StringUtils.isBlank(mapping)) {
     	  LOGGER.error("REINDEX status: Not able to retrieve mapping {}", filenameItemsMapping);
