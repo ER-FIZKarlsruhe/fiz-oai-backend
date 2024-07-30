@@ -11,7 +11,7 @@
 
     <javax.javaee.version>7.0</javax.javaee.version>
     <junit.version>4.12</junit.version>
-    <elasticsearch.version>7.17.21</elasticsearch.version>
+    <elasticsearch.version>7.17.14</elasticsearch.version>
     <solr.version>8.11.3</solr.version>
     <saxon.version>10.2</saxon.version>
     <log4j.version>2.17.2</log4j.version>
