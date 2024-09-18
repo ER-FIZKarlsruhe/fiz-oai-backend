@@ -425,6 +425,22 @@ public class ItemControllerIT extends JerseyTest {
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
+  @Test
+  public void testUpdateItemMetadata() throws Exception {
+    Item item = new Item();
+    item.setIdentifier("65465456");
+    item.setDatestamp("1972-05-20T20:33:18.772Z");
+    item.setDeleteFlag(true);
+    item.setTags(List.of("mih"));
+    item.setIngestFormat("radar");
+    String json = "{\"identifier\":\"65465456\",\"deleteFlag\":true,\"tags\":[\"mih\"],\"ingestFormat\":\"radar1\"}";
+
+    when(itemService.updateMetadata(any(Item.class))).thenReturn(item);
+
+    Response response = target("/item/metadata/65465456").request().put(Entity.json(json));
+    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+  }
+
   private SearchResult<Item> getTestSearchResult() {
     List<Item> items = new ArrayList<Item>();
 

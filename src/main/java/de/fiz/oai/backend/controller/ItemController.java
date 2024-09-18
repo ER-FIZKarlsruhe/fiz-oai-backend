@@ -256,4 +256,32 @@ public class ItemController extends AbstractController {
     return updateItem;
   }
 
+  @PUT
+  @Path("/metadata/{identifier}")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @ApiOperation(value = "Update Item Metadata", notes = "Update only Metadata of an existing item", response = Item.class)
+  @ApiResponses(value = {
+          @ApiResponse(code = 200, message = "Item-Metadata successfully updated", response = Item.class),
+          @ApiResponse(code = 400, message = "Invalid item data")
+  })
+  public Item updateItemMetadata(
+          @ApiParam(value = "Identifier of the item", required = true) @PathParam("identifier") String identifier,
+          @ApiParam(value = "Item object", required = true) Item item,
+          @Context HttpServletRequest request,
+          @Context HttpServletResponse response) throws IOException {
+
+    Configuration config = Configuration.getInstance();
+    boolean checkItemIdentifierInContent = Boolean.valueOf(config.getProperty("checkItemIdentifierInContent", "true"));
+
+    if (checkItemIdentifierInContent &&!identifier.equals(item.getIdentifier())) {
+      throw new WebApplicationException("The identifier in the path and the item json does not match!",
+              Status.BAD_REQUEST);
+    }
+
+    Item updateItem = itemService.updateMetadata(item);
+
+    return updateItem;
+  }
+
 }

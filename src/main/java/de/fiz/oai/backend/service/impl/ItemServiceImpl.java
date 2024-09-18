@@ -202,7 +202,37 @@ public class ItemServiceImpl implements ItemService {
     return updateItem;
   }
 
-  @Override
+    @Override
+    public Item updateMetadata(Item item) throws IOException {
+        Item oldItem = read(item.getIdentifier(), null, false);
+
+        if (oldItem == null) {
+            throw new WebApplicationException(Status.NOT_FOUND);
+        }
+
+        //Only change of delete-flag and tags allowed
+        if (item.getIngestFormat() == null) {
+            item.setIngestFormat(oldItem.getIngestFormat());
+        }
+        if (!StringUtils.equals(oldItem.getIngestFormat(), item.getIngestFormat())) {
+            throw new IOException("Not allowed to change fromat of the item");
+        }
+
+        //Keep Date
+        item.setDatestamp(oldItem.getDatestamp());
+
+        //Keep deleteflag if null
+        if (item.isDeleteFlag() == null) {
+            item.setDeleteFlag(oldItem.isDeleteFlag());
+        }
+
+        Item updateItem = daoItem.create(item);
+        searchService.updateDocument(updateItem);
+
+        return updateItem;
+    }
+
+    @Override
   public SearchResult<Item> search(Integer rows, String setName, String format, Date from, Date until,
       Boolean readContent, String searchMark) throws IOException {
     // TODO make this default setting configurable!

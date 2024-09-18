@@ -52,6 +52,15 @@ public interface ItemService {
 
 
   /**
+   * Updates an existing Item-Metadata.
+   *
+   * @param item the item
+   * @return the item updated
+   */
+  Item updateMetadata(Item item) throws IOException;
+
+
+  /**
    * Search for Items.
    *
    * @param rows   the rows
