@@ -18,6 +18,7 @@ package de.fiz.oai.backend.controller;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.servlet.ServletContext;
@@ -254,6 +255,23 @@ public class ItemController extends AbstractController {
     Item updateItem = itemService.update(item);
 
     return updateItem;
+  }
+
+  @PUT
+  @Path("/tags/{identifier}")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @ApiOperation(value = "Update Item Tags", notes = "Update only Tags of an existing item", response = Item.class)
+  @ApiResponses(value = {
+          @ApiResponse(code = 200, message = "Item-Tags successfully updated", response = Item.class),
+          @ApiResponse(code = 400, message = "Invalid data")
+  })
+  public Item updateItemTags(
+          @ApiParam(value = "Identifier of the item", required = true) @PathParam("identifier") String identifier,
+          @ApiParam(value = "List of String with Tags", required = true) List<String> tags,
+          @Context HttpServletRequest request,
+          @Context HttpServletResponse response) throws IOException {
+    return itemService.updateTags(identifier, tags);
   }
 
 }

@@ -29,6 +29,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.HttpHeaders;
@@ -423,6 +424,28 @@ public class ItemControllerIT extends JerseyTest {
     Response response = target("/item/badidentifier").request().put(Entity.entity(form, form.getMediaType()));
 
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testUpdateItemTags() throws Exception {
+    Item item = new Item();
+    item.setIdentifier("65465456");
+    item.setDatestamp("1972-05-20T20:33:18.772Z");
+    item.setDeleteFlag(false);
+    item.setTags(List.of("foo", "bar", "baz"));
+    item.setIngestFormat("radar");
+    when(itemService.updateTags(any(String.class), any(List.class))).thenReturn(item);
+    String json = "[\"mih\"]";
+    Response response = target("/item/tags/65465456").request().put(Entity.json(json));
+    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testUpdateItemMetadataNotExistingIdentifier() throws Exception {
+    when(itemService.updateTags(any(String.class), any(List.class))).thenThrow(new WebApplicationException(Status.NOT_FOUND));
+    String json = "[\"mih\"]";
+    Response response = target("/item/tags/notexisting").request().put(Entity.json(json));
+    assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   private SearchResult<Item> getTestSearchResult() {
