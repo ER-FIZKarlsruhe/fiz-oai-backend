@@ -202,7 +202,24 @@ public class ItemServiceImpl implements ItemService {
     return updateItem;
   }
 
-  @Override
+    @Override
+    public Item updateTags(String identifier, List<String> tags) throws IOException {
+        Item item = read(identifier, null, false);
+
+        if (item == null) {
+            throw new WebApplicationException(Status.NOT_FOUND);
+        }
+
+        item.setTags(tags);
+        Item updateItem = daoItem.create(item);
+
+        addFormatsAndSets(updateItem);
+        searchService.updateDocument(updateItem);
+
+        return updateItem;
+    }
+
+    @Override
   public SearchResult<Item> search(Integer rows, String setName, String format, Date from, Date until,
       Boolean readContent, String searchMark) throws IOException {
     // TODO make this default setting configurable!
