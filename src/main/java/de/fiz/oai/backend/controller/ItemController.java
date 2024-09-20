@@ -18,6 +18,7 @@ package de.fiz.oai.backend.controller;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.servlet.ServletContext;
@@ -257,31 +258,20 @@ public class ItemController extends AbstractController {
   }
 
   @PUT
-  @Path("/metadata/{identifier}")
+  @Path("/tags/{identifier}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  @ApiOperation(value = "Update Item Metadata", notes = "Update only Metadata of an existing item", response = Item.class)
+  @ApiOperation(value = "Update Item Tags", notes = "Update only Tags of an existing item", response = Item.class)
   @ApiResponses(value = {
-          @ApiResponse(code = 200, message = "Item-Metadata successfully updated", response = Item.class),
-          @ApiResponse(code = 400, message = "Invalid item data")
+          @ApiResponse(code = 200, message = "Item-Tags successfully updated", response = Item.class),
+          @ApiResponse(code = 400, message = "Invalid data")
   })
-  public Item updateItemMetadata(
+  public Item updateItemTags(
           @ApiParam(value = "Identifier of the item", required = true) @PathParam("identifier") String identifier,
-          @ApiParam(value = "Item object", required = true) Item item,
+          @ApiParam(value = "List of String with Tags", required = true) List<String> tags,
           @Context HttpServletRequest request,
           @Context HttpServletResponse response) throws IOException {
-
-    Configuration config = Configuration.getInstance();
-    boolean checkItemIdentifierInContent = Boolean.valueOf(config.getProperty("checkItemIdentifierInContent", "true"));
-
-    if (checkItemIdentifierInContent &&!identifier.equals(item.getIdentifier())) {
-      throw new WebApplicationException("The identifier in the path and the item json does not match!",
-              Status.BAD_REQUEST);
-    }
-
-    Item updateItem = itemService.updateMetadata(item);
-
-    return updateItem;
+    return itemService.updateTags(identifier, tags);
   }
 
 }

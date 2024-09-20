@@ -17,6 +17,7 @@ package de.fiz.oai.backend.service;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 
 import org.jvnet.hk2.annotations.Contract;
 
@@ -54,10 +55,11 @@ public interface ItemService {
   /**
    * Updates an existing Item-Metadata.
    *
-   * @param item the item
+   * @param identifier identifier of the item
+   * @param tags List of Tags
    * @return the item updated
    */
-  Item updateMetadata(Item item) throws IOException;
+  Item updateTags(String identifier, List<String> tags) throws IOException;
 
 
   /**
