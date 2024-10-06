@@ -38,5 +38,11 @@
 	   <packageUrl regex="true">^pkg:maven/org\.eclipse\.jetty\.http2/http2.*$</packageUrl>
 	   <cve>CVE-2019-17638</cve>
 	</suppress>
-
+	<suppress>
+	   <notes><![CDATA[
+	   file name: snakeyaml-1.27.jar
+	   ]]></notes>
+	   <packageUrl regex="true">^pkg:maven/org\.yaml/snakeyaml@.*$</packageUrl>
+	   <cve>CVE-2022-1471</cve>
+	</suppress>
 </suppressions>
