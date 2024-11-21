@@ -36,6 +36,7 @@ import javax.ws.rs.core.Context;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
+import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -81,600 +82,636 @@ import de.fiz.oai.backend.utils.ResourcesUtils;
 @Service
 public class EsSearchServiceImpl implements SearchService {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(EsSearchServiceImpl.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(EsSearchServiceImpl.class);
 
-  String elastisearchHost = Configuration.getInstance().getProperty("elasticsearch.host", "localhost");
+    String elastisearchHost = Configuration.getInstance().getProperty("elasticsearch.host", "localhost");
 
-  int elastisearchPort = Integer.parseInt(Configuration.getInstance().getProperty("elasticsearch.port", "8082"));
+    int elastisearchPort = Integer.parseInt(Configuration.getInstance().getProperty("elasticsearch.port", "8082"));
 
-  public static String ITEMS_ALIAS_INDEX_NAME = "items";
+    public static String ITEMS_ALIAS_INDEX_NAME = "items";
 
-  public static String ITEMS_MAPPING_V7_FILENAME = "/WEB-INF/classes/elasticsearch/item_mapping_es_v7";
-  public static String ITEMS_MAPPING_V7_FILENAME_UPDATE_MAPPING = "/WEB-INF/classes/elasticsearch/item_mapping_es_v7_update_mapping";
-  
-  private RestHighLevelClient elasticsearchClient = new RestHighLevelClient(
-      RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
+    public static String ITEMS_MAPPING_V7_FILENAME = "/WEB-INF/classes/elasticsearch/item_mapping_es_v7";
+    public static String ITEMS_MAPPING_V7_FILENAME_UPDATE_MAPPING = "/WEB-INF/classes/elasticsearch/item_mapping_es_v7_update_mapping";
 
-  @Context
-  ServletContext servletContext;
+    private RestHighLevelClient elasticsearchClient = null;
 
-  @Inject
-  Provider<ItemService> itemProvider;
-  
-  @Inject
-  DAOItem daoItem;
+    @Context
+    ServletContext servletContext;
 
-  @Inject
-  DAOContent daoContent;
+    @Inject
+    Provider<ItemService> itemProvider;
 
-  @Inject
-  DAOFormat daoFormat;
+    @Inject
+    DAOItem daoItem;
 
-  @Inject
-  DAOSet daoSet;
+    @Inject
+    DAOContent daoContent;
 
-  private ReindexStatus reindexStatus = null;
+    @Inject
+    DAOFormat daoFormat;
 
-  private CompletableFuture<Boolean> reindexAllFuture;
+    @Inject
+    DAOSet daoSet;
 
-  /**
-   * 
-   * @param item @throws IOException @throws
-   */
-  @Override
-  public Map<String, Object> readDocument(Item item) throws IOException {
-      GetRequest getRequest = new GetRequest(ITEMS_ALIAS_INDEX_NAME, "_doc", item.getIdentifier());
+    private ReindexStatus reindexStatus = null;
 
-      GetResponse getResponse = elasticsearchClient.get(getRequest, RequestOptions.DEFAULT);
-      Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
+    private CompletableFuture<Boolean> reindexAllFuture;
 
-      return sourceAsMap;
-  }
+    /**
+     * @param item @throws IOException @throws
+     */
+    @Override
+    public Map<String, Object> readDocument(Item item) throws IOException {
+        GetRequest getRequest = new GetRequest(ITEMS_ALIAS_INDEX_NAME, "_doc", item.getIdentifier());
 
-  /**
-   * Create new item in index.
-   *
-   * @param item The item to create
-   * @throws IOException
-   */
-  @Override
-  public void createDocument(Item item) throws IOException {
-      indexDocument(item, ITEMS_ALIAS_INDEX_NAME, elasticsearchClient);
-      LOGGER.info("Added item " + item.getIdentifier() + " to search index.");
-  }
+        GetResponse getResponse = getElasticsearchClient().get(getRequest, RequestOptions.DEFAULT);
+        Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
 
-
-
-  
-  private void indexDocument(Item item, String indexName, RestHighLevelClient client) throws IOException {
-      Map<String, Object> itemMap = item.toMap();
-
-	    IndexRequest indexRequest = new IndexRequest();
-	    indexRequest.index(indexName);
-	    indexRequest.type("_doc");
-	    indexRequest.source(itemMap);
-	    indexRequest.id(item.getIdentifier());
-
-	    client.index(indexRequest, RequestOptions.DEFAULT);
-	  }
-  
-  /**
-   * Update item in index.
-   *
-   * @param item The item to update
-   * @throws IOException
-   */
-  @Override
-  public void updateDocument(Item item) throws IOException {
-      Map<String, Object> itemMap = item.toMap();
-
-      UpdateRequest updateRequest = new UpdateRequest();
-      updateRequest.index(ITEMS_ALIAS_INDEX_NAME);
-      updateRequest.type("_doc");
-      updateRequest.id(item.getIdentifier());
-      updateRequest.doc(itemMap);
-
-      elasticsearchClient.update(updateRequest, RequestOptions.DEFAULT);
-      LOGGER.info("Updated item " + item.getIdentifier() + " in search index.");
-  }
-  
-  /**
-   * 
-   * @param item @throws IOException @throws
-   */
-  @Override
-  public void deleteDocument(Item item) throws IOException {
-      DeleteRequest request = new DeleteRequest();
-      request.index(ITEMS_ALIAS_INDEX_NAME);
-      request.type("_doc");
-      request.id(item.getIdentifier());
-
-      elasticsearchClient.delete(request, RequestOptions.DEFAULT);
-  }
-
-  @Override
-  public SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate,
-      String searchMark) throws IOException {
-
-    if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("rows: {}", rows);
-        LOGGER.debug("format: {}", format);
-        LOGGER.debug("searchMark: {}", searchMark);
+        return sourceAsMap;
     }
 
-    try {
-      final BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
+    /**
+     * Create new item in index.
+     *
+     * @param item The item to create
+     * @throws IOException
+     */
+    @Override
+    public void createDocument(Item item) throws IOException {
+        indexDocument(item, ITEMS_ALIAS_INDEX_NAME);
+        LOGGER.info("Added item " + item.getIdentifier() + " to search index.");
+    }
 
-      Date finalFromDate = new SimpleDateFormat("yyyy-MM-dd").parse("0001-01-01");
-      Date finalUntilDate = new SimpleDateFormat("yyyy-MM-dd").parse("9999-12-31");
 
-      if (fromDate != null) {
-        finalFromDate = fromDate;
-      }
-      if (untilDate != null) {
-        finalUntilDate = untilDate;
-      }
+    private void indexDocument(Item item, String indexName) throws IOException {
+        Map<String, Object> itemMap = item.toMap();
 
-      queryBuilder
-          .filter(QueryBuilders.rangeQuery("datestamp").from(Configuration.getDateformat().format(finalFromDate))
-              .to(Configuration.getDateformat().format(finalUntilDate)));
-      queryBuilder.filter(QueryBuilders.termQuery("formats", format));
+        IndexRequest indexRequest = new IndexRequest();
+        indexRequest.index(indexName);
+        indexRequest.type("_doc");
+        indexRequest.source(itemMap);
+        indexRequest.id(item.getIdentifier());
 
-      if (StringUtils.isNotBlank(set)) {
-        queryBuilder.filter(QueryBuilders.termQuery("sets", set));
-      }
+        getElasticsearchClient().index(indexRequest, RequestOptions.DEFAULT);
+    }
 
-      final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+    /**
+     * Update item in index.
+     *
+     * @param item The item to update
+     * @throws IOException
+     */
+    @Override
+    public void updateDocument(Item item) throws IOException {
+        Map<String, Object> itemMap = item.toMap();
 
-      FieldSortBuilder datestampBuilder = SortBuilders.fieldSort("datestamp");
-      FieldSortBuilder identifierBuilder = SortBuilders.fieldSort("identifier");
-      searchSourceBuilder.query(queryBuilder);
-      searchSourceBuilder.sort(datestampBuilder);
-      searchSourceBuilder.sort(identifierBuilder);
-      searchSourceBuilder.size(rows);
-      searchSourceBuilder.fetchSource(false);
-      searchSourceBuilder.trackTotalHits(true);
+        UpdateRequest updateRequest = new UpdateRequest();
+        updateRequest.index(ITEMS_ALIAS_INDEX_NAME);
+        updateRequest.type("_doc");
+        updateRequest.id(item.getIdentifier());
+        updateRequest.doc(itemMap);
 
-      
-      if (StringUtils.isNotBlank(searchMark)) {
-        Item lastItem = daoItem.read(searchMark);
-        
-        //Read the timestamp from the Index!!! Reading the timestamp from the cassandra item can return adifferent value 
-        //and than search_after will not work any more
-        Map<String,Object> itemDoc = readDocument(lastItem);
-        LOGGER.info("itemDoc: " + itemDoc);
-        
-        Long timestamp = null;
-        try {
-          timestamp = Configuration.getDateformat().parse((String)itemDoc.get("datestamp")).getTime();
-        } catch (ParseException e) {
-          LOGGER.warn(e.getMessage());
-        }
-        searchSourceBuilder.searchAfter(new Object[] { timestamp, lastItem.getIdentifier() });
-        searchSourceBuilder.from(0);
-      }
+        getElasticsearchClient().update(updateRequest, RequestOptions.DEFAULT);
+        LOGGER.info("Updated item " + item.getIdentifier() + " in search index.");
+    }
 
-      SearchRequest searchRequest = new SearchRequest(ITEMS_ALIAS_INDEX_NAME);
-      searchRequest.source(searchSourceBuilder);
+    /**
+     * @param item @throws IOException @throws
+     */
+    @Override
+    public void deleteDocument(Item item) throws IOException {
+        DeleteRequest request = new DeleteRequest();
+        request.index(ITEMS_ALIAS_INDEX_NAME);
+        request.type("_doc");
+        request.id(item.getIdentifier());
 
-      LOGGER.debug("searchRequest: {}", searchRequest.toString());
+        getElasticsearchClient().delete(request, RequestOptions.DEFAULT);
+    }
 
-      SearchResponse searchResponse = elasticsearchClient.search(searchRequest, RequestOptions.DEFAULT);
-
-      LOGGER.debug("searchResponse: {}", searchResponse.toString());
-      
-      SearchHits searchHits = searchResponse.getHits();
-      Iterator<SearchHit> iterator = searchHits.iterator();
-      List<String> idsRetrieved = new ArrayList<>();
-
-      while (iterator.hasNext()) {
-        SearchHit searchHit = iterator.next();
-        idsRetrieved.add(searchHit.getId());
-      }
-
-      SearchResult<String> idResult = new SearchResult<>();
-      idResult.setSize(idsRetrieved.size());
-      idResult.setTotal(searchResponse.getHits().getTotalHits().value);
-      idResult.setData(idsRetrieved);
-
-      // Send the searchMark if there are elements after it
-      String newSearchMark = null;
-      if (idsRetrieved.size() > 0) {
-        newSearchMark = idsRetrieved.get(idsRetrieved.size() - 1);
-        idResult.setSearchMark(newSearchMark);
-      }
-      Item newLastItem = null;
-      if (StringUtils.isNotBlank(newSearchMark)) {
-
-        newLastItem = daoItem.read(newSearchMark);
-        LOGGER.info("searchSourceBuilder: {}", searchSourceBuilder);
-        LOGGER.info("searchMark: {}", newSearchMark);
-        LOGGER.info("newLastItem: {}", newLastItem);
-
-        Long timestamp = null;
-        try {
-          timestamp = Configuration.getDateformat().parse(newLastItem.getDatestamp()).getTime();
-        } catch (ParseException e) {
-          e.printStackTrace();
-        }
-        searchSourceBuilder.searchAfter(new Object[] { timestamp, newLastItem.getIdentifier() });
-        searchRequest.source(searchSourceBuilder);
+    @Override
+    public SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate,
+                                       String searchMark) throws IOException {
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("newSearchMark: {}", newSearchMark);
-            LOGGER.debug("searchRequest next elements?: {}", searchRequest.toString());
+            LOGGER.debug("rows: {}", rows);
+            LOGGER.debug("format: {}", format);
+            LOGGER.debug("searchMark: {}", searchMark);
         }
-        searchResponse = elasticsearchClient.search(searchRequest, RequestOptions.DEFAULT);
-        if (searchResponse.getHits().getHits().length == 0) {
-          idResult.setSearchMark(null);
-        }
-      }
 
-      return idResult;
+        try {
+            final BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
 
-    } catch (Exception e) {
-      throw new IOException(e);
-    }
+            Date finalFromDate = new SimpleDateFormat("yyyy-MM-dd").parse("0001-01-01");
+            Date finalUntilDate = new SimpleDateFormat("yyyy-MM-dd").parse("9999-12-31");
 
-  }
-
-  @SuppressWarnings("deprecation")
-  @Override
-  public boolean createIndex(final String indexName, final String mapping) throws IOException {
-    if (StringUtils.isNotBlank(indexName) && StringUtils.isNotBlank(mapping)) {
-        CreateIndexRequest request = new CreateIndexRequest(indexName);
-        CreateIndexResponse createIndexResponse = elasticsearchClient.indices().create(request, RequestOptions.DEFAULT);
-        if (createIndexResponse.isAcknowledged()) {
-          RestClient lowLevelClient = elasticsearchClient.getLowLevelClient();
-
-          Request requestMapping = new Request("PUT", "/" + indexName + "/_mapping");
-          requestMapping.setJsonEntity(mapping);
-          Response responseMapping = lowLevelClient.performRequest(requestMapping);
-          if (responseMapping.getStatusLine().getStatusCode() == HttpStatus.SC_OK
-              || responseMapping.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
-            return true;
-          }
-        }
-    }
-    LOGGER.info("CREATE status: something went wrong, return false");
-    return false;
-  }
-
-  @Override
-  public void dropIndex(final String indexName) throws IOException {
-    if (StringUtils.isNotBlank(indexName)) {
-        DeleteIndexRequest request = new DeleteIndexRequest(indexName);
-        elasticsearchClient.indices().delete(request, RequestOptions.DEFAULT);
-    }
-  }
-  
-  @Override
-  public void commit() throws IOException {
-      RefreshRequest request = new RefreshRequest(ITEMS_ALIAS_INDEX_NAME);
-      elasticsearchClient.indices().refresh(request, RequestOptions.DEFAULT);
-  }
-
-  @Override
-  public boolean stopReindexAll(final int stopAttempts, final int millisecondsAttemptsDelay) {
-    boolean stopped = true;
-
-    // Stop future process if already running
-    if (reindexStatus != null && StringUtils.isBlank(reindexStatus.getEndTime())) {
-      reindexStatus.setStopSignalReceived(true);
-      if (reindexAllFuture != null) {
-        int attempt = 0;
-        while (!reindexAllFuture.isCancelled() && attempt <= stopAttempts) {
-          attempt++;
-          reindexAllFuture.cancel(true);
-          try {
-            Thread.sleep(millisecondsAttemptsDelay);
-            LOGGER.warn("Attempt " + attempt + " of " + stopAttempts + " to stop the current Reindex process...");
-          } catch (InterruptedException e) {
-            stopped = false;
-          }
-        }
-        if (reindexAllFuture.isCancelled()) {
-          reindexStatus = null;
-          stopped = true;
-        }
-      } else {
-        reindexStatus = null;
-        stopped = true;
-      }
-    }
-
-    if (stopped) {
-      LOGGER.info("Current reindex process stopped.");
-    } else {
-      LOGGER.warn("Current reindex process NOT stopped!");
-    }
-
-    return stopped;
-  }
-
-  @Override
-  public boolean reindexAll() {
-    if (reindexStatus != null && StringUtils.isBlank(reindexStatus.getEndTime())) {
-      LOGGER.warn("REINDEX status: Reindex process already started since " + reindexStatus.getStartTime()
-          + ". Cannot continue until it finishes!");
-      return false;
-    }
-
-    ItemService itemService = itemProvider.get();
-
-    reindexStatus = new ReindexStatus();
-
-    reindexStatus.setStopSignalReceived(false);
-
-    reindexStatus.setAliasName(ITEMS_ALIAS_INDEX_NAME);
-    LOGGER.info("REINDEX status: Alias name: {}", reindexStatus.getAliasName());
-
-    reindexAllFuture = CompletableFuture.supplyAsync(() -> {
-
-      try {
-    	
-    	GetIndexRequest requestAllIndices = new GetIndexRequest("*");
-    	GetIndexResponse responseAllIndices = elasticsearchClient.indices().get(requestAllIndices, RequestOptions.DEFAULT);
-    	String[] allIndices = responseAllIndices.getIndices();
-    	
-    	LOGGER.info("REINDEX status: Found " + allIndices.length + " indexes:");
-    	int maximumIndexFound = 0;
-    	for (final String pickedIndex : allIndices) {
-    	  LOGGER.info("REINDEX status: {}", pickedIndex);
-    	  if (pickedIndex.startsWith(ITEMS_ALIAS_INDEX_NAME)) {
-    		final String suffixIndex = pickedIndex.substring(ITEMS_ALIAS_INDEX_NAME.length());
-    		LOGGER.info("REINDEX status: " + pickedIndex + " -> suffix: " + suffixIndex);
-    		if (!StringUtils.isBlank(suffixIndex) && StringUtils.isNumeric(suffixIndex)) {
-    		  int pickedNumIndexFound = Integer.parseInt(suffixIndex);
-    		  if (pickedNumIndexFound > maximumIndexFound) {
-    			maximumIndexFound = pickedNumIndexFound;
-    			reindexStatus.setOriginalIndexName(pickedIndex);
-    		  }
-    		}
-    	  }
-    	}
-
-    	int newIndexVersion = maximumIndexFound + 1;
-    	final StringBuilder newIndexName = new StringBuilder();
-    	newIndexName.append(ITEMS_ALIAS_INDEX_NAME);
-    	newIndexName.append(String.valueOf(newIndexVersion));
-    	reindexStatus.setNewIndexName(newIndexName.toString());
-    	LOGGER.info("REINDEX status: New index name: {}", reindexStatus.getNewIndexName());
-
-    	if (StringUtils.isBlank(reindexStatus.getNewIndexName())) {
-    	  LOGGER.error("Not able to determine index names: original (" + reindexStatus.getOriginalIndexName()
-    	  + ") or new (" + reindexStatus.getNewIndexName() + ")");
-    	  return false;
-    	}
-
-    	final String filenameItemsMapping = ITEMS_MAPPING_V7_FILENAME_UPDATE_MAPPING;
-    	final String mapping = ResourcesUtils.getResourceFileAsString(filenameItemsMapping, servletContext);
-    	if (StringUtils.isBlank(mapping)) {
-    	  LOGGER.error("REINDEX status: Not able to retrieve mapping {}", filenameItemsMapping);
-    	}
-    	
-    	RestClient lowLevelClient = elasticsearchClient.getLowLevelClient();
-    	
-        if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())) {
-        	LOGGER.warn("No previous indices found.");
-        	reindexStatus.setOriginalIndexName(ITEMS_ALIAS_INDEX_NAME + "0");
-        	if (!createIndex(reindexStatus.getOriginalIndexName(), mapping)) {
-                LOGGER.error("REINDEX status: Something went wrong while creating the first index " + reindexStatus.getOriginalIndexName());
-                return false;
+            if (fromDate != null) {
+                finalFromDate = fromDate;
             }
-        	Request requestNewAlias = new Request("POST", "/_aliases");
-            requestNewAlias.setJsonEntity(
-                "{\n" + "    \"actions\" : [\n" + "        { \"add\" : { \"index\" : \"" + reindexStatus.getOriginalIndexName()
-                    + "\", \"alias\" : \"" + ITEMS_ALIAS_INDEX_NAME + "\" } }\n" + "    ]\n" + "}");
-            lowLevelClient.performRequest(requestNewAlias);
+            if (untilDate != null) {
+                finalUntilDate = untilDate;
+            }
+
+            queryBuilder
+                    .filter(QueryBuilders.rangeQuery("datestamp").from(Configuration.getDateformat().format(finalFromDate))
+                            .to(Configuration.getDateformat().format(finalUntilDate)));
+            queryBuilder.filter(QueryBuilders.termQuery("formats", format));
+
+            if (StringUtils.isNotBlank(set)) {
+                queryBuilder.filter(QueryBuilders.termQuery("sets", set));
+            }
+
+            final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
+            FieldSortBuilder datestampBuilder = SortBuilders.fieldSort("datestamp");
+            FieldSortBuilder identifierBuilder = SortBuilders.fieldSort("identifier");
+            searchSourceBuilder.query(queryBuilder);
+            searchSourceBuilder.sort(datestampBuilder);
+            searchSourceBuilder.sort(identifierBuilder);
+            searchSourceBuilder.size(rows);
+            searchSourceBuilder.fetchSource(false);
+            searchSourceBuilder.trackTotalHits(true);
+
+
+            if (StringUtils.isNotBlank(searchMark)) {
+                Item lastItem = daoItem.read(searchMark);
+
+                //Read the timestamp from the Index!!! Reading the timestamp from the cassandra item can return adifferent value
+                //and than search_after will not work any more
+                Map<String, Object> itemDoc = readDocument(lastItem);
+                LOGGER.info("itemDoc: " + itemDoc);
+
+                Long timestamp = null;
+                try {
+                    timestamp = Configuration.getDateformat().parse((String) itemDoc.get("datestamp")).getTime();
+                } catch (ParseException e) {
+                    LOGGER.warn(e.getMessage());
+                }
+                searchSourceBuilder.searchAfter(new Object[]{timestamp, lastItem.getIdentifier()});
+                searchSourceBuilder.from(0);
+            }
+
+            SearchRequest searchRequest = new SearchRequest(ITEMS_ALIAS_INDEX_NAME);
+            searchRequest.source(searchSourceBuilder);
+
+            LOGGER.debug("searchRequest: {}", searchRequest.toString());
+
+            SearchResponse searchResponse = getElasticsearchClient().search(searchRequest, RequestOptions.DEFAULT);
+
+            LOGGER.debug("searchResponse: {}", searchResponse.toString());
+
+            SearchHits searchHits = searchResponse.getHits();
+            Iterator<SearchHit> iterator = searchHits.iterator();
+            List<String> idsRetrieved = new ArrayList<>();
+
+            while (iterator.hasNext()) {
+                SearchHit searchHit = iterator.next();
+                idsRetrieved.add(searchHit.getId());
+            }
+
+            SearchResult<String> idResult = new SearchResult<>();
+            idResult.setSize(idsRetrieved.size());
+            idResult.setTotal(searchResponse.getHits().getTotalHits().value);
+            idResult.setData(idsRetrieved);
+
+            // Send the searchMark if there are elements after it
+            String newSearchMark = null;
+            if (idsRetrieved.size() > 0) {
+                newSearchMark = idsRetrieved.get(idsRetrieved.size() - 1);
+                idResult.setSearchMark(newSearchMark);
+            }
+            Item newLastItem = null;
+            if (StringUtils.isNotBlank(newSearchMark)) {
+
+                newLastItem = daoItem.read(newSearchMark);
+                LOGGER.info("searchSourceBuilder: {}", searchSourceBuilder);
+                LOGGER.info("searchMark: {}", newSearchMark);
+                LOGGER.info("newLastItem: {}", newLastItem);
+
+                Long timestamp = null;
+                try {
+                    timestamp = Configuration.getDateformat().parse(newLastItem.getDatestamp()).getTime();
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                searchSourceBuilder.searchAfter(new Object[]{timestamp, newLastItem.getIdentifier()});
+                searchRequest.source(searchSourceBuilder);
+
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("newSearchMark: {}", newSearchMark);
+                    LOGGER.debug("searchRequest next elements?: {}", searchRequest.toString());
+                }
+                searchResponse = getElasticsearchClient().search(searchRequest, RequestOptions.DEFAULT);
+                if (searchResponse.getHits().getHits().length == 0) {
+                    idResult.setSearchMark(null);
+                }
+            }
+
+            return idResult;
+
+        } catch (Exception e) {
+            throw new IOException(e);
         }
-        
-        if (!createIndex(reindexStatus.getNewIndexName(), mapping)) {
-          LOGGER.error(
-              "REINDEX status: Something went wrong while creating the new index " + reindexStatus.getNewIndexName());
-          return false;
+
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public boolean createIndex(final String indexName, final String mapping) throws IOException {
+        if (StringUtils.isNotBlank(indexName) && StringUtils.isNotBlank(mapping)) {
+            CreateIndexRequest request = new CreateIndexRequest(indexName);
+            CreateIndexResponse createIndexResponse = getElasticsearchClient().indices().create(request, RequestOptions.DEFAULT);
+            if (createIndexResponse.isAcknowledged()) {
+                RestClient lowLevelClient = getElasticsearchClient().getLowLevelClient();
+
+                Request requestMapping = new Request("PUT", "/" + indexName + "/_mapping");
+                requestMapping.setJsonEntity(mapping);
+                Response responseMapping = lowLevelClient.performRequest(requestMapping);
+                if (responseMapping.getStatusLine().getStatusCode() == HttpStatus.SC_OK
+                        || responseMapping.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
+                    return true;
+                }
+            }
         }
+        LOGGER.info("CREATE status: something went wrong, return false");
+        return false;
+    }
 
-        reindexStatus.setTotalCount(daoItem.getCount());
-        reindexStatus.setItemResultSet(daoItem.getAllItemsResultSet());
-        LOGGER.info("REINDEX status: Total Items count: {}", reindexStatus.getTotalCount());
-
-        if (reindexStatus.getTotalCount() < 1) {
-          LOGGER.warn("No items to reindex {}", reindexStatus.getNewIndexName());
-          return false;
+    @Override
+    public void dropIndex(final String indexName) throws IOException {
+        if (StringUtils.isNotBlank(indexName)) {
+            DeleteIndexRequest request = new DeleteIndexRequest(indexName);
+            getElasticsearchClient().indices().delete(request, RequestOptions.DEFAULT);
         }
+    }
 
-        reindexStatus.setIndexedCount(0);
-        LOGGER.info("REINDEX status: Indexed Items count: {}", reindexStatus.getIndexedCount());
+    @Override
+    public void commit() throws IOException {
+        RefreshRequest request = new RefreshRequest(ITEMS_ALIAS_INDEX_NAME);
+        getElasticsearchClient().indices().refresh(request, RequestOptions.DEFAULT);
+    }
 
-        reindexStatus.setStartTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
-        LOGGER.info("REINDEX status: Start Time: {}", reindexStatus.getStartTime());
+    @Override
+    public boolean stopReindexAll(final int stopAttempts, final int millisecondsAttemptsDelay) {
+        boolean stopped = true;
 
-        Item mostRecentItem = null;
-
-        do {
-          List<Item> bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
-
-          for (final Item pickedItem : bufferListItems) {
-            try {
-                LOGGER.debug("Reindex now " + pickedItem.getIdentifier());
-                
-            	itemService.addFormatsAndSets(pickedItem);
-                indexDocument(pickedItem, reindexStatus.getNewIndexName(), elasticsearchClient);
-                reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
-                // Keep the most recent Item
-                if (mostRecentItem == null) {
-                  mostRecentItem = pickedItem;
-                } else {
-                    if (Configuration.getDateformat().parse(mostRecentItem.getDatestamp())
-                        .before(Configuration.getDateformat().parse(pickedItem.getDatestamp()))) {
-                      mostRecentItem = pickedItem;
+        // Stop future process if already running
+        if (reindexStatus != null && StringUtils.isBlank(reindexStatus.getEndTime())) {
+            reindexStatus.setStopSignalReceived(true);
+            if (reindexAllFuture != null) {
+                int attempt = 0;
+                while (!reindexAllFuture.isCancelled() && attempt <= stopAttempts) {
+                    attempt++;
+                    reindexAllFuture.cancel(true);
+                    try {
+                        Thread.sleep(millisecondsAttemptsDelay);
+                        LOGGER.warn("Attempt " + attempt + " of " + stopAttempts + " to stop the current Reindex process...");
+                    } catch (InterruptedException e) {
+                        stopped = false;
                     }
                 }
-            } catch (Exception e) {
-                // leave mostRecentItem as it is
-                  LOGGER.error("Reindex fails for " + pickedItem.getIdentifier() , e);
+                if (reindexAllFuture.isCancelled()) {
+                    reindexStatus = null;
+                    stopped = true;
+                }
+            } else {
+                reindexStatus = null;
+                stopped = true;
             }
-          }
+        }
 
-          LOGGER.info("REINDEX status: " + reindexStatus.getIndexedCount() + " indexed out of "
-              + reindexStatus.getTotalCount() + ".");
-        } while (reindexStatus.getIndexedCount() < reindexStatus.getTotalCount()
-            && !reindexStatus.isStopSignalReceived());
-
-        // If in the meanwhile some new object has been inserted, reindex the new Items
-        if (!reindexStatus.isStopSignalReceived()) {
-
-          // Switch alias from old index to new one
-          LOGGER.info("REINDEX status: Remove all old aliases of {}", ITEMS_ALIAS_INDEX_NAME);
-          for (final String pickedIndex : allIndices) {
-            Request requestDeleteOldAlias = new Request("POST", "/_aliases");
-            requestDeleteOldAlias
-                .setJsonEntity("{\n" + "    \"actions\" : [\n" + "        { \"remove\" : { \"index\" : \"" + pickedIndex
-                    + "\", \"alias\" : \"" + ITEMS_ALIAS_INDEX_NAME + "\" } }\n" + "    ]\n" + "}");
-            LOGGER.info("REINDEX status: execute remove alias " + ITEMS_ALIAS_INDEX_NAME + " to " + pickedIndex);
-            try {
-              Response responseDeleteOldAlias = lowLevelClient.performRequest(requestDeleteOldAlias);
-              LOGGER.info("REINDEX status: responseDeleteOldAlias.getStatusLine().getStatusCode()"
-                  + responseDeleteOldAlias.getStatusLine().getStatusCode());
-            } catch (Exception e) {
-              if (e instanceof ResponseException
-                  && ((ResponseException) e).getResponse().getStatusLine().getStatusCode() == 404) {
-                LOGGER.info(
-                    "REINDEX status: alias " + ITEMS_ALIAS_INDEX_NAME + " to " + pickedIndex + " not found to delete.");
-              } else {
-                LOGGER.error("REINDEX status: something went wrong while deleting alias " + ITEMS_ALIAS_INDEX_NAME
-                    + " to " + pickedIndex, e);
-              }
-            }
-          }
-
-          LOGGER.info("REINDEX status: Add new alias " + ITEMS_ALIAS_INDEX_NAME + " to index "
-              + reindexStatus.getNewIndexName());
-          Request requestNewAlias = new Request("POST", "/_aliases");
-          requestNewAlias.setJsonEntity(
-              "{\n" + "    \"actions\" : [\n" + "        { \"add\" : { \"index\" : \"" + reindexStatus.getNewIndexName()
-                  + "\", \"alias\" : \"" + ITEMS_ALIAS_INDEX_NAME + "\" } }\n" + "    ]\n" + "}");
-          LOGGER.info("REINDEX status: execute new alias");
-          Response responseNewAlias = lowLevelClient.performRequest(requestNewAlias);
-          LOGGER.info("REINDEX status: responseNewAlias.getStatusLine().getStatusCode()"
-              + responseNewAlias.getStatusLine().getStatusCode());
-
-          if (responseNewAlias.getStatusLine().getStatusCode() < 300) {
-            // Delete old index
-            dropIndex(reindexStatus.getOriginalIndexName());
-          }
+        if (stopped) {
+            LOGGER.info("Current reindex process stopped.");
         } else {
-          // Stop signal received, log all the informations
-          LOGGER.warn("REINDEX status: stop signal received. Current reindex status so far:");
-          LOGGER.warn("REINDEX status: Alias: {}", reindexStatus.getAliasName());
-          LOGGER.warn("REINDEX status: New index (to drop): {}", reindexStatus.getNewIndexName());
-          LOGGER.warn("REINDEX status: Previous index: {}", reindexStatus.getOriginalIndexName());
-          LOGGER.warn("REINDEX status: Count total: {}", reindexStatus.getTotalCount());
-          LOGGER.warn("REINDEX status: Count indexed: {}", reindexStatus.getIndexedCount());
-          LOGGER.warn("REINDEX status: Start time: {}", reindexStatus.getStartTime());
-          dropIndex(reindexStatus.getNewIndexName());
+            LOGGER.warn("Current reindex process NOT stopped!");
         }
 
-      } catch (IOException e) {
-        LOGGER.error(
-            "REINDEX status: Something went wrong while processing the new index " + reindexStatus.getNewIndexName(),
-            e);
-        return false;
-      } finally {
-        reindexStatus.setEndTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
-        LOGGER.info("REINDEX status: End Time: {}", reindexStatus.getEndTime());
-      }
-      return true;
-
-    });
-
-    return true;
-  }
-
-  @Override
-  public String getReindexStatusVerbose() {
-    StringBuilder statusString = new StringBuilder();
-    if (reindexStatus == null) {
-      statusString.append("Reindex process not started.");
-    } else {
-      statusString.append("Reindex process STARTED on ");
-      statusString.append(reindexStatus.getStartTime());
-      if (!StringUtils.isBlank(reindexStatus.getEndTime())) {
-        statusString.append(" and FINISHED on ");
-        statusString.append(reindexStatus.getEndTime());
-
-      }
-      statusString.append(".\n");
-      statusString.append("Alias ");
-      statusString.append(reindexStatus.getAliasName());
-      statusString.append(" -> last index created ");
-      statusString.append(reindexStatus.getNewIndexName());
-      statusString.append(".\n");
-      statusString.append("Previous index ");
-      statusString.append(reindexStatus.getOriginalIndexName());
-      statusString.append(".\n");
-      statusString.append("Reindexed elements ");
-      statusString.append(reindexStatus.getIndexedCount());
-      statusString.append(" out of ");
-      statusString.append(reindexStatus.getTotalCount());
-      statusString.append(".\n");
-
-      double percProgress = 0;
-      if (reindexStatus.getIndexedCount() > 0 && reindexStatus.getTotalCount() > 0) {
-        percProgress = ((double) reindexStatus.getIndexedCount() / reindexStatus.getTotalCount()) * 100;
-      }
-
-      long hours = 0;
-      long minutesOfHours = 0;
-      int secondsOfMinutes = 0;
-      long totalSecondsSoFar = 0;
-      ZonedDateTime startZDT = null;
-      if (StringUtils.isNotBlank(reindexStatus.getStartTime())) {
-        startZDT = ZonedDateTime.parse(reindexStatus.getStartTime());
-      }
-
-      Duration timeLapsed = null;
-      if (startZDT != null) {
-        timeLapsed = Duration.between(startZDT,
-            StringUtils.isBlank(reindexStatus.getEndTime()) ? ZonedDateTime.now(ZoneOffset.UTC)
-                : ZonedDateTime.parse(reindexStatus.getEndTime()));
-        hours = timeLapsed.toHours();
-        minutesOfHours = timeLapsed.toMinutesPart();
-        secondsOfMinutes = timeLapsed.toSecondsPart();
-        totalSecondsSoFar = timeLapsed.toSeconds();
-      }
-
-      statusString.append("Progress: ");
-      statusString.append(String.format("%.2f", percProgress));
-      statusString.append(" % in ");
-      statusString.append(hours);
-      statusString.append(":");
-      statusString.append(String.format("%02d", minutesOfHours));
-      statusString.append(":");
-      statusString.append(String.format("%02d", secondsOfMinutes));
-      statusString.append(".\n");
-
-      String eta = "";
-      if (StringUtils.isBlank(reindexStatus.getEndTime()) && percProgress > 0 && totalSecondsSoFar > 0
-          && startZDT != null) {
-        final double estimatedTotalSeconds = ((double) totalSecondsSoFar / percProgress) * 100;
-        final ZonedDateTime etaZDT = startZDT.plusSeconds((long) estimatedTotalSeconds)
-            .withZoneSameInstant(ZoneOffset.UTC);
-        if (etaZDT != null) {
-          eta = etaZDT.toString();
-        }
-      }
-
-      statusString.append("ETA: ");
-      statusString.append(eta);
-      statusString.append(".\n");
-      statusString.append("Stop signal sent: ");
-      statusString.append(reindexStatus.isStopSignalReceived());
-      statusString.append(".\n");
+        return stopped;
     }
 
-    return statusString.toString();
-  }
+    @Override
+    public boolean reindexAll() {
+        if (reindexStatus != null && StringUtils.isBlank(reindexStatus.getEndTime())) {
+            LOGGER.warn("REINDEX status: Reindex process already started since " + reindexStatus.getStartTime()
+                    + ". Cannot continue until it finishes!");
+            return false;
+        }
+
+        ItemService itemService = itemProvider.get();
+
+        reindexStatus = new ReindexStatus();
+
+        reindexStatus.setStopSignalReceived(false);
+
+        reindexStatus.setAliasName(ITEMS_ALIAS_INDEX_NAME);
+        LOGGER.info("REINDEX status: Alias name: {}", reindexStatus.getAliasName());
+
+        reindexAllFuture = CompletableFuture.supplyAsync(() -> {
+
+            try {
+
+                GetIndexRequest requestAllIndices = new GetIndexRequest("*");
+                GetIndexResponse responseAllIndices = getElasticsearchClient().indices().get(requestAllIndices, RequestOptions.DEFAULT);
+                String[] allIndices = responseAllIndices.getIndices();
+
+                LOGGER.info("REINDEX status: Found " + allIndices.length + " indexes:");
+                int maximumIndexFound = 0;
+                for (final String pickedIndex : allIndices) {
+                    LOGGER.info("REINDEX status: {}", pickedIndex);
+                    if (pickedIndex.startsWith(ITEMS_ALIAS_INDEX_NAME)) {
+                        final String suffixIndex = pickedIndex.substring(ITEMS_ALIAS_INDEX_NAME.length());
+                        LOGGER.info("REINDEX status: " + pickedIndex + " -> suffix: " + suffixIndex);
+                        if (!StringUtils.isBlank(suffixIndex) && StringUtils.isNumeric(suffixIndex)) {
+                            int pickedNumIndexFound = Integer.parseInt(suffixIndex);
+                            if (pickedNumIndexFound > maximumIndexFound) {
+                                maximumIndexFound = pickedNumIndexFound;
+                                reindexStatus.setOriginalIndexName(pickedIndex);
+                            }
+                        }
+                    }
+                }
+
+                int newIndexVersion = maximumIndexFound + 1;
+                final StringBuilder newIndexName = new StringBuilder();
+                newIndexName.append(ITEMS_ALIAS_INDEX_NAME);
+                newIndexName.append(String.valueOf(newIndexVersion));
+                reindexStatus.setNewIndexName(newIndexName.toString());
+                LOGGER.info("REINDEX status: New index name: {}", reindexStatus.getNewIndexName());
+
+                if (StringUtils.isBlank(reindexStatus.getNewIndexName())) {
+                    LOGGER.error("Not able to determine index names: original (" + reindexStatus.getOriginalIndexName()
+                            + ") or new (" + reindexStatus.getNewIndexName() + ")");
+                    return false;
+                }
+
+                final String filenameItemsMapping = ITEMS_MAPPING_V7_FILENAME_UPDATE_MAPPING;
+                final String mapping = ResourcesUtils.getResourceFileAsString(filenameItemsMapping, servletContext);
+                if (StringUtils.isBlank(mapping)) {
+                    LOGGER.error("REINDEX status: Not able to retrieve mapping {}", filenameItemsMapping);
+                }
+
+                RestClient lowLevelClient = getElasticsearchClient().getLowLevelClient();
+
+                if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())) {
+                    LOGGER.warn("No previous indices found.");
+                    reindexStatus.setOriginalIndexName(ITEMS_ALIAS_INDEX_NAME + "0");
+                    if (!createIndex(reindexStatus.getOriginalIndexName(), mapping)) {
+                        LOGGER.error("REINDEX status: Something went wrong while creating the first index " + reindexStatus.getOriginalIndexName());
+                        return false;
+                    }
+                    Request requestNewAlias = new Request("POST", "/_aliases");
+                    requestNewAlias.setJsonEntity(
+                            "{\n" + "    \"actions\" : [\n" + "        { \"add\" : { \"index\" : \"" + reindexStatus.getOriginalIndexName()
+                                    + "\", \"alias\" : \"" + ITEMS_ALIAS_INDEX_NAME + "\" } }\n" + "    ]\n" + "}");
+                    lowLevelClient.performRequest(requestNewAlias);
+                }
+
+                if (!createIndex(reindexStatus.getNewIndexName(), mapping)) {
+                    LOGGER.error(
+                            "REINDEX status: Something went wrong while creating the new index " + reindexStatus.getNewIndexName());
+                    return false;
+                }
+
+                reindexStatus.setTotalCount(daoItem.getCount());
+                reindexStatus.setItemResultSet(daoItem.getAllItemsResultSet());
+                LOGGER.info("REINDEX status: Total Items count: {}", reindexStatus.getTotalCount());
+
+                if (reindexStatus.getTotalCount() < 1) {
+                    LOGGER.warn("No items to reindex {}", reindexStatus.getNewIndexName());
+                    return false;
+                }
+
+                reindexStatus.setIndexedCount(0);
+                LOGGER.info("REINDEX status: Indexed Items count: {}", reindexStatus.getIndexedCount());
+
+                reindexStatus.setStartTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
+                LOGGER.info("REINDEX status: Start Time: {}", reindexStatus.getStartTime());
+
+                Item mostRecentItem = null;
+
+                do {
+                    List<Item> bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
+
+                    for (final Item pickedItem : bufferListItems) {
+                        try {
+                            LOGGER.debug("Reindex now " + pickedItem.getIdentifier());
+
+                            itemService.addFormatsAndSets(pickedItem);
+                            indexDocument(pickedItem, reindexStatus.getNewIndexName());
+                            reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
+                            // Keep the most recent Item
+                            if (mostRecentItem == null) {
+                                mostRecentItem = pickedItem;
+                            } else {
+                                if (Configuration.getDateformat().parse(mostRecentItem.getDatestamp())
+                                        .before(Configuration.getDateformat().parse(pickedItem.getDatestamp()))) {
+                                    mostRecentItem = pickedItem;
+                                }
+                            }
+                        } catch (Exception e) {
+                            // leave mostRecentItem as it is
+                            LOGGER.error("Reindex fails for " + pickedItem.getIdentifier(), e);
+                        }
+                    }
+
+                    LOGGER.info("REINDEX status: " + reindexStatus.getIndexedCount() + " indexed out of "
+                            + reindexStatus.getTotalCount() + ".");
+                } while (reindexStatus.getIndexedCount() < reindexStatus.getTotalCount()
+                        && !reindexStatus.isStopSignalReceived());
+
+                // If in the meanwhile some new object has been inserted, reindex the new Items
+                if (!reindexStatus.isStopSignalReceived()) {
+
+                    // Switch alias from old index to new one
+                    LOGGER.info("REINDEX status: Remove all old aliases of {}", ITEMS_ALIAS_INDEX_NAME);
+                    for (final String pickedIndex : allIndices) {
+                        Request requestDeleteOldAlias = new Request("POST", "/_aliases");
+                        requestDeleteOldAlias
+                                .setJsonEntity("{\n" + "    \"actions\" : [\n" + "        { \"remove\" : { \"index\" : \"" + pickedIndex
+                                        + "\", \"alias\" : \"" + ITEMS_ALIAS_INDEX_NAME + "\" } }\n" + "    ]\n" + "}");
+                        LOGGER.info("REINDEX status: execute remove alias " + ITEMS_ALIAS_INDEX_NAME + " to " + pickedIndex);
+                        try {
+                            Response responseDeleteOldAlias = lowLevelClient.performRequest(requestDeleteOldAlias);
+                            LOGGER.info("REINDEX status: responseDeleteOldAlias.getStatusLine().getStatusCode()"
+                                    + responseDeleteOldAlias.getStatusLine().getStatusCode());
+                        } catch (Exception e) {
+                            if (e instanceof ResponseException
+                                    && ((ResponseException) e).getResponse().getStatusLine().getStatusCode() == 404) {
+                                LOGGER.info(
+                                        "REINDEX status: alias " + ITEMS_ALIAS_INDEX_NAME + " to " + pickedIndex + " not found to delete.");
+                            } else {
+                                LOGGER.error("REINDEX status: something went wrong while deleting alias " + ITEMS_ALIAS_INDEX_NAME
+                                        + " to " + pickedIndex, e);
+                            }
+                        }
+                    }
+
+                    LOGGER.info("REINDEX status: Add new alias " + ITEMS_ALIAS_INDEX_NAME + " to index "
+                            + reindexStatus.getNewIndexName());
+                    Request requestNewAlias = new Request("POST", "/_aliases");
+                    requestNewAlias.setJsonEntity(
+                            "{\n" + "    \"actions\" : [\n" + "        { \"add\" : { \"index\" : \"" + reindexStatus.getNewIndexName()
+                                    + "\", \"alias\" : \"" + ITEMS_ALIAS_INDEX_NAME + "\" } }\n" + "    ]\n" + "}");
+                    LOGGER.info("REINDEX status: execute new alias");
+                    Response responseNewAlias = lowLevelClient.performRequest(requestNewAlias);
+                    LOGGER.info("REINDEX status: responseNewAlias.getStatusLine().getStatusCode()"
+                            + responseNewAlias.getStatusLine().getStatusCode());
+
+                    if (responseNewAlias.getStatusLine().getStatusCode() < 300) {
+                        // Delete old index
+                        dropIndex(reindexStatus.getOriginalIndexName());
+                    }
+                } else {
+                    // Stop signal received, log all the informations
+                    LOGGER.warn("REINDEX status: stop signal received. Current reindex status so far:");
+                    LOGGER.warn("REINDEX status: Alias: {}", reindexStatus.getAliasName());
+                    LOGGER.warn("REINDEX status: New index (to drop): {}", reindexStatus.getNewIndexName());
+                    LOGGER.warn("REINDEX status: Previous index: {}", reindexStatus.getOriginalIndexName());
+                    LOGGER.warn("REINDEX status: Count total: {}", reindexStatus.getTotalCount());
+                    LOGGER.warn("REINDEX status: Count indexed: {}", reindexStatus.getIndexedCount());
+                    LOGGER.warn("REINDEX status: Start time: {}", reindexStatus.getStartTime());
+                    dropIndex(reindexStatus.getNewIndexName());
+                }
+
+            } catch (IOException e) {
+                LOGGER.error(
+                        "REINDEX status: Something went wrong while processing the new index " + reindexStatus.getNewIndexName(),
+                        e);
+                return false;
+            } finally {
+                reindexStatus.setEndTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
+                LOGGER.info("REINDEX status: End Time: {}", reindexStatus.getEndTime());
+            }
+            return true;
+
+        });
+
+        return true;
+    }
+
+    @Override
+    public String getReindexStatusVerbose() {
+        StringBuilder statusString = new StringBuilder();
+        if (reindexStatus == null) {
+            statusString.append("Reindex process not started.");
+        } else {
+            statusString.append("Reindex process STARTED on ");
+            statusString.append(reindexStatus.getStartTime());
+            if (!StringUtils.isBlank(reindexStatus.getEndTime())) {
+                statusString.append(" and FINISHED on ");
+                statusString.append(reindexStatus.getEndTime());
+
+            }
+            statusString.append(".\n");
+            statusString.append("Alias ");
+            statusString.append(reindexStatus.getAliasName());
+            statusString.append(" -> last index created ");
+            statusString.append(reindexStatus.getNewIndexName());
+            statusString.append(".\n");
+            statusString.append("Previous index ");
+            statusString.append(reindexStatus.getOriginalIndexName());
+            statusString.append(".\n");
+            statusString.append("Reindexed elements ");
+            statusString.append(reindexStatus.getIndexedCount());
+            statusString.append(" out of ");
+            statusString.append(reindexStatus.getTotalCount());
+            statusString.append(".\n");
+
+            double percProgress = 0;
+            if (reindexStatus.getIndexedCount() > 0 && reindexStatus.getTotalCount() > 0) {
+                percProgress = ((double) reindexStatus.getIndexedCount() / reindexStatus.getTotalCount()) * 100;
+            }
+
+            long hours = 0;
+            long minutesOfHours = 0;
+            int secondsOfMinutes = 0;
+            long totalSecondsSoFar = 0;
+            ZonedDateTime startZDT = null;
+            if (StringUtils.isNotBlank(reindexStatus.getStartTime())) {
+                startZDT = ZonedDateTime.parse(reindexStatus.getStartTime());
+            }
+
+            Duration timeLapsed = null;
+            if (startZDT != null) {
+                timeLapsed = Duration.between(startZDT,
+                        StringUtils.isBlank(reindexStatus.getEndTime()) ? ZonedDateTime.now(ZoneOffset.UTC)
+                                : ZonedDateTime.parse(reindexStatus.getEndTime()));
+                hours = timeLapsed.toHours();
+                minutesOfHours = timeLapsed.toMinutesPart();
+                secondsOfMinutes = timeLapsed.toSecondsPart();
+                totalSecondsSoFar = timeLapsed.toSeconds();
+            }
+
+            statusString.append("Progress: ");
+            statusString.append(String.format("%.2f", percProgress));
+            statusString.append(" % in ");
+            statusString.append(hours);
+            statusString.append(":");
+            statusString.append(String.format("%02d", minutesOfHours));
+            statusString.append(":");
+            statusString.append(String.format("%02d", secondsOfMinutes));
+            statusString.append(".\n");
+
+            String eta = "";
+            if (StringUtils.isBlank(reindexStatus.getEndTime()) && percProgress > 0 && totalSecondsSoFar > 0
+                    && startZDT != null) {
+                final double estimatedTotalSeconds = ((double) totalSecondsSoFar / percProgress) * 100;
+                final ZonedDateTime etaZDT = startZDT.plusSeconds((long) estimatedTotalSeconds)
+                        .withZoneSameInstant(ZoneOffset.UTC);
+                if (etaZDT != null) {
+                    eta = etaZDT.toString();
+                }
+            }
+
+            statusString.append("ETA: ");
+            statusString.append(eta);
+            statusString.append(".\n");
+            statusString.append("Stop signal sent: ");
+            statusString.append(reindexStatus.isStopSignalReceived());
+            statusString.append(".\n");
+        }
+
+        return statusString.toString();
+    }
+
+    /**
+     * Check elasticsearchClient synchronized and return it.
+     *
+     * @return RestHighLevelClient
+     * @throws IOException
+     */
+    private synchronized RestHighLevelClient getElasticsearchClient() throws IOException {
+        if (elasticsearchClient == null) {
+            elasticsearchClient = new RestHighLevelClient(
+                    RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http"))
+                            .setHttpClientConfigCallback(httpClientBuilder
+                                    -> httpClientBuilder.setDefaultIOReactorConfig(IOReactorConfig.custom().setSoKeepAlive(true).build())));
+
+//            final ConnectionKeepAliveStrategy myStrategy = new ConnectionKeepAliveStrategy() {
+//                @Override
+//                public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
+//                    Args.notNull(response, "HTTP response");
+//                    Header[] keepAliveHeaders = response.getHeaders("Keep-Alive");
+//                    if (keepAliveHeaders != null) {
+//                        for (Header header : keepAliveHeaders) {
+//                            if (header.getName().equalsIgnoreCase("timeout") && header.getValue() != null) {
+//                                try {
+//                                    return Long.parseLong(header.getValue());
+//                                } catch (final NumberFormatException ignore) {
+//                                }
+//                            }
+//                        }
+//                    }
+//                    return 5000;
+//                }
+//            };
+//            elasticsearchClient = new RestHighLevelClient(
+//                    RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http"))
+//                            .setHttpClientConfigCallback(httpClientBuilder
+//                                    -> httpClientBuilder.setKeepAliveStrategy(myStrategy)));
+
+        }
+
+        return elasticsearchClient;
+    }
 
 }
