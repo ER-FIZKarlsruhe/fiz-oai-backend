@@ -19,12 +19,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -260,14 +256,22 @@ public class ItemServiceImpl implements ItemService {
         throw new NotFoundException("Item with id " + identifier + " was not found");
     }
 
-    itemToDelete.setDeleteFlag(true);
-    itemToDelete.setDatestamp(Configuration.getDateformat().format(new Date()));
-
-    daoItem.create(itemToDelete);
-
-    addFormatsAndSets(itemToDelete);
-
-    searchService.updateDocument(itemToDelete);
+    DeletedRecordType deletedRecord = DeletedRecordType.get(
+            Configuration.getInstance().getProperty("deletedRecord", DeletedRecordType.PERSISTENT.getTypeString()));
+    if (DeletedRecordType.NO.equals(deletedRecord)) {
+        //Delete completely
+        searchService.deleteDocument(itemToDelete);
+        daoItem.delete(itemToDelete.getIdentifier());
+        deleteAllContent(itemToDelete);
+    }
+    else {
+        //Set delete-flag
+        itemToDelete.setDeleteFlag(true);
+        itemToDelete.setDatestamp(Configuration.getDateformat().format(new Date()));
+        daoItem.create(itemToDelete);
+        addFormatsAndSets(itemToDelete);
+        searchService.updateDocument(itemToDelete);
+    }
   }
   
   public void addFormatsAndSets(Item item) throws IOException {
@@ -378,5 +382,51 @@ public class ItemServiceImpl implements ItemService {
         }
     }
   }
+
+    public enum DeletedRecordType {
+        /** The Record gets completely deleted, there is no marked record kept */
+        NO("no"),
+
+        /** The Records just gets marked as deleted and remains in the System */
+        PERSISTENT("persistent"),
+
+        /** Its not transparent if Records gets marked or completely deleted */
+        TRANSIENT("transient");
+
+        /**
+         * DisplayType.
+         */
+        private String typeString;
+
+        private static final Map<String, DeletedRecordType> ENUM_MAP;
+
+        /**
+         * Objekt anlegen
+         *
+         * @param typeString DeletedRecordType
+         */
+        private DeletedRecordType(String typeString) {
+            this.typeString = typeString;
+        }
+
+        /**
+         * @return Returns the typeString.
+         */
+        public String getTypeString() {
+            return this.typeString;
+        }
+
+        static {
+            Map<String, DeletedRecordType> map = new ConcurrentHashMap<String, DeletedRecordType>();
+            for (DeletedRecordType instance : DeletedRecordType.values()) {
+                map.put(instance.getTypeString().toLowerCase(),instance);
+            }
+            ENUM_MAP = Collections.unmodifiableMap(map);
+        }
+
+        public static DeletedRecordType get(String name) {
+            return ENUM_MAP.get(name.toLowerCase());
+        }
+    }
 
 }
