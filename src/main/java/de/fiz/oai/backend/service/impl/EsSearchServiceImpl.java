@@ -711,6 +711,7 @@ public class EsSearchServiceImpl implements SearchService {
 //
 //        }
 
+        LOGGER.info("Initialize new ES-Connection");
         return new RestHighLevelClient(RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
     }
 
