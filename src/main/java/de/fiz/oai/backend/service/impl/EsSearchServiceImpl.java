@@ -680,12 +680,12 @@ public class EsSearchServiceImpl implements SearchService {
      * @throws IOException
      */
     private synchronized RestHighLevelClient getElasticsearchClient() throws IOException {
-        if (elasticsearchClient == null) {
-            elasticsearchClient = new RestHighLevelClient(
-                    RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http"))
-                            .setHttpClientConfigCallback(httpClientBuilder
-                                    -> httpClientBuilder.setDefaultIOReactorConfig(IOReactorConfig.custom().setSoKeepAlive(true).build())));
-
+//        if (elasticsearchClient == null) {
+//            elasticsearchClient = new RestHighLevelClient(
+//                    RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http"))
+//                            .setHttpClientConfigCallback(httpClientBuilder
+//                                    -> httpClientBuilder.setDefaultIOReactorConfig(IOReactorConfig.custom().setSoKeepAlive(true).build())));
+//
 //            final ConnectionKeepAliveStrategy myStrategy = new ConnectionKeepAliveStrategy() {
 //                @Override
 //                public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
@@ -708,10 +708,11 @@ public class EsSearchServiceImpl implements SearchService {
 //                    RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http"))
 //                            .setHttpClientConfigCallback(httpClientBuilder
 //                                    -> httpClientBuilder.setKeepAliveStrategy(myStrategy)));
+//
+//        }
 
-        }
-
-        return elasticsearchClient;
+        return new RestHighLevelClient(
+                    RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
     }
 
 }
