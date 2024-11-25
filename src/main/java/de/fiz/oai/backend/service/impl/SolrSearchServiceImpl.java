@@ -43,6 +43,7 @@ import org.apache.solr.client.solrj.impl.HttpSolrClient.Builder;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CursorMarkParams;
 import org.jvnet.hk2.annotations.Service;
@@ -82,22 +83,26 @@ public class SolrSearchServiceImpl implements SearchService {
         List<Map<String, Object>> documents = new ArrayList<>();
 
         if (CollectionUtils.isNotEmpty(items)) {
+            List<String> identifiers = new ArrayList<>();
             for (Item item : items) {
-                Map<String, Object> resultMap = new HashMap<>();
-                try {
-                    SolrDocument doc = solrClient.getById(item.getIdentifier());
-                    if (doc == null) {
-                        continue;
-                    }
-                    Collection<String> fieldNames = doc.getFieldNames();
-                    for (String fieldName : fieldNames) {
-                        Collection<Object> values = doc.getFieldValues(fieldName);
-                        resultMap.put(fieldName, values);
-                    }
-                } catch (Exception e) {
-                    LOGGER.error(e.getMessage());
+                identifiers.add(item.getIdentifier());
+            }
+            try {
+                SolrDocumentList docs = solrClient.getById(identifiers);
+                if (docs != null && docs.getNumFound() > 0) {
+                    docs.stream().forEach(doc -> {
+                        Map<String, Object> resultMap = new HashMap<>();
+                        Collection<String> fieldNames = doc.getFieldNames();
+                        for (String fieldName : fieldNames) {
+                            Collection<Object> values = doc.getFieldValues(fieldName);
+                            resultMap.put(fieldName, values);
+                        }
+                        documents.add(resultMap);
+                    });
+
                 }
-                documents.add(resultMap);
+            } catch (Exception e) {
+                LOGGER.error(e.getMessage());
             }
         }
 
