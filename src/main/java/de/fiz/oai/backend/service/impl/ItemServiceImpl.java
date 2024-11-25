@@ -101,7 +101,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<Item> read(List<String> identifiers, String format, Boolean readContent) throws IOException {
-        Map<String, Item> dbItems = new HashMap<>();
+        Map<String, Item> dbItems = new LinkedHashMap<>();
         List<Item> items = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(identifiers)) {
             for (String identifier : identifiers) {

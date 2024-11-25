@@ -34,6 +34,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
+import org.apache.solr.common.SolrDocument;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -121,12 +122,32 @@ public class EsSearchServiceImpl implements SearchService {
         List<Map<String, Object>> documents = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(items)) {
             MultiGetRequest mgetRequest = new MultiGetRequest();
+            List<String> identifiers = new ArrayList<>();
             for (Item item : items) {
-                mgetRequest.add(new MultiGetRequest.Item(ITEMS_ALIAS_INDEX_NAME, item.getIdentifier()));
+                identifiers.add(item.getIdentifier());
+            }
+            for (String identifier : identifiers) {
+                mgetRequest.add(new MultiGetRequest.Item(ITEMS_ALIAS_INDEX_NAME, identifier));
             }
             MultiGetResponse response = getElasticsearchClient().mget(mgetRequest, RequestOptions.DEFAULT);
+
+            // Map documents by their ID for quick lookup
+            Map<String, Map<String, Object>> docMap = new LinkedHashMap<>();
             for (MultiGetItemResponse itemResponse : response.getResponses()) {
-                documents.add(itemResponse.getResponse().getSourceAsMap());
+                Map<String, Object> sourceMap = itemResponse.getResponse().getSourceAsMap();
+                if (sourceMap != null && StringUtils.isNotBlank((String)sourceMap.get("identifier"))) {
+                    docMap.put((String)sourceMap.get("identifier"), sourceMap);
+                }
+            }
+
+            // Reorder documents to match the input ID order
+            for (String identifier : identifiers) {
+                if (docMap.get(identifier) != null) {
+                    documents.add(docMap.get(identifier));
+                }
+                else {
+                    LOGGER.warn("Couldn't find item with id " + identifier + " in search-index.");
+                }
             }
         }
         return documents;

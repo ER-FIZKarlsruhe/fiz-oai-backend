@@ -18,15 +18,10 @@ package de.fiz.oai.backend.service.impl;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletContext;
 import javax.ws.rs.core.Context;
@@ -90,7 +85,25 @@ public class SolrSearchServiceImpl implements SearchService {
             try {
                 SolrDocumentList docs = solrClient.getById(identifiers);
                 if (docs != null && docs.getNumFound() > 0) {
-                    docs.stream().forEach(doc -> {
+                    // Map documents by their ID for quick lookup
+                    Map<String, SolrDocument> docMap = new LinkedHashMap<>();
+                    for (SolrDocument doc : docs) {
+                        String docId = (String) doc.getFieldValue("identifier");
+                        docMap.put(docId, doc);
+                    }
+
+                    // Reorder documents to match the input ID order
+                    List<SolrDocument> orderedDocuments = new ArrayList<>();
+                    for (String identifier : identifiers) {
+                        if (docMap.get(identifier) != null) {
+                            orderedDocuments.add(docMap.get(identifier));
+                        }
+                        else {
+                            LOGGER.warn("Couldn't find item with id " + identifier + " in search-index.");
+                        }
+                    }
+
+                    orderedDocuments.forEach(doc -> {
                         Map<String, Object> resultMap = new HashMap<>();
                         Collection<String> fieldNames = doc.getFieldNames();
                         for (String fieldName : fieldNames) {
@@ -99,7 +112,6 @@ public class SolrSearchServiceImpl implements SearchService {
                         }
                         documents.add(resultMap);
                     });
-
                 }
             } catch (Exception e) {
                 LOGGER.error(e.getMessage());
