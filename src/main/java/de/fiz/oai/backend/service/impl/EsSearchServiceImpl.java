@@ -21,11 +21,7 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import javax.inject.Inject;
@@ -33,6 +29,7 @@ import javax.inject.Provider;
 import javax.servlet.ServletContext;
 import javax.ws.rs.core.Context;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
@@ -40,11 +37,10 @@ import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.get.*;
 import org.elasticsearch.client.indices.GetIndexResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.get.GetRequest;
-import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -118,16 +114,22 @@ public class EsSearchServiceImpl implements SearchService {
     private CompletableFuture<Boolean> reindexAllFuture;
 
     /**
-     * @param item @throws IOException @throws
+     * @param items @throws IOException @throws
      */
     @Override
-    public Map<String, Object> readDocument(Item item) throws IOException {
-        GetRequest getRequest = new GetRequest(ITEMS_ALIAS_INDEX_NAME, "_doc", item.getIdentifier());
-
-        GetResponse getResponse = getElasticsearchClient().get(getRequest, RequestOptions.DEFAULT);
-        Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
-
-        return sourceAsMap;
+    public List<Map<String, Object>> readDocuments(Collection<Item> items) throws IOException {
+        List<Map<String, Object>> documents = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(items)) {
+            MultiGetRequest mgetRequest = new MultiGetRequest();
+            for (Item item : items) {
+                mgetRequest.add(new MultiGetRequest.Item(ITEMS_ALIAS_INDEX_NAME, item.getIdentifier()));
+            }
+            MultiGetResponse response = getElasticsearchClient().mget(mgetRequest, RequestOptions.DEFAULT);
+            for (MultiGetItemResponse itemResponse : response.getResponses()) {
+                documents.add(itemResponse.getResponse().getSourceAsMap());
+            }
+        }
+        return documents;
     }
 
     /**
@@ -233,18 +235,26 @@ public class EsSearchServiceImpl implements SearchService {
 
 
             if (StringUtils.isNotBlank(searchMark)) {
-                Item lastItem = daoItem.read(searchMark);
-
-                //Read the timestamp from the Index!!! Reading the timestamp from the cassandra item can return adifferent value
-                //and than search_after will not work any more
-                Map<String, Object> itemDoc = readDocument(lastItem);
-                LOGGER.info("itemDoc: " + itemDoc);
-
                 Long timestamp = null;
-                try {
-                    timestamp = Configuration.getDateformat().parse((String) itemDoc.get("datestamp")).getTime();
-                } catch (ParseException e) {
-                    LOGGER.warn(e.getMessage());
+                Item lastItem = daoItem.read(searchMark);
+                if (lastItem != null) {
+                    //Read the timestamp from the Index!!! Reading the timestamp from the cassandra item can return adifferent value
+                    //and than search_after will not work any more
+                    List<Map<String, Object>> itemDocs = readDocuments(List.of(lastItem));
+                    if (CollectionUtils.isNotEmpty(itemDocs)) {
+                        LOGGER.info("itemDoc: {}", itemDocs.get(0));
+                        try {
+                            timestamp = Configuration.getDateformat().parse((String) itemDocs.get(0).get("datestamp")).getTime();
+                        } catch (ParseException e) {
+                            LOGGER.warn(e.getMessage());
+                        }
+                    }
+                    else {
+                        LOGGER.warn("Item for searchMark {} not found", searchMark);
+                    }
+                }
+                else {
+                    LOGGER.warn("Item for searchMark {} not found", searchMark);
                 }
                 searchSourceBuilder.searchAfter(new Object[]{timestamp, lastItem.getIdentifier()});
                 searchSourceBuilder.from(0);
@@ -711,8 +721,7 @@ public class EsSearchServiceImpl implements SearchService {
 //
 //        }
 
-        return new RestHighLevelClient(
-                    RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
+        return new RestHighLevelClient(RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
     }
 
 }

@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import javax.servlet.ServletContext;
 import javax.ws.rs.core.Context;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -74,28 +75,33 @@ public class SolrSearchServiceImpl implements SearchService {
     }
 
     /**
-     * 
-     * @param item @throws IOException @throws
+     * @param items @throws IOException @throws
      */
     @Override
-    public Map<String, Object> readDocument(Item item) throws IOException {
-        Map<String, Object> resultMap = new HashMap<>();
-        try {
-            SolrDocument doc = solrClient.getById(item.getIdentifier());
-            if (doc == null) {
-                return null;
+    public List<Map<String, Object>> readDocuments(Collection<Item> items) throws IOException {
+        List<Map<String, Object>> documents = new ArrayList<>();
+
+        if (CollectionUtils.isNotEmpty(items)) {
+            for (Item item : items) {
+                Map<String, Object> resultMap = new HashMap<>();
+                try {
+                    SolrDocument doc = solrClient.getById(item.getIdentifier());
+                    if (doc == null) {
+                        continue;
+                    }
+                    Collection<String> fieldNames = doc.getFieldNames();
+                    for (String fieldName : fieldNames) {
+                        Collection<Object> values = doc.getFieldValues(fieldName);
+                        resultMap.put(fieldName, values);
+                    }
+                } catch (Exception e) {
+                    LOGGER.error(e.getMessage());
+                }
+                documents.add(resultMap);
             }
-            Collection<String> fieldNames = doc.getFieldNames();
-            for (String fieldName: fieldNames) {
-                Collection<Object> values = doc.getFieldValues(fieldName);
-                resultMap.put(fieldName, values);
-            }
-        }
-        catch (Exception e) {
-            throw new IOException(e.getMessage());
         }
 
-        return resultMap;
+        return documents;
     }
 
     /**
@@ -113,8 +119,7 @@ public class SolrSearchServiceImpl implements SearchService {
                 solrDocument.addField(entry.getKey(), entry.getValue());
             }
             solrClient.add(solrDocument, commitWithin);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new IOException(e.getMessage());
         }
         LOGGER.info("Added/Updated item " + item.getIdentifier() + " to search index.");
@@ -133,7 +138,7 @@ public class SolrSearchServiceImpl implements SearchService {
 
     @Override
     public SearchResult<String> search(
-        Integer rows, String set, String format, Date fromDate, Date untilDate, String searchMark) throws IOException {
+            Integer rows, String set, String format, Date fromDate, Date untilDate, String searchMark) throws IOException {
         String decodedSearchMark = null;
 
         if (LOGGER.isDebugEnabled()) {
@@ -148,8 +153,7 @@ public class SolrSearchServiceImpl implements SearchService {
             //URL-Encode + decode searchMark.
             if (StringUtils.isBlank(searchMark)) {
                 decodedSearchMark = CursorMarkParams.CURSOR_MARK_START;
-            }
-            else {
+            } else {
                 decodedSearchMark = new String(Base64.getUrlDecoder().decode(searchMark), StandardCharsets.UTF_8);
             }
             Date finalFromDate = new SimpleDateFormat("yyyy-MM-dd").parse("0001-01-01");
@@ -202,36 +206,32 @@ public class SolrSearchServiceImpl implements SearchService {
                 //URL-Encode + decode searchMark.
                 idResult.setSearchMark(Base64.getUrlEncoder().encodeToString(nextCursorMark.getBytes()));
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new IOException(e.getMessage());
         }
         return idResult;
     }
 
     /**
-     * 
      * @param item @throws IOException @throws
      */
     @Override
     public void deleteDocument(Item item) throws IOException {
         try {
             solrClient.deleteById(item.getIdentifier(), commitWithin);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new IOException(e.getMessage());
         }
     }
-    
+
     @Override
     public void commit() throws IOException {
         try {
             solrClient.commit();
-        }
-        catch (SolrServerException e) {
+        } catch (SolrServerException e) {
             throw new IOException(e.getMessage());
         }
-        
+
     }
 
     @Override
@@ -261,9 +261,9 @@ public class SolrSearchServiceImpl implements SearchService {
     private HttpSolrClient initSolrClient() {
         Builder builder = new Builder(Configuration.getInstance().getProperty("solr.url"));
         CloseableHttpClient httpclient =
-            HttpClients
-                .custom().setProxy(null).setMaxConnPerRoute(128).setMaxConnTotal(256)
-                .setConnectionTimeToLive(900, TimeUnit.SECONDS).build();
+                HttpClients
+                        .custom().setProxy(null).setMaxConnPerRoute(128).setMaxConnTotal(256)
+                        .setConnectionTimeToLive(900, TimeUnit.SECONDS).build();
         builder.withHttpClient(httpclient);
         return builder.build();
     }
