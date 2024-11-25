@@ -54,8 +54,8 @@ public interface CrosswalkService {
   /**
    * Process a Crosswalk for a set of items
    *
-   * @param content String name of the Crosswalk to process
-   * @param updateItemTimestamp <code>true</true> if the related item timestamp should be updated
+   * @param name String name of the Crosswalk to process
+   * @param keepItemTimestamp <code>true</true> if the related item timestamp should be updated
    * @param from together with the until parameter, it defines a time range for searching items by the datestamp, where the related crosswalk should be processed
    * @param until together with the from parameter, it defines a time range for searching item by the datestamps, where the related crosswalk should be processed
    * 
