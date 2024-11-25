@@ -254,10 +254,14 @@ public class ItemServiceImpl implements ItemService {
         final SearchResult<String> idResult = searchService.search(rows, setName, format, from, until, searchMark);
 
         List<Item> itemList = new ArrayList<>();
+        List<String> identifiers = new ArrayList<>();
 
-        for (String s : idResult.getData()) {
-            Item item = read(s, format, readContent);
-            if (item != null) {
+        for (String identifier : idResult.getData()) {
+            identifiers.add(identifier);
+        }
+        List<Item> items = read(identifiers, format, readContent);
+        if (CollectionUtils.isNotEmpty(items)) {
+            for (Item item : items) {
                 itemList.add(item);
             }
         }
