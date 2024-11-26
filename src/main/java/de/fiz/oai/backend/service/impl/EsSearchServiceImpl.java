@@ -83,8 +83,6 @@ public class EsSearchServiceImpl implements SearchService {
     public static String ITEMS_MAPPING_V7_FILENAME = "/WEB-INF/classes/elasticsearch/item_mapping_es_v7";
     public static String ITEMS_MAPPING_V7_FILENAME_UPDATE_MAPPING = "/WEB-INF/classes/elasticsearch/item_mapping_es_v7_update_mapping";
 
-    private RestHighLevelClient elasticsearchClient = null;
-
     @Context
     ServletContext servletContext;
 
@@ -114,33 +112,37 @@ public class EsSearchServiceImpl implements SearchService {
     public List<Map<String, Object>> readDocuments(Collection<Item> items) throws IOException {
         List<Map<String, Object>> documents = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(items)) {
-            MultiGetRequest mgetRequest = new MultiGetRequest();
-            List<String> identifiers = new ArrayList<>();
-            for (Item item : items) {
-                identifiers.add(item.getIdentifier());
-            }
-            for (String identifier : identifiers) {
-                mgetRequest.add(new MultiGetRequest.Item(ITEMS_ALIAS_INDEX_NAME, identifier));
-            }
-            MultiGetResponse response = getElasticsearchClient().mget(mgetRequest, RequestOptions.DEFAULT);
+            RestHighLevelClient client = getElasticsearchClient();
+            try {
+                MultiGetRequest mgetRequest = new MultiGetRequest();
+                List<String> identifiers = new ArrayList<>();
+                for (Item item : items) {
+                    identifiers.add(item.getIdentifier());
+                }
+                for (String identifier : identifiers) {
+                    mgetRequest.add(new MultiGetRequest.Item(ITEMS_ALIAS_INDEX_NAME, identifier));
+                }
+                MultiGetResponse response = client.mget(mgetRequest, RequestOptions.DEFAULT);
 
-            // Map documents by their ID for quick lookup
-            Map<String, Map<String, Object>> docMap = new LinkedHashMap<>();
-            for (MultiGetItemResponse itemResponse : response.getResponses()) {
-                Map<String, Object> sourceMap = itemResponse.getResponse().getSourceAsMap();
-                if (sourceMap != null && StringUtils.isNotBlank((String)sourceMap.get("identifier"))) {
-                    docMap.put((String)sourceMap.get("identifier"), sourceMap);
+                // Map documents by their ID for quick lookup
+                Map<String, Map<String, Object>> docMap = new LinkedHashMap<>();
+                for (MultiGetItemResponse itemResponse : response.getResponses()) {
+                    Map<String, Object> sourceMap = itemResponse.getResponse().getSourceAsMap();
+                    if (sourceMap != null && StringUtils.isNotBlank((String) sourceMap.get("identifier"))) {
+                        docMap.put((String) sourceMap.get("identifier"), sourceMap);
+                    }
                 }
-            }
 
-            // Reorder documents to match the input ID order
-            for (String identifier : identifiers) {
-                if (docMap.get(identifier) != null) {
-                    documents.add(docMap.get(identifier));
+                // Reorder documents to match the input ID order
+                for (String identifier : identifiers) {
+                    if (docMap.get(identifier) != null) {
+                        documents.add(docMap.get(identifier));
+                    } else {
+                        LOGGER.warn("Couldn't find item with id " + identifier + " in search-index.");
+                    }
                 }
-                else {
-                    LOGGER.warn("Couldn't find item with id " + identifier + " in search-index.");
-                }
+            } finally {
+                closeElasticsearchClient(client);
             }
         }
         return documents;
@@ -160,15 +162,20 @@ public class EsSearchServiceImpl implements SearchService {
 
 
     private void indexDocument(Item item, String indexName) throws IOException {
-        Map<String, Object> itemMap = item.toMap();
+        RestHighLevelClient client = getElasticsearchClient();
+        try {
+            Map<String, Object> itemMap = item.toMap();
 
-        IndexRequest indexRequest = new IndexRequest();
-        indexRequest.index(indexName);
-        indexRequest.type("_doc");
-        indexRequest.source(itemMap);
-        indexRequest.id(item.getIdentifier());
+            IndexRequest indexRequest = new IndexRequest();
+            indexRequest.index(indexName);
+            indexRequest.type("_doc");
+            indexRequest.source(itemMap);
+            indexRequest.id(item.getIdentifier());
 
-        getElasticsearchClient().index(indexRequest, RequestOptions.DEFAULT);
+            client.index(indexRequest, RequestOptions.DEFAULT);
+        } finally {
+            closeElasticsearchClient(client);
+        }
     }
 
     /**
@@ -179,16 +186,21 @@ public class EsSearchServiceImpl implements SearchService {
      */
     @Override
     public void updateDocument(Item item) throws IOException {
-        Map<String, Object> itemMap = item.toMap();
+        RestHighLevelClient client = getElasticsearchClient();
+        try {
+            Map<String, Object> itemMap = item.toMap();
 
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.index(ITEMS_ALIAS_INDEX_NAME);
-        updateRequest.type("_doc");
-        updateRequest.id(item.getIdentifier());
-        updateRequest.doc(itemMap);
+            UpdateRequest updateRequest = new UpdateRequest();
+            updateRequest.index(ITEMS_ALIAS_INDEX_NAME);
+            updateRequest.type("_doc");
+            updateRequest.id(item.getIdentifier());
+            updateRequest.doc(itemMap);
 
-        getElasticsearchClient().update(updateRequest, RequestOptions.DEFAULT);
-        LOGGER.info("Updated item " + item.getIdentifier() + " in search index.");
+            client.update(updateRequest, RequestOptions.DEFAULT);
+            LOGGER.info("Updated item " + item.getIdentifier() + " in search index.");
+        } finally {
+            closeElasticsearchClient(client);
+        }
     }
 
     /**
@@ -196,12 +208,17 @@ public class EsSearchServiceImpl implements SearchService {
      */
     @Override
     public void deleteDocument(Item item) throws IOException {
-        DeleteRequest request = new DeleteRequest();
-        request.index(ITEMS_ALIAS_INDEX_NAME);
-        request.type("_doc");
-        request.id(item.getIdentifier());
+        RestHighLevelClient client = getElasticsearchClient();
+        try {
+            DeleteRequest request = new DeleteRequest();
+            request.index(ITEMS_ALIAS_INDEX_NAME);
+            request.type("_doc");
+            request.id(item.getIdentifier());
 
-        getElasticsearchClient().delete(request, RequestOptions.DEFAULT);
+            client.delete(request, RequestOptions.DEFAULT);
+        } finally {
+            closeElasticsearchClient(client);
+        }
     }
 
     @Override
@@ -214,6 +231,7 @@ public class EsSearchServiceImpl implements SearchService {
             LOGGER.debug("searchMark: {}", searchMark);
         }
 
+        RestHighLevelClient client = getElasticsearchClient();
         try {
             final BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
 
@@ -262,12 +280,10 @@ public class EsSearchServiceImpl implements SearchService {
                         } catch (ParseException e) {
                             LOGGER.warn(e.getMessage());
                         }
-                    }
-                    else {
+                    } else {
                         LOGGER.warn("Item for searchMark {} not found", searchMark);
                     }
-                }
-                else {
+                } else {
                     LOGGER.warn("Item for searchMark {} not found", searchMark);
                 }
                 searchSourceBuilder.searchAfter(new Object[]{timestamp, lastItem.getIdentifier()});
@@ -279,7 +295,7 @@ public class EsSearchServiceImpl implements SearchService {
 
             LOGGER.debug("searchRequest: {}", searchRequest.toString());
 
-            SearchResponse searchResponse = getElasticsearchClient().search(searchRequest, RequestOptions.DEFAULT);
+            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
 
             LOGGER.debug("searchResponse: {}", searchResponse.toString());
 
@@ -324,7 +340,7 @@ public class EsSearchServiceImpl implements SearchService {
                     LOGGER.debug("newSearchMark: {}", newSearchMark);
                     LOGGER.debug("searchRequest next elements?: {}", searchRequest.toString());
                 }
-                searchResponse = getElasticsearchClient().search(searchRequest, RequestOptions.DEFAULT);
+                searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
                 if (searchResponse.getHits().getHits().length == 0) {
                     idResult.setSearchMark(null);
                 }
@@ -334,6 +350,8 @@ public class EsSearchServiceImpl implements SearchService {
 
         } catch (Exception e) {
             throw new IOException(e);
+        } finally {
+            closeElasticsearchClient(client);
         }
 
     }
@@ -342,18 +360,23 @@ public class EsSearchServiceImpl implements SearchService {
     @Override
     public boolean createIndex(final String indexName, final String mapping) throws IOException {
         if (StringUtils.isNotBlank(indexName) && StringUtils.isNotBlank(mapping)) {
-            CreateIndexRequest request = new CreateIndexRequest(indexName);
-            CreateIndexResponse createIndexResponse = getElasticsearchClient().indices().create(request, RequestOptions.DEFAULT);
-            if (createIndexResponse.isAcknowledged()) {
-                RestClient lowLevelClient = getElasticsearchClient().getLowLevelClient();
+            RestHighLevelClient client = getElasticsearchClient();
+            try {
+                CreateIndexRequest request = new CreateIndexRequest(indexName);
+                CreateIndexResponse createIndexResponse = client.indices().create(request, RequestOptions.DEFAULT);
+                if (createIndexResponse.isAcknowledged()) {
+                    RestClient lowLevelClient = client.getLowLevelClient();
 
-                Request requestMapping = new Request("PUT", "/" + indexName + "/_mapping");
-                requestMapping.setJsonEntity(mapping);
-                Response responseMapping = lowLevelClient.performRequest(requestMapping);
-                if (responseMapping.getStatusLine().getStatusCode() == HttpStatus.SC_OK
-                        || responseMapping.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
-                    return true;
+                    Request requestMapping = new Request("PUT", "/" + indexName + "/_mapping");
+                    requestMapping.setJsonEntity(mapping);
+                    Response responseMapping = lowLevelClient.performRequest(requestMapping);
+                    if (responseMapping.getStatusLine().getStatusCode() == HttpStatus.SC_OK
+                            || responseMapping.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
+                        return true;
+                    }
                 }
+            } finally {
+                closeElasticsearchClient(client);
             }
         }
         LOGGER.info("CREATE status: something went wrong, return false");
@@ -363,15 +386,25 @@ public class EsSearchServiceImpl implements SearchService {
     @Override
     public void dropIndex(final String indexName) throws IOException {
         if (StringUtils.isNotBlank(indexName)) {
-            DeleteIndexRequest request = new DeleteIndexRequest(indexName);
-            getElasticsearchClient().indices().delete(request, RequestOptions.DEFAULT);
+            RestHighLevelClient client = getElasticsearchClient();
+            try {
+                DeleteIndexRequest request = new DeleteIndexRequest(indexName);
+                client.indices().delete(request, RequestOptions.DEFAULT);
+            } finally {
+                closeElasticsearchClient(client);
+            }
         }
     }
 
     @Override
     public void commit() throws IOException {
-        RefreshRequest request = new RefreshRequest(ITEMS_ALIAS_INDEX_NAME);
-        getElasticsearchClient().indices().refresh(request, RequestOptions.DEFAULT);
+        RestHighLevelClient client = getElasticsearchClient();
+        try {
+            RefreshRequest request = new RefreshRequest(ITEMS_ALIAS_INDEX_NAME);
+            client.indices().refresh(request, RequestOptions.DEFAULT);
+        } finally {
+            closeElasticsearchClient(client);
+        }
     }
 
     @Override
@@ -431,10 +464,11 @@ public class EsSearchServiceImpl implements SearchService {
 
         reindexAllFuture = CompletableFuture.supplyAsync(() -> {
 
+            RestHighLevelClient client = null;
             try {
-
+                client = getElasticsearchClient();
                 GetIndexRequest requestAllIndices = new GetIndexRequest("*");
-                GetIndexResponse responseAllIndices = getElasticsearchClient().indices().get(requestAllIndices, RequestOptions.DEFAULT);
+                GetIndexResponse responseAllIndices = client.indices().get(requestAllIndices, RequestOptions.DEFAULT);
                 String[] allIndices = responseAllIndices.getIndices();
 
                 LOGGER.info("REINDEX status: Found " + allIndices.length + " indexes:");
@@ -473,7 +507,7 @@ public class EsSearchServiceImpl implements SearchService {
                     LOGGER.error("REINDEX status: Not able to retrieve mapping {}", filenameItemsMapping);
                 }
 
-                RestClient lowLevelClient = getElasticsearchClient().getLowLevelClient();
+                RestClient lowLevelClient = client.getLowLevelClient();
 
                 if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())) {
                     LOGGER.warn("No previous indices found.");
@@ -602,6 +636,7 @@ public class EsSearchServiceImpl implements SearchService {
                         e);
                 return false;
             } finally {
+                closeElasticsearchClient(client);
                 reindexStatus.setEndTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
                 LOGGER.info("REINDEX status: End Time: {}", reindexStatus.getEndTime());
             }
@@ -736,6 +771,15 @@ public class EsSearchServiceImpl implements SearchService {
 //        }
 
         return new RestHighLevelClient(RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
+    }
+
+    private void closeElasticsearchClient(RestHighLevelClient client) {
+        if (client != null) {
+            try {
+                client.getLowLevelClient().close();
+            } catch (Exception e) {
+            }
+        }
     }
 
 }
