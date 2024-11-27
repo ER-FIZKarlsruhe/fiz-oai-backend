@@ -36,6 +36,14 @@ public interface ItemService {
   Item read(String identifier, String format, Boolean content) throws IOException;
 
   /**
+   * Read an Item.
+   *
+   * @param identifiers the identifiers
+   * @return the items
+   */
+  List<Item> read(List<String> identifiers, String format, Boolean content) throws IOException;
+
+  /**
    * Create a new Item.
    *
    * @param item the item
