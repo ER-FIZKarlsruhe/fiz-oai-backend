@@ -425,7 +425,12 @@ public class ItemServiceImpl implements ItemService {
         }
 
         public static DeletedRecordType get(String name) {
-            return ENUM_MAP.get(name.toLowerCase());
+            if (StringUtils.isNotBlank(name)) {
+                return ENUM_MAP.get(name.toLowerCase());
+            }
+            else {
+                return null;
+            }
         }
     }
 

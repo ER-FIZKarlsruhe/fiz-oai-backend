@@ -10,13 +10,38 @@
     <jersey.version>2.40</jersey.version>
 
     <javax.javaee.version>7.0</javax.javaee.version>
-    <junit.version>4.12</junit.version>
+    <servlet.version>3.0.1</servlet.version>
     <elasticsearch.version>7.17.24</elasticsearch.version>
     <solr.version>8.11.4</solr.version>
+    <cassandra.version>4.18.1</cassandra.version>
     <saxon.version>10.2</saxon.version>
+    <httpclient.version>4.5.14</httpclient.version>
     <log4j.version>2.17.2</log4j.version>
-    <dependencyCheckSuppressionFile>src/test/resources/suppress.xml</dependencyCheckSuppressionFile>
     <jackson.version>2.17.1</jackson.version>
+    <jaxb.api.version>2.3.1</jaxb.api.version>
+    <jaxb.runtime.version>2.3.9</jaxb.runtime.version>
+    <jakarta.version>1.2.1</jakarta.version>
+    <gremlin.version>3.4.13</gremlin.version>
+    <commons.lang.version>3.17.0</commons.lang.version>
+    <commons.pool2.version>2.8.0</commons.pool2.version>
+    <activation.version>1.1.1</activation.version>
+
+    <junit.version>4.13.2</junit.version>
+    <mockito.version>5.14.2</mockito.version>
+    <swagger.version>1.6.14</swagger.version>
+
+    <maven.properties.version>1.2.1</maven.properties.version>
+    <maven.compiler.version>3.13.0</maven.compiler.version>
+    <maven.war.version>3.4.0</maven.war.version>
+    <maven.failsafe.version>2.22.2</maven.failsafe.version>
+    <maven.jetty.version>9.4.19.v20190610</maven.jetty.version>
+    <maven.dependency.version>3.6.1</maven.dependency.version>
+    <maven.dependency-analyzer.version>1.11.1</maven.dependency-analyzer.version>
+    <maven.license.version>2.0.0</maven.license.version>
+
+    <java.version>17</java.version>
+
+    <dependencyCheckSuppressionFile>src/test/resources/suppress.xml</dependencyCheckSuppressionFile>
 
     <!-- Artifacts -->
     <artifacts.snapshots.url>https://dev.fiz-karlsruhe.de/artifactory/libs-snapshot-local</artifacts.snapshots.url>
@@ -30,7 +55,6 @@
 
   <name>oai-backend</name>
 
-
   <parent>
     <groupId>de.fiz.iee</groupId>
     <artifactId>common</artifactId>
@@ -41,26 +65,26 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.13.2</version>
+      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>2.28.2</version>
+      <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
-      <version>3.0.1</version>
+      <version>${servlet.version}</version>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.apache.cassandra</groupId>
       <artifactId>java-driver-core</artifactId>
-      <version>4.18.1</version>
+      <version>${cassandra.version}</version>
       <exclusions>
 
         <exclusion>
@@ -72,12 +96,12 @@
     <dependency>
       <groupId>org.apache.tinkerpop</groupId>
       <artifactId>gremlin-core</artifactId>
-      <version>3.4.13</version>
+      <version>${gremlin.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.17.0</version>
+      <version>${commons.lang.version}</version>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.containers</groupId>
@@ -114,29 +138,29 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
-      <version>4.5.14</version>
+      <version>${httpclient.version}</version>
     </dependency>
     <dependency>
       <groupId>javax.activation</groupId>
       <artifactId>activation</artifactId>
-      <version>1.1.1</version>
+      <version>${activation.version}</version>
     </dependency>
 
     <dependency>
       <groupId>javax.xml.bind</groupId>
       <artifactId>jaxb-api</artifactId>
-      <version>2.3.1</version>
+      <version>${jaxb.api.version}</version>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jaxb</groupId>
       <artifactId>jaxb-runtime</artifactId>
-      <version>2.3.9</version>
+      <version>${jaxb.runtime.version}</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>com.sun.activation</groupId>
       <artifactId>jakarta.activation</artifactId>
-      <version>1.2.1</version>
+      <version>${jakarta.version}</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
@@ -164,7 +188,7 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-pool2</artifactId>
-      <version>2.8.0</version>
+      <version>${commons.pool2.version}</version>
     </dependency>
 
 
@@ -188,7 +212,7 @@
     <dependency>
       <groupId>io.swagger</groupId>
       <artifactId>swagger-jersey2-jaxrs</artifactId>
-      <version>1.6.14</version>
+      <version>${swagger.version}</version>
     </dependency>
 
 
@@ -212,7 +236,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>properties-maven-plugin</artifactId>
-        <version>1.2.1</version>
+        <version>${maven.properties.version}</version>
         <executions>
           <execution>
             <phase>generate-resources</phase>
@@ -231,9 +255,9 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.13.0</version>
+        <version>${maven.compiler.version}</version>
         <configuration>
-          <release>17</release>
+          <release>${java.version}</release>
         </configuration>
       </plugin>
 
@@ -241,7 +265,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-war-plugin</artifactId>
-        <version>3.4.0</version>
+        <version>${maven.war.version}</version>
         <configuration>
           <filteringDeploymentDescriptors>true</filteringDeploymentDescriptors>
           <attachClasses>true</attachClasses>
@@ -257,7 +281,7 @@
 
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.22.2</version>
+        <version>${maven.failsafe.version}</version>
         <executions>
           <execution>
             <goals>
@@ -280,7 +304,7 @@
       <plugin>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-maven-plugin</artifactId>
-        <version>9.4.19.v20190610</version>
+        <version>${maven.jetty.version}</version>
         <configuration>
           <httpConnector>
             <port>8999</port>
@@ -295,12 +319,12 @@
 
       <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.6.1</version>
+        <version>${maven.dependency.version}</version>
         <dependencies>
           <dependency>
             <groupId>org.apache.maven.shared</groupId>
             <artifactId>maven-dependency-analyzer</artifactId>
-            <version>1.11.1</version>
+            <version>${maven.dependency-analyzer.version}</version>
           </dependency>
         </dependencies>
       </plugin>
@@ -309,7 +333,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>license-maven-plugin</artifactId>
-        <version>2.0.0</version>
+        <version>${maven.license.version}</version>
         <executions>
           <execution>
             <id>default-cli</id>
