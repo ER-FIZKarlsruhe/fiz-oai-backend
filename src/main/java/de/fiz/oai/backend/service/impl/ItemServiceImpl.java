@@ -284,67 +284,75 @@ public class ItemServiceImpl implements ItemService {
             throw new NotFoundException("Item with id " + identifier + " was not found");
         }
 
+    DeletedRecordType deletedRecord = DeletedRecordType.get(
+            Configuration.getInstance().getProperty("deletedRecord", DeletedRecordType.PERSISTENT.getTypeString()));
+    if (DeletedRecordType.NO.equals(deletedRecord)) {
+        //Delete completely
+        searchService.deleteDocument(itemToDelete);
+        daoItem.delete(itemToDelete.getIdentifier());
+        deleteAllContent(itemToDelete);
+    }
+    else {
+        //Set delete-flag
         itemToDelete.setDeleteFlag(true);
         itemToDelete.setDatestamp(Configuration.getDateformat().format(new Date()));
-
         daoItem.create(itemToDelete);
-
         addFormatsAndSets(itemToDelete);
-
         searchService.updateDocument(itemToDelete);
     }
-
-    public void addFormatsAndSets(Item item) throws IOException {
-        try {
-            // Add all available formats
-            List<Content> allContents = daoContent.readFormats(item.getIdentifier());
-            List<String> itemFormats = new ArrayList<>();
-            if (allContents != null && !allContents.isEmpty()) {
-                for (final Content pickedContent : allContents) {
-                    itemFormats.add(pickedContent.getFormat());
-                }
-            }
-            item.setFormats(itemFormats);
-
-            // Add all the matching sets
-            List<de.fiz.oai.backend.models.Set> allSets = daoSet.readAll();
-            List<String> itemSets = new ArrayList<>();
-            if (allSets != null && !allSets.isEmpty()) {
-
-                for (final de.fiz.oai.backend.models.Set pickedSet : allSets) {
-                    // Check set membership via xPath
-                    Map<String, String> xPaths = pickedSet.getxPaths();
-                    if (allContents != null && !allContents.isEmpty()) {
-                        for (final Content pickedContent : allContents) {
-                            if (xPaths.containsKey(pickedContent.getFormat())) {
-                                final String xPathToCheck = xPaths.get(pickedContent.getFormat());
-                                if (XPathHelper.isTextValueMatching(pickedContent.getContent(), xPathToCheck)) {
-                                    itemSets.add(pickedSet.getName());
-                                }
-                            }
-                        }
-                    }
-
-                    // Check set membership via item tags
-                    List<String> setTags = pickedSet.getTags();
-
-                    if (setTags != null && !setTags.isEmpty()) {
-                        for (String setTag : setTags) {
-                            LOGGER.debug("item.getTags() " + item.getTags());
-                            if (item.getTags() != null && item.getTags().contains(setTag)) {
-                                itemSets.add(pickedSet.getSpec());
-                            }
-                        }
-                    }
-                }
-
-            }
-            item.setSets(itemSets);
-        } catch (SAXException | XPathExpressionException e) {
-            //Rethrow Exceptions from XPathHelper as IOException
-            throw new IOException(e);
-        }
-    }
+  }
+  
+  public void addFormatsAndSets(Item item) throws IOException {
+      try {
+          // Add all available formats
+          List<Content> allContents = daoContent.readFormats(item.getIdentifier());
+          List<String> itemFormats = new ArrayList<>();
+          if (allContents != null && !allContents.isEmpty()) {
+              for (final Content pickedContent : allContents) {
+                  itemFormats.add(pickedContent.getFormat());
+              }
+          }
+          item.setFormats(itemFormats);
+    
+          // Add all the matching sets
+          List<de.fiz.oai.backend.models.Set> allSets = daoSet.readAll();
+          List<String> itemSets = new ArrayList<>();
+          if (allSets != null && !allSets.isEmpty()) {
+    
+              for (final de.fiz.oai.backend.models.Set pickedSet : allSets) {
+                  // Check set membership via xPath
+                  Map<String, String> xPaths = pickedSet.getxPaths();
+                  if (allContents != null && !allContents.isEmpty()) {
+                      for (final Content pickedContent : allContents) {
+                          if (xPaths.containsKey(pickedContent.getFormat())) {
+                              final String xPathToCheck = xPaths.get(pickedContent.getFormat());
+                              if (XPathHelper.isTextValueMatching(pickedContent.getContent(), xPathToCheck)) {
+                                  itemSets.add(pickedSet.getName());
+                              }
+                          }
+                      }
+                  }
+    
+                  // Check set membership via item tags
+                  List<String> setTags = pickedSet.getTags();
+    
+                  if (setTags != null && !setTags.isEmpty()) {
+                      for (String setTag : setTags) {
+                          LOGGER.debug("item.getTags() " + item.getTags());
+                          if (item.getTags() != null && item.getTags().contains(setTag)) {
+                              itemSets.add(pickedSet.getSpec());
+                          }
+                      }
+                  }
+              }
+    
+          }
+          item.setSets(itemSets);
+      } catch(SAXException| XPathExpressionException e) {
+          //Rethrow Exceptions from XPathHelper as IOException
+          throw new IOException(e);
+      }
+  }
 
     /**
      * Validate xml against an XSD schemaLocation
@@ -398,6 +406,57 @@ public class ItemServiceImpl implements ItemService {
         if (allContents != null && !allContents.isEmpty()) {
             for (final Content pickedContent : allContents) {
                 daoContent.delete(item.getIdentifier(), pickedContent.getFormat());
+            }
+        }
+    }
+
+    public enum DeletedRecordType {
+        /** The Record gets completely deleted, there is no marked record kept */
+        NO("no"),
+
+        /** The Records just gets marked as deleted and remains in the System */
+        PERSISTENT("persistent"),
+
+        /** Its not transparent if Records gets marked or completely deleted */
+        TRANSIENT("transient");
+
+        /**
+         * DisplayType.
+         */
+        private String typeString;
+
+        private static final Map<String, DeletedRecordType> ENUM_MAP;
+
+        /**
+         * Objekt anlegen
+         *
+         * @param typeString DeletedRecordType
+         */
+        private DeletedRecordType(String typeString) {
+            this.typeString = typeString;
+        }
+
+        /**
+         * @return Returns the typeString.
+         */
+        public String getTypeString() {
+            return this.typeString;
+        }
+
+        static {
+            Map<String, DeletedRecordType> map = new ConcurrentHashMap<String, DeletedRecordType>();
+            for (DeletedRecordType instance : DeletedRecordType.values()) {
+                map.put(instance.getTypeString().toLowerCase(),instance);
+            }
+            ENUM_MAP = Collections.unmodifiableMap(map);
+        }
+
+        public static DeletedRecordType get(String name) {
+            if (StringUtils.isNotBlank(name)) {
+                return ENUM_MAP.get(name.toLowerCase());
+            }
+            else {
+                return null;
             }
         }
     }
