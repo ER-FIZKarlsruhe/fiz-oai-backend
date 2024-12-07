@@ -16,7 +16,9 @@
 package de.fiz.oai.backend.service;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.jvnet.hk2.annotations.Contract;
@@ -27,72 +29,67 @@ import de.fiz.oai.backend.models.SearchResult;
 @Contract
 public interface SearchService {
 
-  /**
-   * Creates a new index if not existing
-   */
-  boolean createIndex(final String indexName, final String mapping) throws IOException;
+    /**
+     * Creates a new index if not existing
+     */
+    boolean createIndex(final String indexName, final String mapping) throws IOException;
 
-  /**
-   * Drops the index
-   */
-  void dropIndex(final String indexName) throws IOException;
+    /**
+     * Drops the index
+     */
+    void dropIndex(final String indexName) throws IOException;
 
-  /**
-   * Reindex all documents
-   */
-  boolean reindexAll();
+    /**
+     * Reindex all documents
+     */
+    boolean reindexAll();
 
-  /**
-   * Reindex status
-   */
-  String getReindexStatusVerbose();
-  
-  /**
-   * Stop reindex all documents process
-   */
-  boolean stopReindexAll(final int stopAttempts, final int millisecondsAttemptsDelay);
+    /**
+     * Reindex status
+     */
+    String getReindexStatusVerbose();
 
-  /**
-   * 
-   * @param item
-   */
-  void createDocument(Item item) throws IOException;
+    /**
+     * Stop reindex all documents process
+     */
+    boolean stopReindexAll(final int stopAttempts, final int millisecondsAttemptsDelay);
 
-  /**
-   * 
-   * @param item
-   */
-  void updateDocument(Item item) throws IOException;
+    /**
+     * @param item
+     */
+    void createDocument(Item item) throws IOException;
 
-  /**
-   * 
-   * @param item
-   */
-  void deleteDocument(Item item) throws IOException;
+    /**
+     * @param item
+     */
+    void updateDocument(Item item) throws IOException;
 
-  /**
-   * 
-   * @param item
-   */
-  Map<String, Object> readDocument(Item item) throws IOException;
-  
-  /**
-   * 
-   * @param rows
-   * @param set
-   * @param format
-   * @param fromDate
-   * @param untilDate
-   * @param searchMark
-   * @return
-   * @throws IOException
-   */
-  SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate, String searchMark)
-      throws IOException;
-  
-  /**
-   * Commit Changes
-   */
-  void commit() throws IOException;
+    /**
+     * @param item
+     */
+    void deleteDocument(Item item) throws IOException;
+
+    /**
+     * @param items
+     */
+    List<Map<String, Object>> readDocuments(Collection<Item> items) throws IOException;
+
+    /**
+     * @param rows
+     * @param set
+     * @param format
+     * @param fromDate
+     * @param untilDate
+     * @param searchMark
+     * @return
+     * @throws IOException
+     */
+    SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate, String searchMark)
+            throws IOException;
+
+    /**
+     * Commit Changes
+     */
+    void commit() throws IOException;
 
 }

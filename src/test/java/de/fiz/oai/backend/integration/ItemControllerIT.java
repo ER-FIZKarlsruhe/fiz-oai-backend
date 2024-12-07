@@ -109,7 +109,7 @@ public class ItemControllerIT extends JerseyTest {
     item.setSets(List.of("article", "chapter"));
     item.setIngestFormat("radar");
 
-    when(itemService.read(any(), any(), eq(false))).thenReturn(item);
+    when(itemService.read((String) any(), any(), eq(false))).thenReturn(item);
 
     Response response = target("/item/65465456").queryParam("format", "oai_dc").request().get();
 
@@ -140,7 +140,7 @@ public class ItemControllerIT extends JerseyTest {
     item.setIngestFormat("radar");
     item.setContent(content);
 
-    when(itemService.read(any(), any(), eq(true))).thenReturn(item);
+    when(itemService.read((String) any(), any(), eq(true))).thenReturn(item);
 
     Response response = target("/item/65465456").queryParam("format", "oai_dc").queryParam("content", "true").request()
         .get();
@@ -158,7 +158,7 @@ public class ItemControllerIT extends JerseyTest {
 
   @Test
   public void testGetItemNotFound() throws Exception {
-    when(itemService.read(any(), any(), any())).thenReturn(null);
+    when(itemService.read((String) any(), any(), any())).thenReturn(null);
 
     Response response = target("/item/123Fragerei").queryParam("format", "oai_dc").request().get();
 

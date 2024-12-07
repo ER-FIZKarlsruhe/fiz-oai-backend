@@ -143,11 +143,9 @@ public class CassandraDAOItem implements DAOItem {
     PreparedStatement prepared = preparedStatements.get("delete");
     if (prepared == null) {
       StringBuilder updateStmt = new StringBuilder();
-      updateStmt.append("UPDATE ");
+      updateStmt.append("DELETE FROM ");
       updateStmt.append(TABLENAME_ITEM);
-      updateStmt.append(" SET ");
-      updateStmt.append(ITEM_DELETEFLAG);
-      updateStmt.append("=? WHERE ");
+      updateStmt.append(" WHERE ");
       updateStmt.append(ITEM_IDENTIFIER);
       updateStmt.append("=?");
 
@@ -155,7 +153,7 @@ public class CassandraDAOItem implements DAOItem {
       preparedStatements.put("delete", prepared);
     }
 
-    BoundStatement bound = prepared.bind(true, identifier);
+    BoundStatement bound = prepared.bind(identifier);
     ResultSet result = session.execute(bound);
 
     if (!result.wasApplied()) {
