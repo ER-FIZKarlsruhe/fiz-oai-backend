@@ -1,11 +1,11 @@
 #!/bin/bash
 
 if [ -n "$PROXY" ]; then
-  export HTTPS_PROXY=proxy.fiz-karlsruhe.de:8888
-  export HTTP_PROXY=proxy.fiz-karlsruhe.de:8888
-  export https_proxy=proxy.fiz-karlsruhe.de:8888
-  export http_proxy=proxy.fiz-karlsruhe.de:8888
-  echo "Acquire::http::Proxy \"http://proxy.fiz-karlsruhe.de:8888/\"; Acquire::https::Proxy \"http://proxy.fiz-karlsruhe.de:8888/\";" > /etc/apt/apt.conf && \
+  export HTTPS_PROXY=$PROXY
+  export HTTP_PROXY=$PROXY
+  export https_proxy=$PROXY
+  export http_proxy=$PROXY
+  echo 'Acquire::http::Proxy \"$PROXY\"; Acquire::https::Proxy \"$PROXY\";' > /etc/apt/apt.conf
 fi
 
 apt-get update -y && apt-get upgrade -y
