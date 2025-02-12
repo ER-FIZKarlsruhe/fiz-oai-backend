@@ -17,10 +17,10 @@ rm -rf /var/lib/apt/lists/*
 
 if [ -n "$LOGFILE_KEEP_DAYS" ]; then
   set -e
-  echo -e "\
+  echo -e '\
   #0 1 * * * find /usr/local/some/logs -type f -ctime +$LOGFILE_KEEP_DAYS -delete\n\
   0 2 * * * find /usr/local/tomcat/logs -type f -ctime +$LOGFILE_KEEP_DAYS -delete\
-  " | crontab -
+  ' | crontab -
 
   crontab -l
   cron
