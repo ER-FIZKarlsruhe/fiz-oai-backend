@@ -29,8 +29,7 @@ RUN echo "Acquire::http::Proxy \"http://proxy.fiz-karlsruhe.de:8888/\"; Acquire:
     rm -rf /var/lib/apt/lists/* && \
     chmod +x /usr/local/bin/oai_backend_init.sh
 
+RUN ["/usr/local/bin/oai_backend_init.sh"]
+
 USER $UNAME
 COPY target/oai-backend.war /usr/local/tomcat/webapps
-
-USER root
-ENTRYPOINT ["/usr/local/bin/oai_backend_init.sh"]
