@@ -9,4 +9,3 @@ echo -e "\
 
 crontab -l
 cron
-tail -f /dev/null
