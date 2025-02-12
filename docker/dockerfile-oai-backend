@@ -14,6 +14,7 @@ RUN chmod -R 770 /usr/local/tomcat/
 
 #Install + Configure Cron
 COPY docker/oai_backend_init.sh /usr/local/bin/oai_backend_init.sh
+RUN chmod +x /usr/local/bin/oai_backend_init.sh
 RUN /usr/local/bin/oai_backend_init.sh
 
 USER $UNAME
