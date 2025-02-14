@@ -21,15 +21,12 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import jakarta.inject.Inject;
-
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.shaded.minlog.Log;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.fiz.oai.backend.controller.CrosswalkController;
 import de.fiz.oai.backend.dao.DAOContent;
 import de.fiz.oai.backend.dao.DAOCrosswalk;
 import de.fiz.oai.backend.dao.DAOItem;
@@ -47,6 +44,7 @@ import de.fiz.oai.backend.service.ItemService;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.service.TransformerService;
 import de.fiz.oai.backend.utils.Configuration;
+import jakarta.inject.Inject;
 
 @Service
 public class CrosswalkServiceImpl implements CrosswalkService {

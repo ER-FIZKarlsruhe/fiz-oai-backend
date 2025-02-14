@@ -24,21 +24,12 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Application;
-import jakarta.ws.rs.core.GenericType;
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
-
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -51,6 +42,15 @@ import de.fiz.oai.backend.exceptions.AlreadyExistsException;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Crosswalk;
 import de.fiz.oai.backend.service.CrosswalkService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Application;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 
 public class CrosswalkControllerIT extends JerseyTest {
 
@@ -65,10 +65,11 @@ public class CrosswalkControllerIT extends JerseyTest {
   @Mock
   HttpServletResponse response;
 
+
+
   @Override
   protected Application configure() {
     MockitoAnnotations.initMocks(this);
-
     ResourceConfig config = new ResourceConfig(CrosswalkController.class);
     config.register(new AbstractBinder() {
 
@@ -89,6 +90,15 @@ public class CrosswalkControllerIT extends JerseyTest {
     clientConfig.register(MultiPartFeature.class);
   }
 
+  
+//  @Before
+//  public void setup() throws Exception {
+//      // Force Jetty (important!)
+//      set(TestProperties.CONTAINER_PORT, String.valueOf(8999)); // if you need a specific port
+//      set(TestProperties.CONTAINER_FACTORY, "org.glassfish.jersey.jetty.JettyContainerFactory");
+//      super.setUp(); // Call super.setUp AFTER setting properties
+//  }
+  
   @Test
   public void testGetCrosswalk() throws Exception {
     Crosswalk crosswalk = new Crosswalk();

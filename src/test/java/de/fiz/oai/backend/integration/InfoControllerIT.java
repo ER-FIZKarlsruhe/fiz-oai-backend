@@ -17,14 +17,13 @@ package de.fiz.oai.backend.integration;
 
 import static org.junit.Assert.assertEquals;
 
-import jakarta.ws.rs.core.Application;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
-
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.TestProperties;
+import org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory;
+import org.glassfish.jersey.test.spi.TestContainerFactory;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -34,6 +33,9 @@ import org.slf4j.LoggerFactory;
 import de.fiz.oai.backend.FizOaiExceptionMapper;
 import de.fiz.oai.backend.controller.InfoController;
 import de.fiz.oai.backend.service.TransformerService;
+import jakarta.ws.rs.core.Application;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 
 
 public class InfoControllerIT extends JerseyTest {
@@ -59,6 +61,10 @@ public class InfoControllerIT extends JerseyTest {
     return config;
   }
   
+  @Override
+  protected TestContainerFactory getTestContainerFactory() {
+      return new GrizzlyTestContainerFactory();
+  }
   
   @Test
   public void testVersion() throws Exception {

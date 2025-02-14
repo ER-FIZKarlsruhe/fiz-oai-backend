@@ -56,6 +56,8 @@ public class ItemServiceIT {
 
     @Before
     public void setUp() {
+        MockitoAnnotations.initMocks(this);
+
         configurationStatic.when(Configuration::getInstance).thenReturn(configuration);
         configurationStatic.when(Configuration::getDateformat).thenReturn(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"));
         when(configuration.getProperty(any(), any())).thenAnswer(invocation -> invocation.getRawArguments()[1]);

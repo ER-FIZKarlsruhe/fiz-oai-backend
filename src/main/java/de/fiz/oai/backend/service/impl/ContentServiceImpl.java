@@ -47,8 +47,10 @@ public class ContentServiceImpl implements ContentService {
   
   @Inject
   SearchService searchService;
-  
-  @Override
+
+
+
+    @Override
   public Content read(String identifier, String format) throws IOException {
     Content content = daoContent.read(identifier, format);
     return content;
