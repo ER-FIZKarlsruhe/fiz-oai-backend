@@ -18,9 +18,9 @@ package de.fiz.oai.backend.service.impl;
 import java.io.IOException;
 import java.util.List;
 
-import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response.Status;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.jvnet.hk2.annotations.Service;
 

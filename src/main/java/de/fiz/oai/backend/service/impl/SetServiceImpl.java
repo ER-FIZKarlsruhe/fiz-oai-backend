@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 
-import javax.inject.Inject;
-import javax.ws.rs.NotFoundException;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.NotFoundException;
 
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;

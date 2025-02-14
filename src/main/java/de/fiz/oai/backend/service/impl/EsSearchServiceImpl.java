@@ -56,10 +56,10 @@ import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.servlet.ServletContext;
-import javax.ws.rs.core.Context;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.servlet.ServletContext;
+import jakarta.ws.rs.core.Context;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
