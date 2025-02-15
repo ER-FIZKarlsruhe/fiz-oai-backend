@@ -11,14 +11,14 @@
 
     <elasticsearch.version>7.17.24</elasticsearch.version>
     <solr.version>9.8.0</solr.version>
-    <cassandra.version>4.18.1</cassandra.version>
+    <cassandra.version>4.19.0</cassandra.version>
     <saxon.version>10.2</saxon.version>
     <httpclient.version>4.5.14</httpclient.version>
     <log4j.version>2.17.2</log4j.version>
     <jackson.version>2.17.1</jackson.version>
     <jaxb.api.version>2.3.1</jaxb.api.version>
     <jaxb.runtime.version>4.0.3</jaxb.runtime.version>
-    <gremlin.version>3.7.1</gremlin.version>
+    <gremlin.version>3.7.3</gremlin.version>
     <commons.lang.version>3.17.0</commons.lang.version>
     <commons.pool2.version>2.8.0</commons.pool2.version>
     <activation.version>1.1.1</activation.version>
