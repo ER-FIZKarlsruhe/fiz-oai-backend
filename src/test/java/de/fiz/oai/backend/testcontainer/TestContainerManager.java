@@ -3,6 +3,7 @@ package de.fiz.oai.backend.testcontainer;
 
 import com.github.dockerjava.api.DockerClient;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.utility.MountableFile;
@@ -15,22 +16,21 @@ import java.io.File;
  * so that each a container is only created and setup once for all integration tests.
  */
 public class TestContainerManager  {
-    boolean cassandraSetupComplete = false;
-    boolean elasticsearchSetupComplete = false;
-    boolean tomcatComplete = false;
+    static boolean cassandraSetupComplete = false;
+    static boolean elasticsearchSetupComplete = false;
+    static boolean tomcatComplete = false;
 
-    GenericContainer<?> tomcatContainer;
+    static GenericContainer<?> tomcatContainer;
 
     private static final String WAR_FILE_PATH = "target/oai-backend.war";
     private static final String CONFIG_FILE_PATH = "src/test/resources/fiz-oai-backend.properties";
 
     public static Network.NetworkImpl network;
 
-    @Before
-    public void setup() {
 
-        String customNetworkName = "my-custom-network";
 
+    @BeforeClass
+    public static void  setup() {
         network =  Network.builder().createNetworkCmdModifier(createNetworkCmd -> createNetworkCmd.withName("oai-network")).build();
 
         if (!cassandraSetupComplete) {
