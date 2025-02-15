@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 27.02.20 Fachinformationszentrum Karlsruhe
  */
-package de.fiz.oai.backend.utils;
+package de.fiz.oai.backend.service.impl;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -28,6 +28,7 @@ import org.apache.commons.pool2.KeyedPooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
+import jakarta.inject.Singleton;
 import org.jvnet.hk2.annotations.Service;
 
 import de.fiz.oai.backend.dao.DAOCrosswalk;
@@ -37,6 +38,7 @@ import net.sf.saxon.lib.FeatureKeys;
 
 /** Crosswalk transformations. */
 @Service
+@Singleton
 public class TransformerServiceImpl implements TransformerService, KeyedObjectPool<String, Transformer> {
 
     /** Logger. */

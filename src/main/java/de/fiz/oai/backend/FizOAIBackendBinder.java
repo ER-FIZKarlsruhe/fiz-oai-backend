@@ -42,7 +42,7 @@ import de.fiz.oai.backend.service.impl.FormatServiceImpl;
 import de.fiz.oai.backend.service.impl.ItemServiceImpl;
 import de.fiz.oai.backend.service.impl.SetServiceImpl;
 import de.fiz.oai.backend.utils.Configuration;
-import de.fiz.oai.backend.utils.TransformerServiceImpl;
+import de.fiz.oai.backend.service.impl.TransformerServiceImpl;
 
 public class FizOAIBackendBinder extends AbstractBinder {
     @SuppressWarnings("unchecked")

@@ -22,6 +22,7 @@ import java.util.List;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 
+import jakarta.inject.Singleton;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,7 @@ import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.service.SetService;
 
 @Service
+@Singleton
 public class SetServiceImpl implements SetService {
 
   private static Logger LOGGER = LoggerFactory.getLogger(SetServiceImpl.class);

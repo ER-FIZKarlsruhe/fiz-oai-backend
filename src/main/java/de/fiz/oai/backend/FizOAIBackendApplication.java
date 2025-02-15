@@ -57,11 +57,11 @@ public class FizOAIBackendApplication extends ResourceConfig {
                 LOGGER.error("FIZ OAI Backend NOT started: {}", e.getLocalizedMessage());
             }
         }
-        
+        //packages("de.fiz.oai.backend.controller", "de.fiz.oai.backend.service", "de.fiz.oai.backend.service.impl", "de.fiz.oai.backend.dao", "de.fiz.oai.backend.dao.impl");
         register(MultiPartFeature.class);
         register(new FizOAIBackendBinder()); 
         
-        this.configureSwagger();
+        //this.configureSwagger();
     }
     
     

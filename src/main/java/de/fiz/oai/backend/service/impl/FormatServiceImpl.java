@@ -22,6 +22,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response.Status;
 
+import jakarta.inject.Singleton;
 import org.jvnet.hk2.annotations.Service;
 
 import de.fiz.oai.backend.dao.DAOFormat;
@@ -30,6 +31,7 @@ import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.service.FormatService;
 
 @Service
+@Singleton
 public class FormatServiceImpl implements FormatService {
 
   @Inject

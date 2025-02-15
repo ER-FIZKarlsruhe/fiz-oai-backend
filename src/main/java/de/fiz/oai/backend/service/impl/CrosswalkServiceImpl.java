@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.shaded.minlog.Log;
+import jakarta.inject.Singleton;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +48,7 @@ import de.fiz.oai.backend.utils.Configuration;
 import jakarta.inject.Inject;
 
 @Service
+@Singleton
 public class CrosswalkServiceImpl implements CrosswalkService {
 
     private static Logger LOGGER = LoggerFactory.getLogger(CrosswalkServiceImpl.class);

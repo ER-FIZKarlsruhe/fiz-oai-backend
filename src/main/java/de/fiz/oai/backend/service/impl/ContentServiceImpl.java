@@ -20,6 +20,7 @@ import java.util.List;
 
 import jakarta.inject.Inject;
 
+import jakarta.inject.Singleton;
 import org.jvnet.hk2.annotations.Service;
 
 import de.fiz.oai.backend.dao.DAOContent;
@@ -34,6 +35,7 @@ import de.fiz.oai.backend.service.ItemService;
 import de.fiz.oai.backend.service.SearchService;
 
 @Service
+@Singleton
 public class ContentServiceImpl implements ContentService {
 
   @Inject

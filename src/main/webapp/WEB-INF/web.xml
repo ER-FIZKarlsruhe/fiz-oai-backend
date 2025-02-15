@@ -1,24 +1,22 @@
 <web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
-         https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
          version="5.0">
 
   <display-name>fiz-oai-backend</display-name>
 
+
   <servlet>
     <servlet-name>FIZ OAI Backend Application</servlet-name>
     <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
-
     <init-param>
       <param-name>jersey.config.server.provider.packages</param-name>
       <param-value>de.fiz.oai.backend</param-value>
     </init-param>
     <init-param>
-      <param-name>javax.ws.rs.Application</param-name>
+      <param-name>jakarta.ws.rs.Application</param-name>
       <param-value>de.fiz.oai.backend.FizOAIBackendApplication</param-value>
     </init-param>
-    <load-on-startup>1</load-on-startup>
   </servlet>
 
   <servlet-mapping>

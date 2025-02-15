@@ -38,6 +38,7 @@ import javax.xml.xpath.XPathExpressionException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import jakarta.inject.Singleton;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +65,7 @@ import de.fiz.oai.backend.utils.Configuration;
 import de.fiz.oai.backend.utils.XPathHelper;
 
 @Service
+@Singleton
 public class ItemServiceImpl implements ItemService {
 
     private static Logger LOGGER = LoggerFactory.getLogger(ItemServiceImpl.class);

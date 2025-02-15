@@ -52,6 +52,7 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
+import jakarta.inject.Singleton;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +71,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @Service
+@Singleton
 public class EsSearchServiceImpl implements SearchService {
 
     private static Logger LOGGER = LoggerFactory.getLogger(EsSearchServiceImpl.class);

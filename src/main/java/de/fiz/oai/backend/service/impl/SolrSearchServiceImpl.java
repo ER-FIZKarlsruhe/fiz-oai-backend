@@ -41,6 +41,7 @@ import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CursorMarkParams;
+import jakarta.inject.Singleton;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +52,7 @@ import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.utils.Configuration;
 
 @Service
+@Singleton
 public class SolrSearchServiceImpl implements SearchService {
 
     private static Logger LOGGER = LoggerFactory.getLogger(SolrSearchServiceImpl.class);
