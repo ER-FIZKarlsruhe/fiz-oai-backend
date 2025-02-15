@@ -17,8 +17,10 @@ import de.fiz.oai.backend.utils.Configuration;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
@@ -52,16 +54,12 @@ public class ItemServiceIT {
     @Mock
     private Configuration configuration;
 
-    private MockedStatic<Configuration> configurationStatic = mockStatic(Configuration.class);
+
+
 
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-
-        configurationStatic.when(Configuration::getInstance).thenReturn(configuration);
-        configurationStatic.when(Configuration::getDateformat).thenReturn(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"));
-        when(configuration.getProperty(any(), any())).thenAnswer(invocation -> invocation.getRawArguments()[1]);
-
         itemService = new ItemServiceImpl();
         injectMocksIntoServices();
     }
@@ -71,6 +69,8 @@ public class ItemServiceIT {
      */
     private void injectMocksIntoServices() {
         try {
+
+
             Field searchServiceField = ItemServiceImpl.class.getDeclaredField("searchService");
             searchServiceField.setAccessible(true);
             searchServiceField.set(itemService, searchService);
@@ -89,6 +89,15 @@ public class ItemServiceIT {
         } catch (Exception e) {
             throw new RuntimeException("Failed to inject mock into MyService", e);
         }
+    }
+
+    @Test
+    public void testConfiguration() throws Exception {
+        MockedStatic<Configuration> configurationStatic = Mockito.mockStatic(Configuration.class);
+
+        configurationStatic.when(Configuration::getInstance).thenReturn(configuration);
+        configurationStatic.when(Configuration::getDateformat).thenReturn(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"));
+        when(configuration.getProperty(any(), any())).thenAnswer(invocation -> invocation.getRawArguments()[1]);
     }
 
     /**
