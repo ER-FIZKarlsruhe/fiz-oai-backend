@@ -1,8 +1,10 @@
 package de.fiz.oai.backend.testcontainer;
 
 
+import com.github.dockerjava.api.DockerClient;
 import org.junit.Before;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
 import org.testcontainers.utility.MountableFile;
 
 import java.io.File;
@@ -22,8 +24,15 @@ public class TestContainerManager  {
     private static final String WAR_FILE_PATH = "target/oai-backend.war";
     private static final String CONFIG_FILE_PATH = "src/test/resources/fiz-oai-backend.properties";
 
+    public static Network.NetworkImpl network;
+
     @Before
     public void setup() {
+
+        String customNetworkName = "my-custom-network";
+
+        network =  Network.builder().createNetworkCmdModifier(createNetworkCmd -> createNetworkCmd.withName("oai-network")).build();
+
         if (!cassandraSetupComplete) {
             try {
                 CassandraTestContainer.container.start();
@@ -45,8 +54,9 @@ public class TestContainerManager  {
 
             tomcatContainer = new GenericContainer<>("tomcat:11-jre21-temurin")
                     .withExposedPorts(8080)
+                    .withNetwork(TestContainerManager.network)
                     .withCopyFileToContainer(warFile, "/usr/local/tomcat/webapps/oai-backend.war")
-                    .withCopyFileToContainer(configFiles, "/usr/local/tomcat/configs/fiz-oai-backend.properties");
+                    .withCopyFileToContainer(configFiles, "/usr/local/tomcat/conf/fiz-oai-backend.properties");
 
             tomcatContainer.start();
             tomcatComplete = tomcatContainer.isRunning();

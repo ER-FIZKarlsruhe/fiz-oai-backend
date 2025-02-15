@@ -105,6 +105,7 @@ public class ClusterManager {
         sessions = new CqlSession[numberOfCassandraSessions];
 
         // Check and create keyspace and tables if not exists
+        LOGGER.info("Check and create keyspace and tables if not exists");
         CqlSession session = sessionBuilder.withConfigLoader(getConfigLoader()).build();
         CassandraUtils.createTables(session, keyspace);
         session.close();
