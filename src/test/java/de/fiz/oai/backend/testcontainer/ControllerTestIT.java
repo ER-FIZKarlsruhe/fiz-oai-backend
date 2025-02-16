@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Assertions;
 import org.testcontainers.containers.output.OutputFrame;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class ControllerTestIT extends TestContainerManager {
 
@@ -44,10 +46,13 @@ public class ControllerTestIT extends TestContainerManager {
     }
 
     @Test
-    public void testFormatController() throws IOException {
+    public void testAllEndpoints() throws IOException {
         createFormat("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/");
         createFormat("radar", "https://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/", "http://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/");
         createFormat("datacite", "https://schema.datacite.org/meta/kernel-4.0/metadata.xsd", "http://datacite.org/schema/kernel-4");
+
+        createCrosswalk("Radar2datacite", "radar", "datacite", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
+        createCrosswalk("Radar2OAI_DC_v09", "radar", "oai_dc", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
     }
 
     private void createFormat(String prefix, String schemaLocation, String namespace) throws IOException{
@@ -78,6 +83,42 @@ public class ControllerTestIT extends TestContainerManager {
         postResponse.close();
 
         HttpGet get = new HttpGet(baseUrl + prefix);
+        CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
+        getResponse.getEntity().consumeContent();
+        Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
+        getResponse.close();
+
+    }
+
+    private void createCrosswalk(String name, String formatFrom, String formatTo, String xsltStylesheet) throws IOException {
+        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/crosswalk/";
+        String dataciteXslt = new String(Files.readAllBytes(Paths.get(xsltStylesheet)));
+
+        final ObjectMapper mapper = new ObjectMapper();
+        ObjectNode node = mapper.createObjectNode();
+        node.put("name", name);
+        node.put("formatFrom", formatFrom);
+        node.put("formatTo", formatTo);
+        node.put("xsltStylesheet", dataciteXslt);
+
+        String json = node.toString();
+
+        EntityBuilder builder = EntityBuilder.create();
+        builder.setText(json);
+        builder.setContentType(ContentType.APPLICATION_JSON);
+        HttpClientContext context = HttpClientContext.create();
+
+        HttpPost post = new HttpPost(baseUrl);
+        post.addHeader("Accept", "application/json");
+        CloseableHttpResponse postResponse = getHttpResponse(post, builder, context, false);
+
+        postResponse.getEntity().consumeContent();
+        Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode());
+        postResponse.close();
+
+        HttpGet get = new HttpGet(baseUrl + "Radar2datacite");
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
         getResponse.getEntity().consumeContent();
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
