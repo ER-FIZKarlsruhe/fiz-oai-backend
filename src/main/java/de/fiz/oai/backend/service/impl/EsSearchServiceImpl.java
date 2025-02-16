@@ -39,6 +39,7 @@ import org.elasticsearch.action.get.MultiGetItemResponse;
 import org.elasticsearch.action.get.MultiGetRequest;
 import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
@@ -174,7 +175,11 @@ public class EsSearchServiceImpl implements SearchService {
             indexRequest.source(itemMap);
             indexRequest.id(item.getIdentifier());
 
-            client.index(indexRequest, RequestOptions.DEFAULT);
+            IndexResponse response = client.index(indexRequest, RequestOptions.DEFAULT);
+
+            if (response == null || response.getResult() == null) {
+                throw new IOException("Elasticsearch response is null or malformed.");
+            }
         } finally {
             closeElasticsearchClient(client);
         }

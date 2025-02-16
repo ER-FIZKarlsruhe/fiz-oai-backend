@@ -10,8 +10,10 @@ import org.testcontainers.utility.DockerImageName;
 public class ElasticsearchTestContainer {
     private static final String password = "s3cret";
     public static final GenericContainer<ElasticsearchContainer> container =
-            new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:8.6.0"))
+            new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.17.13"))
                     .withExposedPorts(9200)
+                    .withNetwork(TestContainerManager.network)
+                    .withNetworkAliases("elasticsearch-oai")
                     .withEnv("xpack.security.enabled", "false")
                     .withReuse(true);
 

@@ -13,6 +13,8 @@ import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.junit.Assert;
@@ -21,6 +23,8 @@ import org.junit.jupiter.api.Assertions;
 import org.testcontainers.containers.output.OutputFrame;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -53,7 +57,49 @@ public class ControllerTestIT extends TestContainerManager {
 
         createCrosswalk("Radar2datacite", "radar", "datacite", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
         createCrosswalk("Radar2OAI_DC_v09", "radar", "oai_dc", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
+
+        sendRadarMetadataToOaiBackend();
     }
+
+
+
+    private void sendRadarMetadataToOaiBackend() throws IOException {
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/item/";
+
+        String doi = "10.5072/38238";
+        String xml = new String(Files.readAllBytes(Paths.get("src/test/resources/10.5072-38238.xml")));
+
+        final ObjectMapper mapper = new ObjectMapper();
+        ObjectNode node = mapper.createObjectNode();
+        node.put("identifier", doi);
+        node.put("ingestFormat", "radar");
+        String json = node.toString();
+
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.addPart("item", new StringBody(json, ContentType.APPLICATION_JSON));
+        builder.addBinaryBody("content", xml.getBytes(StandardCharsets.UTF_8));
+        HttpClientContext context = HttpClientContext.create();
+
+        String identifierUrlEncoded = URLEncoder.encode(doi, "UTF-8");
+
+//        HttpGet get = new HttpGet(oaiUploadUrl + identifierUrlEncoded)
+//        CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false)
+//        log.info("Search doi in backend returns: " + getResponse.getStatusLine().getStatusCode())
+//        getResponse.getEntity().consumeContent()
+//        getResponse.close()
+
+        CloseableHttpResponse response;
+
+        HttpPost post = new HttpPost(baseUrl);
+        response = getHttpResponse(post, builder, context, false);
+
+        response.getEntity().consumeContent();
+        final String logs = tomcatContainer.getLogs(OutputFrame.OutputType.STDOUT);
+        final String errlogs = tomcatContainer.getLogs(OutputFrame.OutputType.STDERR);
+        response.close();
+
+    }
+
 
     private void createFormat(String prefix, String schemaLocation, String namespace) throws IOException{
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
@@ -127,29 +173,34 @@ public class ControllerTestIT extends TestContainerManager {
     }
 
     private CloseableHttpResponse getHttpResponse(
-            HttpRequestBase requestBase, EntityBuilder builder, HttpClientContext context, boolean useProxy) throws IOException {
+            HttpRequestBase requestBase, Object builder, HttpClientContext context, boolean useProxy) throws IOException {
 
-        Integer timeout = new Integer(20000);
-        RequestConfig defaultRequestConfig =
-                RequestConfig.custom().setSocketTimeout(timeout).setConnectTimeout(timeout).setConnectionRequestTimeout(timeout)
-                        .build();
-        RequestConfig requestConfig =
-                RequestConfig.copy(defaultRequestConfig)
-                        .setProxy(new HttpHost("proxy", 8888)).build();
-        requestBase.setConfig(defaultRequestConfig);
-        if (useProxy) {
-            requestBase.setConfig(requestConfig);
+        int timeout = 20000;
+        RequestConfig defaultRequestConfig = RequestConfig.custom()
+                .setSocketTimeout(timeout)
+                .setConnectTimeout(timeout)
+                .setConnectionRequestTimeout(timeout)
+                .build();
+
+        RequestConfig requestConfig = RequestConfig.copy(defaultRequestConfig)
+                .setProxy(new HttpHost("proxy", 8888))
+                .build();
+
+        requestBase.setConfig(useProxy ? requestConfig : defaultRequestConfig);
+
+        HttpEntity httpEntity = null;
+        if (builder instanceof EntityBuilder) {
+            httpEntity = ((EntityBuilder) builder).build();
+        } else if (builder instanceof MultipartEntityBuilder) {
+            httpEntity = ((MultipartEntityBuilder) builder).build();
         }
-        HttpEntity httpEntity = builder.build();
-        if (requestBase instanceof HttpEntityEnclosingRequestBase) {
-            ((HttpEntityEnclosingRequestBase)requestBase).setEntity(httpEntity);
+
+        if (httpEntity != null && requestBase instanceof HttpEntityEnclosingRequestBase) {
+            ((HttpEntityEnclosingRequestBase) requestBase).setEntity(httpEntity);
         }
-        CloseableHttpClient client = HttpClients.createDefault();
-        CloseableHttpResponse response = client.execute(requestBase, context);
 
-        final String logs = tomcatContainer.getLogs(OutputFrame.OutputType.STDOUT);
-        final String errlogs = tomcatContainer.getLogs(OutputFrame.OutputType.STDERR);
-
-        return response;
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            return client.execute(requestBase, context);
+        }
     }
 }
