@@ -28,7 +28,7 @@ public class CassandraTestContainer extends CassandraContainer<CassandraTestCont
     public static final CassandraTestContainer container =
             new CassandraTestContainer()
                     .withExposedPorts(hostPort)
-                    .withNetwork(TestContainerManager.network)
+                    .withNetwork(BaseInstance.network)
                     .withNetworkAliases("cassandra-oai")
                     .withCreateContainerCmdModifier(cmd)
                     .waitingFor(new CassandraQueryWaitStrategy())

@@ -28,7 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-public class ControllerTestIT extends TestContainerManager {
+public abstract class BaseInstance extends TestContainerManager {
 
 
 
@@ -49,22 +49,14 @@ public class ControllerTestIT extends TestContainerManager {
         client.close();
     }
 
-    @Test
-    public void testAllEndpoints() throws IOException {
-        createFormat("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/");
-        createFormat("radar", "https://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/", "http://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/");
-        createFormat("datacite", "https://schema.datacite.org/meta/kernel-4.0/metadata.xsd", "http://datacite.org/schema/kernel-4");
-
-        createCrosswalk("Radar2datacite", "radar", "datacite", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
-        createCrosswalk("Radar2OAI_DC_v09", "radar", "oai_dc", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
-
-        sendRadarMetadataToOaiBackend();
-    }
 
 
 
-    private void sendRadarMetadataToOaiBackend() throws IOException {
+
+    protected void sendRadarMetadataToOaiBackend() throws IOException {
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/item/";
+
+        System.out.println("sendRadarMetadataToOaiBackend " );
 
         String doi = "10.5072/38238";
         String xml = new String(Files.readAllBytes(Paths.get("src/test/resources/10.5072-38238.xml")));
@@ -101,11 +93,11 @@ public class ControllerTestIT extends TestContainerManager {
     }
 
 
-    private void createFormat(String prefix, String schemaLocation, String namespace) throws IOException{
+    protected void createFormat(String prefix, String schemaLocation, String namespace) throws IOException{
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/format/";
-        System.out.println("Tomcat is running with deployed WAR at: " + baseUrl);
+        System.out.println("createFormat " + prefix);
 
 
         final ObjectMapper mapper = new ObjectMapper();
@@ -125,6 +117,10 @@ public class ControllerTestIT extends TestContainerManager {
         HttpPost post = new HttpPost(baseUrl);
         post.addHeader("Accept", "application/json");
         postResponse = getHttpResponse(post, builder, context, false);
+
+        final String logs = tomcatContainer.getLogs(OutputFrame.OutputType.STDOUT);
+        final String errlogs = tomcatContainer.getLogs(OutputFrame.OutputType.STDERR);
+
         Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode());
         postResponse.close();
 
@@ -136,8 +132,10 @@ public class ControllerTestIT extends TestContainerManager {
 
     }
 
-    private void createCrosswalk(String name, String formatFrom, String formatTo, String xsltStylesheet) throws IOException {
+    protected void createCrosswalk(String name, String formatFrom, String formatTo, String xsltStylesheet) throws IOException {
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+
+        System.out.println("createCrosswalk " + name);
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/crosswalk/";
         String dataciteXslt = new String(Files.readAllBytes(Paths.get(xsltStylesheet)));
@@ -172,7 +170,7 @@ public class ControllerTestIT extends TestContainerManager {
 
     }
 
-    private CloseableHttpResponse getHttpResponse(
+    protected CloseableHttpResponse getHttpResponse(
             HttpRequestBase requestBase, Object builder, HttpClientContext context, boolean useProxy) throws IOException {
 
         int timeout = 20000;

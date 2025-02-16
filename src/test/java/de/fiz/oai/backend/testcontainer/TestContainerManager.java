@@ -1,21 +1,20 @@
 package de.fiz.oai.backend.testcontainer;
 
 
-import com.github.dockerjava.api.DockerClient;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.utility.MountableFile;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * This class starts the required test-containers before a test method is run.
  * It is required that the used test-containers set the container reuse flag,
  * so that each a container is only created and setup once for all integration tests.
  */
-public class TestContainerManager  {
+public abstract class TestContainerManager  {
     static boolean cassandraSetupComplete = false;
     static boolean elasticsearchSetupComplete = false;
     static boolean solrSetupComplete = false;
@@ -24,14 +23,15 @@ public class TestContainerManager  {
     static GenericContainer<?> tomcatContainer;
 
     private static final String WAR_FILE_PATH = "target/oai-backend.war";
-    private static final String CONFIG_FILE_PATH = "src/test/resources/fiz-oai-backend.properties";
+    private static final String CONFIG_FILE_PATH = "src/test/resources/fiz-oai-backend-es.properties";
+    //private static final String CONFIG_FILE_PATH = "src/test/resources/fiz-oai-backend-solr.properties";
 
     public static Network.NetworkImpl network;
 
 
 
     @BeforeClass
-    public static void  setup() {
+    public static void  setup() throws IOException, InterruptedException {
         network =  Network.builder().createNetworkCmdModifier(createNetworkCmd -> createNetworkCmd.withName("oai-network")).build();
 
         if (!cassandraSetupComplete) {
@@ -47,11 +47,9 @@ public class TestContainerManager  {
             elasticsearchSetupComplete = ElasticsearchTestContainer.setConfigProperties();
         }
 
-//TODO
-//        if (!solrSetupComplete) {
-//            SolrTestContainer.container.start();
-//            solrSetupComplete = SolrTestContainer.setConfigProperties();
-//        }
+        if (!solrSetupComplete) {
+            SolrTestContainer.container.start();
+        }
 
         if (!tomcatComplete) {
             MountableFile warFile = MountableFile.forHostPath(new File(WAR_FILE_PATH).getAbsolutePath());
@@ -69,4 +67,5 @@ public class TestContainerManager  {
             tomcatComplete = tomcatContainer.isRunning();
         }
     }
+
 }

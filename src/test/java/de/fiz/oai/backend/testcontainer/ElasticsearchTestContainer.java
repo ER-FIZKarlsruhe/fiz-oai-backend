@@ -12,7 +12,7 @@ public class ElasticsearchTestContainer {
     public static final GenericContainer<ElasticsearchContainer> container =
             new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.17.13"))
                     .withExposedPorts(9200)
-                    .withNetwork(TestContainerManager.network)
+                    .withNetwork(BaseInstance.network)
                     .withNetworkAliases("elasticsearch-oai")
                     .withEnv("xpack.security.enabled", "false")
                     .withReuse(true);
