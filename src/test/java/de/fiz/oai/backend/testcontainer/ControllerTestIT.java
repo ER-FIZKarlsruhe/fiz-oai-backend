@@ -45,17 +45,23 @@ public class ControllerTestIT extends TestContainerManager {
 
     @Test
     public void testFormatController() throws IOException {
+        createFormat("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/");
+        createFormat("radar", "https://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/", "http://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/");
+        createFormat("datacite", "https://schema.datacite.org/meta/kernel-4.0/metadata.xsd", "http://datacite.org/schema/kernel-4");
+    }
+
+    private void createFormat(String prefix, String schemaLocation, String namespace) throws IOException{
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
-        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/format";
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/format/";
         System.out.println("Tomcat is running with deployed WAR at: " + baseUrl);
 
 
         final ObjectMapper mapper = new ObjectMapper();
         ObjectNode node = mapper.createObjectNode();
-        node.put("metadataPrefix", "oai_dc");
-        node.put("schemaLocation", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd");
-        node.put("schemaNamespace", "http://www.openarchives.org/OAI/2.0/oai_dc/");
+        node.put("metadataPrefix", prefix);
+        node.put("schemaLocation", schemaLocation);
+        node.put("schemaNamespace", namespace);
         node.put("identifierXpath", "/");
         String json = node.toString();
 
@@ -64,18 +70,19 @@ public class ControllerTestIT extends TestContainerManager {
         builder.setContentType(ContentType.APPLICATION_JSON);
         HttpClientContext context = HttpClientContext.create();
 
-        //Check if format already exists at oai-provider
-//        HttpGet get = new HttpGet(baseUrl + "/oai_dc");
-//        CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
-//        getResponse.getEntity().consumeContent();
-//        getResponse.close();
-
-        CloseableHttpResponse response;
+        CloseableHttpResponse postResponse;
         HttpPost post = new HttpPost(baseUrl);
         post.addHeader("Accept", "application/json");
-        response = getHttpResponse(post, builder, context, false);
+        postResponse = getHttpResponse(post, builder, context, false);
+        Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode());
+        postResponse.close();
 
-        Assertions.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+        HttpGet get = new HttpGet(baseUrl + prefix);
+        CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
+        getResponse.getEntity().consumeContent();
+        Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
+        getResponse.close();
+
     }
 
     private CloseableHttpResponse getHttpResponse(

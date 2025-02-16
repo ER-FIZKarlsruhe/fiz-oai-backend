@@ -18,6 +18,7 @@ import java.io.File;
 public class TestContainerManager  {
     static boolean cassandraSetupComplete = false;
     static boolean elasticsearchSetupComplete = false;
+    static boolean solrSetupComplete = false;
     static boolean tomcatComplete = false;
 
     static GenericContainer<?> tomcatContainer;
@@ -45,6 +46,12 @@ public class TestContainerManager  {
             ElasticsearchTestContainer.container.start();
             elasticsearchSetupComplete = ElasticsearchTestContainer.setConfigProperties();
         }
+
+//TODO
+//        if (!solrSetupComplete) {
+//            SolrTestContainer.container.start();
+//            solrSetupComplete = SolrTestContainer.setConfigProperties();
+//        }
 
         if (!tomcatComplete) {
             MountableFile warFile = MountableFile.forHostPath(new File(WAR_FILE_PATH).getAbsolutePath());
