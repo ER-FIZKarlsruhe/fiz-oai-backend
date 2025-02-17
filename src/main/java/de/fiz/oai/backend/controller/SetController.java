@@ -42,16 +42,16 @@ import org.apache.commons.lang3.StringUtils;
 import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.service.SetService;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 
 
 @Path("/set")
-@Api(value = "/set", tags = "SetController", description = "Controller for managing sets")
+@Tag(name = "SetController", description = "Controller for managing sets")
 public class SetController extends AbstractController {
 
   @Context
@@ -63,17 +63,14 @@ public class SetController extends AbstractController {
   @GET
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get set by name",
-      response = Set.class
-  )
+  @Operation(summary = "Get set by name", description = "Retrieve a set based on its name.")
   @ApiResponses({
-      @ApiResponse(code = 200, message = "Set retrieved successfully", response = Set.class),
-      @ApiResponse(code = 404, message = "Set not found"),
-      @ApiResponse(code = 400, message = "Bad request")
+          @ApiResponse(responseCode = "200", description = "Set retrieved successfully"),
+          @ApiResponse(responseCode = "404", description = "Set not found"),
+          @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public Set getSet(
-      @ApiParam(value = "Name of the set", required = true) @PathParam("name") String name,
+      @Parameter(description = "Name of the set", required = true) @PathParam("name") String name,
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
@@ -92,14 +89,10 @@ public class SetController extends AbstractController {
   
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get all sets",
-      response = Set.class,
-      responseContainer = "List"
-  )
+  @Operation(summary = "Get all sets", description = "Retrieve all sets.")
   @ApiResponses({
-      @ApiResponse(code = 200, message = "Sets retrieved successfully", response = Set.class, responseContainer = "List"),
-      @ApiResponse(code = 400, message = "Bad request")
+          @ApiResponse(responseCode = "200", description = "Sets retrieved successfully"),
+          @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public List<Set> getAllSets(
       @Context HttpServletRequest request,
@@ -113,15 +106,13 @@ public class SetController extends AbstractController {
   
   @DELETE
   @Path("/{name}")
-  @ApiOperation(
-      value = "Delete set by name"
-  )
+  @Operation(summary = "Delete set by name", description = "Deletes a set based on its name.")
   @ApiResponses({
-      @ApiResponse(code = 204, message = "Set deleted successfully"),
-      @ApiResponse(code = 400, message = "Bad request")
+          @ApiResponse(responseCode = "204", description = "Set deleted successfully"),
+          @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public void deleteSet(
-      @ApiParam(value = "Name of the set to delete", required = true) @PathParam("name") String name,
+      @Parameter(description = "Name of the set to delete", required = true) @PathParam("name") String name,
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
@@ -136,16 +127,13 @@ public class SetController extends AbstractController {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  @ApiOperation(
-      value = "Create new set",
-      response = Set.class
-  )
+  @Operation(summary = "Create a new set", description = "Creates a new set.")
   @ApiResponses({
-      @ApiResponse(code = 201, message = "Set created successfully", response = Set.class),
-      @ApiResponse(code = 400, message = "Bad request")
+          @ApiResponse(responseCode = "201", description = "Set created successfully"),
+          @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public Set createSet(
-      @ApiParam(value = "Set to create", required = true) Set set,
+      @Parameter(description = "Set to create", required = true) Set set,
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
     
@@ -172,17 +160,14 @@ public class SetController extends AbstractController {
   @Path("/{name}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  @ApiOperation(
-      value = "Update existing set",
-      response = Set.class
-  )
+  @Operation(summary = "Update existing set", description = "Updates an existing set.")
   @ApiResponses({
-      @ApiResponse(code = 200, message = "Set updated successfully", response = Set.class),
-      @ApiResponse(code = 400, message = "Bad request")
+          @ApiResponse(responseCode = "200", description = "Set updated successfully"),
+          @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public Set updateSet(
-      @ApiParam(value = "Name of the set", required = true) @PathParam("name") String name,
-      @ApiParam(value = "Set to update", required = true) Set set,
+      @Parameter(description = "Name of the set", required = true) @PathParam("name") String name,
+      @Parameter(description = "Set to update", required = true) Set set,
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 

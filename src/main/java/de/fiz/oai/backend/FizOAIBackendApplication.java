@@ -25,9 +25,16 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import de.fiz.oai.backend.utils.CassandraUtils;
 import de.fiz.oai.backend.utils.ClusterManager;
 import de.fiz.oai.backend.utils.Configuration;
-import io.swagger.jaxrs.config.BeanConfig;
-import io.swagger.jaxrs.listing.ApiListingResource;
-import io.swagger.jaxrs.listing.SwaggerSerializers;
+
+
+import io.swagger.v3.oas.integration.SwaggerConfiguration;
+import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.servers.Server;
+
+import java.util.Set;
+
 
 public class FizOAIBackendApplication extends ResourceConfig {
 
@@ -61,21 +68,27 @@ public class FizOAIBackendApplication extends ResourceConfig {
         register(MultiPartFeature.class);
         register(new FizOAIBackendBinder()); 
         
-        //this.configureSwagger();
+        this.configureSwagger();
     }
-    
-    
+
+
 
     private void configureSwagger() {
-      this.register(ApiListingResource.class);
-      this.register(SwaggerSerializers.class);
-      BeanConfig config = new BeanConfig();
-      config.setTitle("FizOaiBackend REST API");
-      config.setBasePath("/oai-backend");
-      config.setResourcePackage("de.fiz.oai.backend");
-      config.setPrettyPrint(true);
-      config.setScan(true);
+        OpenAPI oas = new OpenAPI()
+                .info(new Info()
+                        .title("FizOaiBackend REST API")
+                        .version("1.0.0")
+                        .description("API documentation for FizOAI Backend"))
+                .addServersItem(new Server().url("/oai-backend"));
+
+        SwaggerConfiguration oasConfig = new SwaggerConfiguration()
+                .openAPI(oas)
+                .prettyPrint(true)
+                .resourcePackages(Set.of("de.fiz.oai.backend"));
+
+        this.register(OpenApiResource.class);
     }
+
 
     public static FizOAIBackendApplication getInstance() {
         return instance;

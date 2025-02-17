@@ -14,13 +14,13 @@ import jakarta.ws.rs.core.Response.Status;
 
 import de.fiz.oai.backend.service.SearchService;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @Path("/reindex")
-@Api(value = "/reindex", tags = "ReindexController", description = "Controller for managing reindex operations")
+@Tag(name = "ReindexController", description = "Controller for managing reindex operations")
 public class ReindexController extends AbstractController {
 
   @Inject
@@ -28,12 +28,10 @@ public class ReindexController extends AbstractController {
 
   @POST
   @Path("/stop")
-  @ApiOperation(
-      value = "Stop reindexing process"
-  )
+  @Operation(summary = "Stop reindexing process")
   @ApiResponses({
-      @ApiResponse(code = 200, message = "Reindexing process stopped successfully"),
-      @ApiResponse(code = 500, message = "Not able to stop reindex process")
+          @ApiResponse(responseCode = "200", description = "Reindexing process stopped successfully"),
+          @ApiResponse(responseCode = "500", description = "Not able to stop reindex process")
   })
   public void stopReindexAll() {
 
@@ -47,12 +45,10 @@ public class ReindexController extends AbstractController {
   
   @POST
   @Path("/start")
-  @ApiOperation(
-      value = "Start reindexing process"
-  )
+  @Operation(summary = "Start reindexing process")
   @ApiResponses({
-      @ApiResponse(code = 200, message = "Reindexing process started successfully"),
-      @ApiResponse(code = 500, message = "Not able to start reindex process, maybe is already started. Please check with /status command.")
+          @ApiResponse(responseCode = "200", description = "Reindexing process started successfully"),
+          @ApiResponse(responseCode = "500", description = "Not able to start reindex process, maybe it is already started. Please check with /status command.")
   })
   public void startReindexAll() {
 
@@ -66,12 +62,9 @@ public class ReindexController extends AbstractController {
   @GET
   @Path("/status")
   @Produces(MediaType.TEXT_PLAIN)
-  @ApiOperation(
-      value = "Get reindexing status",
-      response = String.class
-  )
+  @Operation(summary = "Get reindexing status", description = "Retrieves the current reindexing status.")
   @ApiResponses({
-      @ApiResponse(code = 200, message = "Reindexing status retrieved successfully", response = String.class)
+          @ApiResponse(responseCode = "200", description = "Reindexing status retrieved successfully")
   })
   public String getStatus() {
 
@@ -81,12 +74,10 @@ public class ReindexController extends AbstractController {
 
   @GET
   @Path("/commit")
-  @ApiOperation(
-      value = "Commit reindexing changes"
-  )
+  @Operation(summary = "Commit reindexing changes")
   @ApiResponses({
-      @ApiResponse(code = 200, message = "Reindexing changes committed successfully"),
-      @ApiResponse(code = 500, message = "Failed to commit reindexing changes")
+          @ApiResponse(responseCode = "200", description = "Reindexing changes committed successfully"),
+          @ApiResponse(responseCode = "500", description = "Failed to commit reindexing changes")
   })
   public void commit() throws IOException {
     searchService.commit();

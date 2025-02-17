@@ -25,11 +25,11 @@ import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.models.Content;
 import de.fiz.oai.backend.service.ContentService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -50,7 +50,7 @@ import jakarta.ws.rs.core.Response.Status;
 
 
 @Path("/content")
-@Api(value = "/content", tags = "ContentController", description = "Controller for managing content")
+@Tag(name = "ContentController", description = "Controller for managing content")
 public class ContentController extends AbstractController {
 
   @Inject
@@ -61,18 +61,18 @@ public class ContentController extends AbstractController {
   @GET
   @Path("/{identifier}/{format}")
   @Produces(MediaType.APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get content by identifier and format",
-      response = Content.class
+  @Operation(
+          summary = "Get content by identifier and format",
+          description = "Retrieves content based on its identifier and format."
   )
   @ApiResponses({
-      @ApiResponse(code = 200, message = "Content retrieved successfully", response = Content.class),
-      @ApiResponse(code = 404, message = "Content not found"),
-      @ApiResponse(code = 400, message = "Bad request")
+          @ApiResponse(responseCode = "200", description = "Content retrieved successfully"),
+          @ApiResponse(responseCode = "404", description = "Content not found"),
+          @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public Content getContent(
-      @ApiParam(value = "Identifier of the content", required = true) @PathParam("identifier") String identifier,
-      @ApiParam(value = "Format of the content", required = true) @PathParam("format") String format,
+      @Parameter(description = "Identifier of the content", required = true) @PathParam("identifier") String identifier,
+      @Parameter(description = "Format of the content", required = true) @PathParam("format") String format,
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
@@ -96,18 +96,17 @@ public class ContentController extends AbstractController {
   @GET
   @Path("/{identifier}")
   @Produces(MediaType.APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get all content formats by identifier",
-      response = Content.class,
-      responseContainer = "List"
+  @Operation(
+          summary = "Get all content formats by identifier",
+          description = "Retrieves all available formats of the content for a given identifier."
   )
   @ApiResponses({
-      @ApiResponse(code = 200, message = "Content formats retrieved successfully", response = Content.class, responseContainer = "List"),
-      @ApiResponse(code = 404, message = "Content not found"),
-      @ApiResponse(code = 400, message = "Bad request")
+          @ApiResponse(responseCode = "200", description = "Content formats retrieved successfully"),
+          @ApiResponse(responseCode = "404", description = "Content not found"),
+          @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public List<Content> getAllContentFormats(
-      @ApiParam(value = "Identifier of the content", required = true) @PathParam("identifier") String identifier,
+      @Parameter(description = "Identifier of the content", required = true) @PathParam("identifier") String identifier,
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
@@ -128,16 +127,14 @@ public class ContentController extends AbstractController {
 
   @DELETE
   @Path("/{identifier}/{format}")
-  @ApiOperation(
-      value = "Delete content by identifier and format"
-  )
+  @Operation(summary = "Delete content by identifier and format")
   @ApiResponses({
-      @ApiResponse(code = 204, message = "Content deleted successfully"),
-      @ApiResponse(code = 400, message = "Bad request")
+          @ApiResponse(responseCode = "204", description = "Content deleted successfully"),
+          @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public void deleteContent(
-      @ApiParam(value = "Identifier of the content", required = true) @PathParam("identifier") String identifier,
-      @ApiParam(value = "Format of the content", required = true) @PathParam("format") String format,
+      @Parameter(description = "Identifier of the content", required = true) @PathParam("identifier") String identifier,
+      @Parameter(description = "Format of the content", required = true) @PathParam("format") String format,
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
@@ -155,16 +152,13 @@ public class ContentController extends AbstractController {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  @ApiOperation(
-      value = "Create new content",
-      response = Content.class
-  )
+  @Operation(summary = "Create new content", description = "Creates a new content entry.")
   @ApiResponses({
-      @ApiResponse(code = 201, message = "Content created successfully", response = Content.class),
-      @ApiResponse(code = 400, message = "Bad request")
+          @ApiResponse(responseCode = "201", description = "Content created successfully"),
+          @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public Content createContent(
-      @ApiParam(value = "Content to create", required = true) Content content,
+      @Parameter(description = "Content to create", required = true) Content content,
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
@@ -179,16 +173,13 @@ public class ContentController extends AbstractController {
   @PUT
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  @ApiOperation(
-      value = "Update existing content",
-      response = Content.class
-  )
+  @Operation(summary = "Update existing content", description = "Updates an existing content entry.")
   @ApiResponses({
-      @ApiResponse(code = 200, message = "Content updated successfully", response = Content.class),
-      @ApiResponse(code = 400, message = "Bad request")
+          @ApiResponse(responseCode = "200", description = "Content updated successfully"),
+          @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public Content updateContent(
-      @ApiParam(value = "Content to update", required = true) Content content,
+      @Parameter(description = "Content to update", required = true) Content content,
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 

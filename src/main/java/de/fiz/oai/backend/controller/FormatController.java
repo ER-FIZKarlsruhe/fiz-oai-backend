@@ -43,14 +43,14 @@ import org.slf4j.LoggerFactory;
 import de.fiz.oai.backend.models.Format;
 import de.fiz.oai.backend.service.FormatService;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @Path("/format")
-@Api(value = "/format", tags = "FormatController", description = "Controller for managing formats")
+@Tag(name = "FormatController", description = "Controller for managing formats")
 public class FormatController extends AbstractController {
 
   @Inject
@@ -61,17 +61,14 @@ public class FormatController extends AbstractController {
   @GET
   @Path("/{metadataPrefix}")
   @Produces(MediaType.APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get format by metadataPrefix",
-      response = Format.class
-  )
+  @Operation(summary = "Get format by metadataPrefix", description = "Retrieves a format based on its metadataPrefix.")
   @ApiResponses({
-      @ApiResponse(code = 200, message = "Format retrieved successfully", response = Format.class),
-      @ApiResponse(code = 404, message = "Format not found"),
-      @ApiResponse(code = 400, message = "Bad request")
+          @ApiResponse(responseCode = "200", description = "Format retrieved successfully"),
+          @ApiResponse(responseCode = "404", description = "Format not found"),
+          @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public Format getFormat(
-      @ApiParam(value = "Metadata prefix of the format", required = true) @PathParam("metadataPrefix") String metadataPrefix,
+      @Parameter(description = "Metadata prefix of the format", required = true) @PathParam("metadataPrefix") String metadataPrefix,
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
@@ -90,14 +87,10 @@ public class FormatController extends AbstractController {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get all formats",
-      response = Format.class,
-      responseContainer = "List"
-  )
+  @Operation(summary = "Get all formats", description = "Retrieves all available formats.")
   @ApiResponses({
-      @ApiResponse(code = 200, message = "Formats retrieved successfully", response = Format.class, responseContainer = "List"),
-      @ApiResponse(code = 400, message = "Bad request")
+          @ApiResponse(responseCode = "200", description = "Formats retrieved successfully"),
+          @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public List<Format> getAllFormats(
       @Context HttpServletRequest request,
@@ -110,15 +103,13 @@ public class FormatController extends AbstractController {
 
   @DELETE
   @Path("/{metadataPrefix}")
-  @ApiOperation(
-      value = "Delete format by metadataPrefix"
-  )
+  @Operation(summary = "Delete format by metadataPrefix")
   @ApiResponses({
-      @ApiResponse(code = 204, message = "Format deleted successfully"),
-      @ApiResponse(code = 400, message = "Bad request")
+          @ApiResponse(responseCode = "204", description = "Format deleted successfully"),
+          @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public void deleteFormat(
-      @ApiParam(value = "Metadata prefix of the format to delete", required = true) @PathParam("metadataPrefix") String metadataPrefix,
+          @Parameter(description = "Metadata prefix of the format to delete", required = true) @PathParam("metadataPrefix") String metadataPrefix,
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
@@ -134,16 +125,13 @@ public class FormatController extends AbstractController {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  @ApiOperation(
-      value = "Create new format",
-      response = Format.class
-  )
+  @Operation(summary = "Create new format", description = "Creates a new format entry.")
   @ApiResponses({
-      @ApiResponse(code = 201, message = "Format created successfully", response = Format.class),
-      @ApiResponse(code = 400, message = "Bad request")
+          @ApiResponse(responseCode = "201", description = "Format created successfully"),
+          @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public Format createFormat(
-      @ApiParam(value = "Format to create", required = true) Format format,
+          @Parameter(description = "Format to create", required = true) Format format,
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
       
@@ -179,17 +167,14 @@ public class FormatController extends AbstractController {
   @Path("/{metadataPrefix}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  @ApiOperation(
-      value = "Update existing format",
-      response = Format.class
-  )
+  @Operation(summary = "Update existing format", description = "Updates an existing format entry.")
   @ApiResponses({
-      @ApiResponse(code = 200, message = "Format updated successfully", response = Format.class),
-      @ApiResponse(code = 400, message = "Bad request")
+          @ApiResponse(responseCode = "200", description = "Format updated successfully"),
+          @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public Format updateFormat(
-      @ApiParam(value = "Metadata prefix of the format", required = true) @PathParam("metadataPrefix") String metadataPrefix,
-      @ApiParam(value = "Format to update", required = true) Format format,
+          @Parameter(description = "Metadata prefix of the format", required = true) @PathParam("metadataPrefix") String metadataPrefix,
+          @Parameter(description = "Format to update", required = true) Format format,
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
   
