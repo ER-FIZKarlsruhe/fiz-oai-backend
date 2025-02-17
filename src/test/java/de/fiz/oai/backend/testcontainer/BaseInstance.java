@@ -74,12 +74,6 @@ public abstract class BaseInstance extends TestContainerManager {
 
         String identifierUrlEncoded = URLEncoder.encode(doi, "UTF-8");
 
-//        HttpGet get = new HttpGet(oaiUploadUrl + identifierUrlEncoded)
-//        CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false)
-//        log.info("Search doi in backend returns: " + getResponse.getStatusLine().getStatusCode())
-//        getResponse.getEntity().consumeContent()
-//        getResponse.close()
-
         CloseableHttpResponse response;
 
         HttpPost post = new HttpPost(baseUrl);
@@ -90,6 +84,12 @@ public abstract class BaseInstance extends TestContainerManager {
         final String errlogs = tomcatContainer.getLogs(OutputFrame.OutputType.STDERR);
         response.close();
 
+        //Read item content
+        HttpGet get = new HttpGet(baseUrl + "10.5072%2F38238?format=radar&content=true");
+        CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
+        getResponse.getEntity().consumeContent();
+        Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
+        getResponse.close();
     }
 
 

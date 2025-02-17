@@ -24,6 +24,7 @@ public abstract class TestContainerManager  {
 
     private static final String WAR_FILE_PATH = "target/oai-backend.war";
     private static final String CONFIG_FILE_PATH = "src/test/resources/fiz-oai-backend-es.properties";
+    private static final String SERVER_FILE_PATH = "docker/server.xml";
     //private static final String CONFIG_FILE_PATH = "src/test/resources/fiz-oai-backend-solr.properties";
 
     public static Network.NetworkImpl network;
@@ -54,15 +55,16 @@ public abstract class TestContainerManager  {
         if (!tomcatComplete) {
             MountableFile warFile = MountableFile.forHostPath(new File(WAR_FILE_PATH).getAbsolutePath());
 
-            MountableFile configFiles = MountableFile.forHostPath(
-                    new File(CONFIG_FILE_PATH).getAbsolutePath());
+            MountableFile configFiles = MountableFile.forHostPath(new File(CONFIG_FILE_PATH).getAbsolutePath());
+
+            MountableFile serverFile = MountableFile.forHostPath(new File(SERVER_FILE_PATH).getAbsolutePath());
 
             tomcatContainer = new GenericContainer<>("tomcat:11-jre21-temurin")
                     .withExposedPorts(8080)
                     .withNetwork(TestContainerManager.network)
                     .withCopyFileToContainer(warFile, "/usr/local/tomcat/webapps/oai-backend.war")
-                    .withCopyFileToContainer(configFiles, "/usr/local/tomcat/conf/fiz-oai-backend.properties");
-
+                    .withCopyFileToContainer(configFiles, "/usr/local/tomcat/conf/fiz-oai-backend.properties")
+                    .withCopyFileToContainer(serverFile, "/usr/local/tomcat/conf/server.xml");
             tomcatContainer.start();
             tomcatComplete = tomcatContainer.isRunning();
         }

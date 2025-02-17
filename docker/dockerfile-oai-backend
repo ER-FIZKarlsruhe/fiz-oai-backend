@@ -14,4 +14,6 @@ RUN chmod -R 770 /usr/local/tomcat/
 
 USER $UNAME
 
+COPY docker/server.xml /usr/local/tomcat/conf/server.xml
+
 COPY target/oai-backend.war /usr/local/tomcat/webapps
