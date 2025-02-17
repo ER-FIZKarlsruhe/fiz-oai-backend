@@ -46,6 +46,8 @@ public abstract class TestContainerManager  {
         if (!elasticsearchSetupComplete) {
             ElasticsearchTestContainer.container.start();
             elasticsearchSetupComplete = ElasticsearchTestContainer.setConfigProperties();
+
+            ElasticsearchTestContainer.createIndexAndAlias();
         }
 
         if (!solrSetupComplete) {

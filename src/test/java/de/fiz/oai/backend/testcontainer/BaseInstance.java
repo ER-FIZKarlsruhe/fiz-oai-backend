@@ -27,6 +27,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 
 public abstract class BaseInstance extends TestContainerManager {
 
@@ -65,6 +66,7 @@ public abstract class BaseInstance extends TestContainerManager {
         ObjectNode node = mapper.createObjectNode();
         node.put("identifier", doi);
         node.put("ingestFormat", "radar");
+        node.putPOJO("tags", List.of( "testtag"));
         String json = node.toString();
 
         MultipartEntityBuilder builder = MultipartEntityBuilder.create();
@@ -92,6 +94,26 @@ public abstract class BaseInstance extends TestContainerManager {
         getResponse.close();
     }
 
+
+    protected void searchItems() throws IOException {
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/item";
+
+        System.out.println("searchItems " );
+
+
+        CloseableHttpResponse response;
+        EntityBuilder builder = EntityBuilder.create();
+        HttpClientContext context = HttpClientContext.create();
+
+        final String logs = tomcatContainer.getLogs(OutputFrame.OutputType.STDOUT);
+        final String errlogs = tomcatContainer.getLogs(OutputFrame.OutputType.STDERR);
+
+        HttpGet get = new HttpGet(baseUrl + "?format=radar&content=true");
+        CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
+        getResponse.getEntity().consumeContent();
+        Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
+        getResponse.close();
+    }
 
     protected void createFormat(String prefix, String schemaLocation, String namespace) throws IOException{
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
@@ -125,6 +147,51 @@ public abstract class BaseInstance extends TestContainerManager {
         postResponse.close();
 
         HttpGet get = new HttpGet(baseUrl + prefix);
+        CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
+        getResponse.getEntity().consumeContent();
+        Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
+        getResponse.close();
+
+    }
+
+
+    protected void createSet(String name, String spec, String description, List<String> tags) throws IOException{
+        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/set/";
+        System.out.println("Set " + name);
+
+
+        final ObjectMapper mapper = new ObjectMapper();
+        ObjectNode node = mapper.createObjectNode();
+        node.put("name", name);
+        node.put("spec", spec);
+        node.put("description", description);
+        if (tags != null && !tags.isEmpty()) {
+            node.putPOJO("tags", tags); // More efficient for lists
+        } else {
+            node.putArray("tags"); // Empty array if no tags
+        }
+
+        String json = node.toString();
+
+        EntityBuilder builder = EntityBuilder.create();
+        builder.setText(json);
+        builder.setContentType(ContentType.APPLICATION_JSON);
+        HttpClientContext context = HttpClientContext.create();
+
+        CloseableHttpResponse postResponse;
+        HttpPost post = new HttpPost(baseUrl);
+        post.addHeader("Accept", "application/json");
+        postResponse = getHttpResponse(post, builder, context, false);
+
+        final String logs = tomcatContainer.getLogs(OutputFrame.OutputType.STDOUT);
+        final String errlogs = tomcatContainer.getLogs(OutputFrame.OutputType.STDERR);
+
+        Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode());
+        postResponse.close();
+
+        HttpGet get = new HttpGet(baseUrl + name);
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
         getResponse.getEntity().consumeContent();
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());

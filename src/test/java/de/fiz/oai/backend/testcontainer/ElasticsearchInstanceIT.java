@@ -3,6 +3,7 @@ package de.fiz.oai.backend.testcontainer;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.List;
 
 
 public class ElasticsearchInstanceIT extends BaseInstance {
@@ -17,7 +18,11 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         createCrosswalk("Radar2datacite", "radar", "datacite", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
         createCrosswalk("Radar2OAI_DC_v09", "radar", "oai_dc", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
 
+        createSet("testset", "testset", "this is a testset", List.of( "testtag"));
+
         sendRadarMetadataToOaiBackend();
+
+        searchItems();
     }
 
 }
