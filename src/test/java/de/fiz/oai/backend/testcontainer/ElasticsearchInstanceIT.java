@@ -24,7 +24,8 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
         searchItems();
 
-        reindex();
+        reindex("items2");
+        reindex("items3");
     }
 
     @Test

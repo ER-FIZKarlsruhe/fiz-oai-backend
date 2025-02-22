@@ -126,7 +126,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
 
 
-    protected void reindex() throws IOException {
+    protected void reindex(String expectIndexName) throws IOException {
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/reindex/";
 
         System.out.println("reindex " );
@@ -137,10 +137,38 @@ public abstract class BaseInstance extends TestContainerManager {
         HttpClientContext context = HttpClientContext.create();
 
         HttpPost post = new HttpPost(baseUrl + "start");
-        CloseableHttpResponse getResponse = getHttpResponse(post, builder, context, false);
-        getResponse.getEntity().consumeContent();
+        CloseableHttpResponse postResponse = getHttpResponse(post, builder, context, false);
+        postResponse.getEntity().consumeContent();
+        Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode());
+        postResponse.close();
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        String esUrl = "http://localhost:" + ElasticsearchTestContainer.container.getMappedPort(9200) +"/";
+
+        HttpGet get = new HttpGet(esUrl + "_cat/indices");
+        CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
+        InputStream is = getResponse.getEntity().getContent();
+        String indices = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        System.out.println("indices: " + indices);
+        Assertions.assertTrue(indices.contains(expectIndexName));
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
+
+
+        get = new HttpGet(esUrl + "_cat/aliases");
+        getResponse = getHttpResponse(get, builder, context, false);
+        is = getResponse.getEntity().getContent();
+        String aliases = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        System.out.println("aliases: " + aliases);
+        Assertions.assertTrue(aliases.contains("items " + expectIndexName));
+        Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
+        getResponse.close();
+
     }
 
 
