@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Assertions;
 import org.testcontainers.containers.output.OutputFrame;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -77,19 +78,27 @@ public abstract class BaseInstance extends TestContainerManager {
         String identifierUrlEncoded = URLEncoder.encode(doi, "UTF-8");
 
         CloseableHttpResponse response;
-
         HttpPost post = new HttpPost(baseUrl);
         response = getHttpResponse(post, builder, context, false);
-
         response.getEntity().consumeContent();
-        final String logs = tomcatContainer.getLogs(OutputFrame.OutputType.STDOUT);
-        final String errlogs = tomcatContainer.getLogs(OutputFrame.OutputType.STDERR);
         response.close();
 
-        //Read item content
-        HttpGet get = new HttpGet(baseUrl + "10.5072%2F38238?format=radar&content=true");
+        //Read item radar content
+        testFormatContent("10.5072%2F38238", "radar", "http://radar-service.eu/schemas/descriptive/radar/v09/radar-elements");
+        testFormatContent("10.5072%2F38238", "oai_dc", "http://purl.org/dc/elements/1.1/");
+        testFormatContent("10.5072%2F38238", "datacite", "http://datacite.org/schema/kernel-4");
+    }
+
+    private void testFormatContent(String id, String format, String contains) throws IOException {
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/item/";
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        HttpClientContext context = HttpClientContext.create();
+
+        HttpGet get = new HttpGet(baseUrl + id + "?format=" + format + "&content=true");
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
-        getResponse.getEntity().consumeContent();
+        InputStream is = getResponse.getEntity().getContent();
+        String radarXml = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        Assertions.assertTrue(radarXml.contains(contains));
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
     }
@@ -152,6 +161,118 @@ public abstract class BaseInstance extends TestContainerManager {
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
 
+    }
+
+    protected void updateFormat(String prefix, String schemaLocation, String namespace) throws IOException{
+        System.out.println("updateFormat " + prefix);
+        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/format/";
+
+        final ObjectMapper mapper = new ObjectMapper();
+        ObjectNode node = mapper.createObjectNode();
+        node.put("metadataPrefix", prefix);
+        node.put("schemaLocation", schemaLocation);
+        node.put("schemaNamespace", namespace);
+        node.put("identifierXpath", "/");
+        String json = node.toString();
+
+        EntityBuilder builder = EntityBuilder.create();
+        builder.setText(json);
+        builder.setContentType(ContentType.APPLICATION_JSON);
+        HttpClientContext context = HttpClientContext.create();
+
+        CloseableHttpResponse putResponse;
+        HttpPut put = new HttpPut(baseUrl + prefix);
+        put.addHeader("Accept", "application/json");
+        putResponse = getHttpResponse(put, builder, context, false);
+
+        Assertions.assertEquals(HttpStatus.SC_OK, putResponse.getStatusLine().getStatusCode());
+        putResponse.close();
+
+        HttpGet get = new HttpGet(baseUrl + prefix);
+        CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
+        getResponse.getEntity().consumeContent();
+        Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
+        getResponse.close();
+
+    }
+
+
+    protected void deleteFormat(String prefix) throws IOException{
+        System.out.println("deleteFormat " + prefix);
+
+        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/format/";
+
+        EntityBuilder builder = EntityBuilder.create();
+        HttpClientContext context = HttpClientContext.create();
+
+        CloseableHttpResponse putResponse;
+        HttpDelete delete = new HttpDelete(baseUrl + prefix);
+        delete.addHeader("Accept", "application/json");
+        putResponse = getHttpResponse(delete, builder, context, false);
+
+        Assertions.assertEquals(204, putResponse.getStatusLine().getStatusCode());
+        putResponse.close();
+
+        HttpGet get = new HttpGet(baseUrl + prefix);
+        CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
+        getResponse.getEntity().consumeContent();
+        Assertions.assertEquals(HttpStatus.SC_NOT_FOUND, getResponse.getStatusLine().getStatusCode());
+        getResponse.close();
+    }
+
+
+    protected void deleteCrosswalk(String prefix) throws IOException{
+        System.out.println("deleteCrosswalk " + prefix);
+
+        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/crosswalk/";
+
+        EntityBuilder builder = EntityBuilder.create();
+        HttpClientContext context = HttpClientContext.create();
+
+        CloseableHttpResponse putResponse;
+        HttpDelete delete = new HttpDelete(baseUrl + prefix);
+        delete.addHeader("Accept", "application/json");
+        putResponse = getHttpResponse(delete, builder, context, false);
+
+        Assertions.assertEquals(204, putResponse.getStatusLine().getStatusCode());
+        putResponse.close();
+
+        HttpGet get = new HttpGet(baseUrl + prefix);
+        CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
+        getResponse.getEntity().consumeContent();
+        Assertions.assertEquals(HttpStatus.SC_NOT_FOUND, getResponse.getStatusLine().getStatusCode());
+        getResponse.close();
+    }
+
+    protected void deleteSet(String setName) throws IOException{
+        System.out.println("deleteSet " + setName);
+
+        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/set/";
+
+        EntityBuilder builder = EntityBuilder.create();
+        HttpClientContext context = HttpClientContext.create();
+
+        CloseableHttpResponse putResponse;
+        HttpDelete delete = new HttpDelete(baseUrl + setName);
+        delete.addHeader("Accept", "application/json");
+        putResponse = getHttpResponse(delete, builder, context, false);
+
+        Assertions.assertEquals(204, putResponse.getStatusLine().getStatusCode());
+        putResponse.close();
+
+        HttpGet get = new HttpGet(baseUrl + setName);
+        CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
+        getResponse.getEntity().consumeContent();
+        Assertions.assertEquals(HttpStatus.SC_NOT_FOUND, getResponse.getStatusLine().getStatusCode());
+        getResponse.close();
     }
 
 
@@ -229,7 +350,7 @@ public abstract class BaseInstance extends TestContainerManager {
         Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode());
         postResponse.close();
 
-        HttpGet get = new HttpGet(baseUrl + "Radar2datacite");
+        HttpGet get = new HttpGet(baseUrl + name);
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
         getResponse.getEntity().consumeContent();
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());

@@ -25,4 +25,26 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         searchItems();
     }
 
+    @Test
+    public void testCrudFormats() throws IOException {
+        createFormat("test_format", "http://abc.de/", "http://abc.de/test_format");
+        updateFormat("test_format", "http://adc.de/new", "http://adc.de/test_format");
+        deleteFormat("test_format");
+    }
+
+    @Test
+    public void testCrudCrosswalks() throws IOException {
+        createFormat("test_format1", "http://abc.de/", "http://abc.de/test_format");
+        createFormat("test_format2", "http://abc.de/", "http://abc.de/test_format");
+        createCrosswalk("format1ToFormat2", "test_format1", "test_format2", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
+        //TODO update crosswalk
+        deleteCrosswalk("format1ToFormat2");
+    }
+
+    @Test
+    public void testCrudSets() throws IOException {
+        createSet("testset1", "testset1", "this is a testset1", List.of( "testtag"));
+        deleteSet("testset1");
+    }
+
 }
