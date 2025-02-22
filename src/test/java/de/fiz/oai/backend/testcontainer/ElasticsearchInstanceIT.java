@@ -23,6 +23,8 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         sendRadarMetadataToOaiBackend();
 
         searchItems();
+
+        reindex();
     }
 
     @Test
@@ -36,14 +38,15 @@ public class ElasticsearchInstanceIT extends BaseInstance {
     public void testCrudCrosswalks() throws IOException {
         createFormat("test_format1", "http://abc.de/", "http://abc.de/test_format");
         createFormat("test_format2", "http://abc.de/", "http://abc.de/test_format");
-        createCrosswalk("format1ToFormat2", "test_format1", "test_format2", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
-        //TODO update crosswalk
+        createCrosswalk("format1ToFormat2", "test_format1", "test_format2", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
+        updateCrosswalk("format1ToFormat2", "test_format1", "test_format2", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
         deleteCrosswalk("format1ToFormat2");
     }
 
     @Test
     public void testCrudSets() throws IOException {
         createSet("testset1", "testset1", "this is a testset1", List.of( "testtag"));
+        updateSet("testset1", "testset1chenged", "Changed testset1", List.of( "testtag"));
         deleteSet("testset1");
     }
 

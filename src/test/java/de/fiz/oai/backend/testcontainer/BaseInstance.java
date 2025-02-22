@@ -124,6 +124,27 @@ public abstract class BaseInstance extends TestContainerManager {
         getResponse.close();
     }
 
+
+
+    protected void reindex() throws IOException {
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/reindex/";
+
+        System.out.println("reindex " );
+        CloseableHttpResponse response;
+        EntityBuilder builder = EntityBuilder.create();
+        //httpEntity = new StringEntity("", StandardCharsets.UTF_8);
+        builder.setText("");
+        HttpClientContext context = HttpClientContext.create();
+
+        HttpPost post = new HttpPost(baseUrl + "start");
+        CloseableHttpResponse getResponse = getHttpResponse(post, builder, context, false);
+        getResponse.getEntity().consumeContent();
+        Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
+        getResponse.close();
+    }
+
+
+
     protected void createFormat(String prefix, String schemaLocation, String namespace) throws IOException{
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
@@ -317,8 +338,43 @@ public abstract class BaseInstance extends TestContainerManager {
         getResponse.getEntity().consumeContent();
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
-
     }
+
+    protected void updateSet(String name, String spec, String description, List<String> tags) throws IOException{
+        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/set/";
+        System.out.println("Set " + name);
+
+
+        final ObjectMapper mapper = new ObjectMapper();
+        ObjectNode node = mapper.createObjectNode();
+        node.put("name", name);
+        node.put("spec", spec);
+        node.put("description", description);
+        if (tags != null && !tags.isEmpty()) {
+            node.putPOJO("tags", tags); // More efficient for lists
+        } else {
+            node.putArray("tags"); // Empty array if no tags
+        }
+
+        String json = node.toString();
+
+        EntityBuilder builder = EntityBuilder.create();
+        builder.setText(json);
+        builder.setContentType(ContentType.APPLICATION_JSON);
+        HttpClientContext context = HttpClientContext.create();
+
+        CloseableHttpResponse postResponse;
+        HttpPut put = new HttpPut(baseUrl + name);
+        put.addHeader("Accept", "application/json");
+        postResponse = getHttpResponse(put, builder, context, false);
+
+        Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode());
+        postResponse.close();
+    }
+
+
 
     protected void createCrosswalk(String name, String formatFrom, String formatTo, String xsltStylesheet) throws IOException {
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
@@ -355,7 +411,37 @@ public abstract class BaseInstance extends TestContainerManager {
         getResponse.getEntity().consumeContent();
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
+    }
 
+    protected void updateCrosswalk(String name, String formatFrom, String formatTo, String xsltStylesheet) throws IOException {
+        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+
+        System.out.println("updateCrosswalk " + name);
+
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/crosswalk/";
+        String dataciteXslt = new String(Files.readAllBytes(Paths.get(xsltStylesheet)));
+
+        final ObjectMapper mapper = new ObjectMapper();
+        ObjectNode node = mapper.createObjectNode();
+        node.put("name", name);
+        node.put("formatFrom", formatFrom);
+        node.put("formatTo", formatTo);
+        node.put("xsltStylesheet", dataciteXslt);
+
+        String json = node.toString();
+
+        EntityBuilder builder = EntityBuilder.create();
+        builder.setText(json);
+        builder.setContentType(ContentType.APPLICATION_JSON);
+        HttpClientContext context = HttpClientContext.create();
+
+        HttpPut put = new HttpPut(baseUrl + name);
+        put.addHeader("Accept", "application/json");
+        CloseableHttpResponse putResponse = getHttpResponse(put, builder, context, false);
+
+        putResponse.getEntity().consumeContent();
+        Assertions.assertEquals(HttpStatus.SC_OK, putResponse.getStatusLine().getStatusCode());
+        putResponse.close();
     }
 
     protected CloseableHttpResponse getHttpResponse(

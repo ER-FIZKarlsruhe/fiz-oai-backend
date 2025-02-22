@@ -148,6 +148,7 @@ public class CrosswalkController extends AbstractController {
 
   
   @PUT
+  @Path("/{name}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @Operation(summary = "Update existing crosswalk", description = "Updates an existing crosswalk entry.")
@@ -156,9 +157,10 @@ public class CrosswalkController extends AbstractController {
           @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public Crosswalk updateCrosswalk(
+          @Parameter(description = "Name of the crosswalk", required = true) @PathParam("name") String name,
           @Parameter(description = "Crosswalk to update", required = true) Crosswalk crosswalk,
-      @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws IOException {
+          @Context HttpServletRequest request,
+          @Context HttpServletResponse response) throws IOException {
 
     validate(crosswalk);
 
