@@ -3,6 +3,8 @@ package de.fiz.oai.backend.testcontainer;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 
@@ -11,6 +13,8 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
     @Test
     public void testAllEndpoints() throws IOException {
+        String template = new String(Files.readAllBytes(Paths.get("src/test/resources/radar-md-template.xml")));
+
         createFormat("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/");
         createFormat("radar", "https://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/", "http://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/");
         createFormat("datacite", "https://schema.datacite.org/meta/kernel-4.0/metadata.xsd", "http://datacite.org/schema/kernel-4");
@@ -20,12 +24,32 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
         createSet("testset", "testset", "this is a testset", List.of( "testtag"));
 
-        sendRadarMetadataToOaiBackend();
+        createItem("10.5072/38238", template);
 
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        checkItemsInIndex(1);
         searchItems();
 
-        reindex("items2");
-        reindex("items3");
+        reindexElasticsearch("items2");
+        reindexElasticsearch("items3");
+
+        for(int i = 0; i <= 1000; i++) {
+            createItem("10.5072/38238_" + i, template);
+        }
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        checkItemsInIndex(1002);
+
     }
 
     @Test

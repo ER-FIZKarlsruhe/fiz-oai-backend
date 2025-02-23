@@ -55,17 +55,17 @@ public abstract class BaseInstance extends TestContainerManager {
 
 
 
-    protected void sendRadarMetadataToOaiBackend() throws IOException {
+    protected void createItem(String identifier, String template) throws IOException {
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/item/";
 
-        System.out.println("sendRadarMetadataToOaiBackend " );
+        System.out.println("createItem " + identifier);
 
-        String doi = "10.5072/38238";
-        String xml = new String(Files.readAllBytes(Paths.get("src/test/resources/10.5072-38238.xml")));
+
+        String xml = template.replace("@@doi@@", identifier);
 
         final ObjectMapper mapper = new ObjectMapper();
         ObjectNode node = mapper.createObjectNode();
-        node.put("identifier", doi);
+        node.put("identifier", identifier);
         node.put("ingestFormat", "radar");
         node.putPOJO("tags", List.of( "testtag"));
         String json = node.toString();
@@ -75,8 +75,8 @@ public abstract class BaseInstance extends TestContainerManager {
         builder.addBinaryBody("content", xml.getBytes(StandardCharsets.UTF_8));
         HttpClientContext context = HttpClientContext.create();
 
-        String identifierUrlEncoded = URLEncoder.encode(doi, "UTF-8");
-
+        String identifierUrlEncoded = URLEncoder.encode(identifier, "UTF-8");
+        System.out.println("identifierUrlEncoded: " + identifierUrlEncoded);
         CloseableHttpResponse response;
         HttpPost post = new HttpPost(baseUrl);
         response = getHttpResponse(post, builder, context, false);
@@ -84,9 +84,9 @@ public abstract class BaseInstance extends TestContainerManager {
         response.close();
 
         //Read item radar content
-        testFormatContent("10.5072%2F38238", "radar", "http://radar-service.eu/schemas/descriptive/radar/v09/radar-elements");
-        testFormatContent("10.5072%2F38238", "oai_dc", "http://purl.org/dc/elements/1.1/");
-        testFormatContent("10.5072%2F38238", "datacite", "http://datacite.org/schema/kernel-4");
+        testFormatContent(identifierUrlEncoded, "radar", "http://radar-service.eu/schemas/descriptive/radar/v09/radar-elements");
+        testFormatContent(identifierUrlEncoded, "oai_dc", "http://purl.org/dc/elements/1.1/");
+        testFormatContent(identifierUrlEncoded, "datacite", "http://datacite.org/schema/kernel-4");
     }
 
     private void testFormatContent(String id, String format, String contains) throws IOException {
@@ -126,7 +126,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
 
 
-    protected void reindex(String expectIndexName) throws IOException {
+    protected void reindexElasticsearch(String expectIndexName) throws IOException {
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/reindex/";
 
         System.out.println("reindex " );
@@ -169,6 +169,23 @@ public abstract class BaseInstance extends TestContainerManager {
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
 
+    }
+
+    protected void checkItemsInIndex(int expectedItems) throws IOException {
+        String esUrl = "http://localhost:" + ElasticsearchTestContainer.container.getMappedPort(9200) +"/";
+
+        EntityBuilder builder = EntityBuilder.create();
+        HttpClientContext context = HttpClientContext.create();
+
+        HttpGet get = new HttpGet(esUrl + "items/_search");
+        CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
+        InputStream is = getResponse.getEntity().getContent();
+        String searchResult = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        System.out.println("search result: " + searchResult);
+        Assertions.assertTrue(searchResult.contains("total\":{\"value\":"+ expectedItems ));
+
+        Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
+        getResponse.close();
     }
 
 
