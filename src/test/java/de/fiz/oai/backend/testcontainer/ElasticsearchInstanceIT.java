@@ -1,6 +1,12 @@
 package de.fiz.oai.backend.testcontainer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import de.fiz.oai.backend.models.Item;
+import de.fiz.oai.backend.models.SearchResult;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,7 +39,9 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         }
 
         checkItemsInIndex(1);
-        searchItems();
+        String result = searchItems("radar", true, null);
+        Assertions.assertTrue(result.contains("\"searchMark\":null"));
+        Assertions.assertTrue(result.contains("\"total\":1,\"size\":1"));
 
         reindexElasticsearch("items2");
         reindexElasticsearch("items3");
@@ -42,6 +50,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
             createItem("10.5072/38238_" + i, template);
         }
 
+        //Wait a bit, that ES has all documents in the index
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
@@ -50,6 +59,38 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
         checkItemsInIndex(1002);
 
+        int countSearchWithMarks = 1;
+        result = searchItems("oai_dc" , false, null);
+        SearchResult<Item> itemResult = convertStringToSearchResult(result);
+        String searchMark = itemResult.getSearchMark();
+        Assertions.assertTrue(searchMark != null);
+        System.out.println("searchMark " + searchMark);
+
+        while (searchMark != null) {
+            countSearchWithMarks++;
+            result = searchItems("oai_dc" , false, searchMark);
+            itemResult = convertStringToSearchResult(result);
+            searchMark = itemResult.getSearchMark();
+            System.out.println("searchMark " + searchMark);
+        }
+
+        Assertions.assertEquals(11,countSearchWithMarks);
+
+
+    }
+
+
+    SearchResult<Item> convertStringToSearchResult(String json) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JavaType type = objectMapper.getTypeFactory().constructParametricType(SearchResult.class, Item.class);
+        SearchResult<Item> itemResult = null;
+        try {
+            itemResult = objectMapper.readValue(json, type);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        return itemResult;
     }
 
     @Test

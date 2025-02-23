@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.core.Response;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
@@ -17,13 +18,17 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.testcontainers.containers.output.OutputFrame;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.SocketException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -31,7 +36,6 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public abstract class BaseInstance extends TestContainerManager {
-
 
 
     @Test
@@ -80,7 +84,7 @@ public abstract class BaseInstance extends TestContainerManager {
         CloseableHttpResponse response;
         HttpPost post = new HttpPost(baseUrl);
         response = getHttpResponse(post, builder, context, false);
-        response.getEntity().consumeContent();
+        response.getEntity().getContent().readAllBytes();
         response.close();
 
         //Read item radar content
@@ -104,24 +108,37 @@ public abstract class BaseInstance extends TestContainerManager {
     }
 
 
-    protected void searchItems() throws IOException {
-        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/item";
+    protected String searchItems(String format, boolean content, String searchMark) throws IOException {
+        String url = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/item?format=" + format + "&content=" + content;
+        if (StringUtils.isNotBlank(searchMark)) {
+            url += "&searchMark=" + searchMark;
+        }
 
         System.out.println("searchItems " );
 
-
-        CloseableHttpResponse response;
+        String result = null;
         EntityBuilder builder = EntityBuilder.create();
         HttpClientContext context = HttpClientContext.create();
 
-        final String logs = tomcatContainer.getLogs(OutputFrame.OutputType.STDOUT);
-        final String errlogs = tomcatContainer.getLogs(OutputFrame.OutputType.STDERR);
-
-        HttpGet get = new HttpGet(baseUrl + "?format=radar&content=true");
+        HttpGet get = new HttpGet(url );
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
-        getResponse.getEntity().consumeContent();
+        InputStream is = getResponse.getEntity().getContent();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+            StringBuilder strBuilder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                strBuilder.append(line).append("\n"); // Append each line
+            }
+            // Now you have the complete content
+            result = strBuilder.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("searchItems " + result);
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
+
+        return result;
     }
 
 
@@ -138,7 +155,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
         HttpPost post = new HttpPost(baseUrl + "start");
         CloseableHttpResponse postResponse = getHttpResponse(post, builder, context, false);
-        postResponse.getEntity().consumeContent();
+        postResponse.getEntity().getContent().readAllBytes();
         Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode());
         postResponse.close();
 
@@ -223,7 +240,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
         HttpGet get = new HttpGet(baseUrl + prefix);
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
-        getResponse.getEntity().consumeContent();
+        getResponse.getEntity().getContent().readAllBytes();
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
 
@@ -258,7 +275,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
         HttpGet get = new HttpGet(baseUrl + prefix);
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
-        getResponse.getEntity().consumeContent();
+        getResponse.getEntity().getContent().readAllBytes();
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
 
@@ -285,7 +302,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
         HttpGet get = new HttpGet(baseUrl + prefix);
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
-        getResponse.getEntity().consumeContent();
+        getResponse.getEntity().getContent().readAllBytes();
         Assertions.assertEquals(HttpStatus.SC_NOT_FOUND, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
     }
@@ -311,7 +328,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
         HttpGet get = new HttpGet(baseUrl + prefix);
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
-        getResponse.getEntity().consumeContent();
+        getResponse.getEntity().getContent().readAllBytes();
         Assertions.assertEquals(HttpStatus.SC_NOT_FOUND, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
     }
@@ -336,7 +353,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
         HttpGet get = new HttpGet(baseUrl + setName);
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
-        getResponse.getEntity().consumeContent();
+        getResponse.getEntity().getContent().readAllBytes();
         Assertions.assertEquals(HttpStatus.SC_NOT_FOUND, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
     }
@@ -380,7 +397,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
         HttpGet get = new HttpGet(baseUrl + name);
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
-        getResponse.getEntity().consumeContent();
+        getResponse.getEntity().getContent().readAllBytes();
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
     }
@@ -447,13 +464,13 @@ public abstract class BaseInstance extends TestContainerManager {
         post.addHeader("Accept", "application/json");
         CloseableHttpResponse postResponse = getHttpResponse(post, builder, context, false);
 
-        postResponse.getEntity().consumeContent();
+        postResponse.getEntity().getContent().readAllBytes();
         Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode());
         postResponse.close();
 
         HttpGet get = new HttpGet(baseUrl + name);
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
-        getResponse.getEntity().consumeContent();
+        getResponse.getEntity().getContent().readAllBytes();
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
     }
@@ -484,7 +501,7 @@ public abstract class BaseInstance extends TestContainerManager {
         put.addHeader("Accept", "application/json");
         CloseableHttpResponse putResponse = getHttpResponse(put, builder, context, false);
 
-        putResponse.getEntity().consumeContent();
+        putResponse.getEntity().getContent().readAllBytes();
         Assertions.assertEquals(HttpStatus.SC_OK, putResponse.getStatusLine().getStatusCode());
         putResponse.close();
     }
@@ -492,19 +509,25 @@ public abstract class BaseInstance extends TestContainerManager {
     protected CloseableHttpResponse getHttpResponse(
             HttpRequestBase requestBase, Object builder, HttpClientContext context, boolean useProxy) throws IOException {
 
+        // Default timeout values
         int timeout = 20000;
+
+        // Configuring the request with the timeouts
         RequestConfig defaultRequestConfig = RequestConfig.custom()
                 .setSocketTimeout(timeout)
                 .setConnectTimeout(timeout)
                 .setConnectionRequestTimeout(timeout)
                 .build();
 
+        // Proxy configuration (if needed)
         RequestConfig requestConfig = RequestConfig.copy(defaultRequestConfig)
                 .setProxy(new HttpHost("proxy", 8888))
                 .build();
 
+        // Apply the request config
         requestBase.setConfig(useProxy ? requestConfig : defaultRequestConfig);
 
+        // Build entity if needed
         HttpEntity httpEntity = null;
         if (builder instanceof EntityBuilder) {
             httpEntity = ((EntityBuilder) builder).build();
@@ -512,12 +535,36 @@ public abstract class BaseInstance extends TestContainerManager {
             httpEntity = ((MultipartEntityBuilder) builder).build();
         }
 
+        // If the request is an HTTP entity enclosing request, set the entity
         if (httpEntity != null && requestBase instanceof HttpEntityEnclosingRequestBase) {
             ((HttpEntityEnclosingRequestBase) requestBase).setEntity(httpEntity);
         }
 
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
+        // Using HttpClient with connection management
+        try {
+            CloseableHttpClient client = createHttpClient(defaultRequestConfig);
+            // Execute the request and return the response
             return client.execute(requestBase, context);
+        } catch (SocketException e) {
+            // Handle socket exceptions like "Socket closed"
+            System.err.println("Socket closed unexpectedly: " + e.getMessage());
+            throw new IOException("Error during HTTP request", e);
+        } catch (IOException e) {
+            // Handle general IO exceptions
+            System.err.println("IO Error during HTTP request: " + e.getMessage());
+            throw e;
         }
+    }
+
+    private CloseableHttpClient createHttpClient(RequestConfig defaultRequestConfig) {
+        // Connection manager to manage multiple connections efficiently
+        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
+        cm.setMaxTotal(200);  // Set the maximum total connections
+        cm.setDefaultMaxPerRoute(20);  // Set the maximum connections per route (per target host)
+
+        return HttpClients.custom()
+                .setDefaultRequestConfig(defaultRequestConfig)
+                .setConnectionManager(cm)  // Set the connection manager
+                .build();
     }
 }
