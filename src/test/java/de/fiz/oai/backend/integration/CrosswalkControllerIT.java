@@ -29,7 +29,6 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -282,9 +281,9 @@ public class CrosswalkControllerIT extends JerseyTest {
     crosswalk.setFormatTo("oai_dc");
     crosswalk.setXsltStylesheet("Please use an Xslt stylesheet here!");
 
-    when(crosswalkService.create(any())).thenReturn(crosswalk);
+    when(crosswalkService.update(any())).thenReturn(crosswalk);
 
-    Response response = target("crosswalk").request().post(Entity.json(
+    Response response = target("crosswalk/Oai2Marc").request().put(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
@@ -293,7 +292,7 @@ public class CrosswalkControllerIT extends JerseyTest {
   @Test
   public void testUpdateCrosswalkNoName() throws Exception {
    
-    Response response = target("crosswalk").request().put(Entity.json(
+    Response response = target("crosswalk/Oai2Marc").request().put(Entity.json(
         "{\"formatFrom\":\"oai_dc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
@@ -302,7 +301,7 @@ public class CrosswalkControllerIT extends JerseyTest {
   @Test
   public void testUpdateCrosswalkNoFormatFrom() throws Exception {
    
-    Response response = target("crosswalk").request().put(Entity.json(
+    Response response = target("crosswalk/Oai2Marc").request().put(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
@@ -311,7 +310,7 @@ public class CrosswalkControllerIT extends JerseyTest {
   @Test
   public void testUpdateCrosswalkNoFormatTo() throws Exception {
    
-    Response response = target("crosswalk").request().put(Entity.json(
+    Response response = target("crosswalk/Oai2Marc").request().put(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
@@ -320,7 +319,7 @@ public class CrosswalkControllerIT extends JerseyTest {
   @Test
   public void testUpdateCrosswalkNoXslt() throws Exception {
    
-    Response response = target("crosswalk").request().put(Entity.json(
+    Response response = target("crosswalk/Oai2Marc").request().put(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"formatTo\":\"oai_dc\"}"));
 
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
@@ -330,7 +329,7 @@ public class CrosswalkControllerIT extends JerseyTest {
   @Test
   public void testUpdateCrosswalkWrongFormatFrom() throws Exception {
    
-    Response response = target("crosswalk").request().put(Entity.json(
+    Response response = target("crosswalk/Oai2Marc").request().put(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai dc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
@@ -339,7 +338,7 @@ public class CrosswalkControllerIT extends JerseyTest {
   @Test
   public void testUpdateCrosswalkWrongFormatTo() throws Exception {
    
-    Response response = target("crosswalk").request().put(Entity.json(
+    Response response = target("crosswalk/Oai2Marc").request().put(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"formatTo\":\"o a i\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
