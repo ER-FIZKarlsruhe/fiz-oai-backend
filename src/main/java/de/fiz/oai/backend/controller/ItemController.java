@@ -151,7 +151,7 @@ public class ItemController extends AbstractController {
     }
 
     SearchResult<Item> result = itemService.search(rows, set, format, fromDate, untilDate, content, searchMark);
-
+    response.setHeader("Connection", "keep-alive");
     return result;
   }
 
