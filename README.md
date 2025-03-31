@@ -25,7 +25,7 @@ An example configuration with essential settings is provided below:
 
 ```properties
 cassandra.keyspace=fizoaibackend1
-cassandra.nodes=cassandra-oai:9042
+cassandra.nodes=cassandra:9042
 cassandra.username=cassandra
 cassandra.password=CHANGEME
 cassandra.replication.factor={ 'class' : 'SimpleStrategy', 'replication_factor' : 1 }
@@ -66,10 +66,21 @@ Once built, copy the war file into the webapps folder of a Tomcat 11 server:
 Make sure your Cassandra and Elasticsearch instances are running and accessible based on your configuration.
 
 ## Initialisation
-TODO
+The backend needs a Cassandra keyspace initialized. Here is a suggestion how you can setup the keyspace:
+
+```Create Cassandra keyspace
+cqlsh cassandra 9042 -u cassandra -p cassandra -e "CREATE ROLE IF NOT EXISTS fizoaibackend WITH SUPERUSER = false AND LOGIN = true AND PASSWORD = '@@PASSWORD@@';"
+cqlsh cassandra 9042 -u cassandra -p cassandra -e "CREATE KEYSPACE IF NOT EXISTS fizoaibackend WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'};"
+cqlsh cassandra 9042 -u cassandra -p cassandra -e "GRANT ALL PERMISSIONS ON KEYSPACE fizoaibackend to fizoaibackend;"
+```
 
 ## REST-API
-TODO
+A raw JSON overview of the REST-API endoints can be found under this endpoint
+
+```Swagger OpenAPI
+http://localhost:8080/oai-backend/openapi.json
+```
+
 
 ## Contributing
 
