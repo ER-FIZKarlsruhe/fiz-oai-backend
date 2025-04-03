@@ -1,4 +1,4 @@
-# FIZ OAI Backend
+# FIZ-OAI-Backend
 
 This repository provides the backend service for the FIZ-OAI system, leveraging Cassandra for data persistence and Elasticsearch for search capabilities.
 
