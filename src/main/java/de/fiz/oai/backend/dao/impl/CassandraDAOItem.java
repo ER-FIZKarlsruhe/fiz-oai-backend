@@ -203,7 +203,7 @@ public class CassandraDAOItem implements DAOItem {
 
     //TODO this is the slow synchronous approach. Replace it with the async one, see https://docs.datastax.com/en/developer/java-driver/4.4/manual/core/paging/#asynchronous-paging
     for (Row row : resultSet) {
-        if (i < itemsToRetrieve) {
+        if (i <= itemsToRetrieve) {
             itemsRetrieved.add(populateItem(row));
             i++;
         } else {
