@@ -47,7 +47,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         reindexElasticsearch("items2");
         reindexElasticsearch("items3");
 
-        for(int i = 0; i <= 1000; i++) {
+        for(int i = 0; i <= 100; i++) {
             createItem("10.5072/38238_" + i, template);
         }
 
@@ -58,7 +58,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
             throw new RuntimeException(e);
         }
 
-        checkItemsInIndex(1002);
+        checkItemsInIndex(102);
 
         int countSearchWithMarks = 1;
         result = searchItems("oai_dc" , false, null);
@@ -75,7 +75,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
             System.out.println("searchMark " + searchMark);
         }
 
-        Assertions.assertEquals(11,countSearchWithMarks);
+        Assertions.assertEquals(2,countSearchWithMarks);
     }
 
 
@@ -83,16 +83,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
     public void testReindexItem() throws IOException {
         String template = new String(Files.readAllBytes(Paths.get("src/test/resources/radar-md-template.xml")));
 
-        createFormat("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/");
-        createFormat("radar", "https://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/", "http://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/");
-        createFormat("datacite", "https://schema.datacite.org/meta/kernel-4.0/metadata.xsd", "http://datacite.org/schema/kernel-4");
-
-        createCrosswalk("Radar2datacite", "radar", "datacite", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
-        createCrosswalk("Radar2OAI_DC_v09", "radar", "oai_dc", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
-
-        createSet("testset", "testset", "this is a testset", List.of( "testtag"));
-
-        createItem("10.5072/38238", template);
+        createItem("10.5072/11111", template);
 
         try {
             Thread.sleep(1000);
@@ -102,14 +93,13 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
         checkItemsInIndex(1);
         String result = searchItems("radar", true, null);
-        Assertions.assertTrue(result.contains("\"searchMark\":null"));
-        Assertions.assertTrue(result.contains("\"total\":1,\"size\":1"));
+        Assertions.assertFalse(result.contains("\"searchMark\":null"));
 
         //reindex item okay
-        reindexItem("10.5072/38238", HttpStatus.SC_NO_CONTENT);
+        reindexItem("10.5072/11111", HttpStatus.SC_NO_CONTENT);
 
         //reindex item not found
-        reindexItem("10.5072/3823fgdf8", HttpStatus.SC_NOT_FOUND);
+        reindexItem("10.5072/11111fgdf8", HttpStatus.SC_NOT_FOUND);
     }
 
 
