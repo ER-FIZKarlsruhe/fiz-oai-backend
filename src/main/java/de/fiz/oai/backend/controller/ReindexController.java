@@ -2,13 +2,14 @@ package de.fiz.oai.backend.controller;
 
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
+import de.fiz.oai.backend.models.Item;
+import de.fiz.oai.backend.service.ItemService;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response.Status;
 
@@ -25,6 +26,9 @@ public class ReindexController extends AbstractController {
 
   @Inject
   SearchService searchService;
+
+  @Inject
+  ItemService itemService;
 
   @POST
   @Path("/stop")
@@ -56,6 +60,33 @@ public class ReindexController extends AbstractController {
         throw new WebApplicationException("Reindex process correctly started.", Status.OK);
       }
       throw new WebApplicationException("Not able to start reindex process, maybe is already started. Please check with /status command.", Status.INTERNAL_SERVER_ERROR);
+
+  }
+
+
+  @POST
+  @Path("/item/{identifier}")
+  @Produces(MediaType.TEXT_PLAIN)
+  @Operation(summary = "Updates an item in the search index", description = "Updates an Item in the search index.")
+  @ApiResponses({
+          @ApiResponse(responseCode = "204", description = "Index document successfully updated"),
+          @ApiResponse(responseCode = "404", description = "Not found")
+  })
+  public void reindexItem(
+          @Parameter(description = "Identifier of the item", required = true) @PathParam("identifier") String identifier) throws IOException {
+    Item item = itemService.read(identifier,null,false);
+
+    if (item != null) {
+
+      List<Map<String, Object>> itemDocs = searchService.readDocuments(List.of(item));
+      if (itemDocs.isEmpty()) {
+        searchService.createDocument(item);
+      } else {
+        searchService.updateDocument(item);
+      }
+    } else {
+      throw new WebApplicationException("Item not found.", Status.NOT_FOUND);
+    }
 
   }
   

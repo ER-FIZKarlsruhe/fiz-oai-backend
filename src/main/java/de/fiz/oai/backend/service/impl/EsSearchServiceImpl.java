@@ -15,17 +15,21 @@
  */
 package de.fiz.oai.backend.service.impl;
 
-import de.fiz.oai.backend.dao.DAOContent;
-import de.fiz.oai.backend.dao.DAOFormat;
-import de.fiz.oai.backend.dao.DAOItem;
-import de.fiz.oai.backend.dao.DAOSet;
-import de.fiz.oai.backend.models.Item;
-import de.fiz.oai.backend.models.SearchResult;
-import de.fiz.oai.backend.models.reindex.ReindexStatus;
-import de.fiz.oai.backend.service.ItemService;
-import de.fiz.oai.backend.service.SearchService;
-import de.fiz.oai.backend.utils.Configuration;
-import de.fiz.oai.backend.utils.ResourcesUtils;
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
@@ -43,7 +47,12 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
-import org.elasticsearch.client.*;
+import org.elasticsearch.client.Request;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.Response;
+import org.elasticsearch.client.ResponseException;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.GetIndexResponse;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -53,23 +62,26 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
-import jakarta.inject.Singleton;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.fiz.oai.backend.dao.DAOContent;
+import de.fiz.oai.backend.dao.DAOFormat;
+import de.fiz.oai.backend.dao.DAOItem;
+import de.fiz.oai.backend.dao.DAOSet;
+import de.fiz.oai.backend.models.Item;
+import de.fiz.oai.backend.models.SearchResult;
+import de.fiz.oai.backend.models.reindex.ReindexStatus;
+import de.fiz.oai.backend.service.ItemService;
+import de.fiz.oai.backend.service.SearchService;
+import de.fiz.oai.backend.utils.Configuration;
+import de.fiz.oai.backend.utils.ResourcesUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import jakarta.servlet.ServletContext;
 import jakarta.ws.rs.core.Context;
-import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.Duration;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 @Singleton
@@ -552,9 +564,10 @@ public class EsSearchServiceImpl implements SearchService {
                 LOGGER.info("REINDEX status: Start Time: {}", reindexStatus.getStartTime());
 
                 Item mostRecentItem = null;
-
+                List<Item> bufferListItems = null;
+                
                 do {
-                    List<Item> bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
+                    bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
 
                     for (final Item pickedItem : bufferListItems) {
                         try {
@@ -562,7 +575,7 @@ public class EsSearchServiceImpl implements SearchService {
 
                             itemService.addFormatsAndSets(pickedItem);
                             indexDocument(pickedItem, reindexStatus.getNewIndexName());
-                            reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
+                            
                             // Keep the most recent Item
                             if (mostRecentItem == null) {
                                 mostRecentItem = pickedItem;
@@ -575,13 +588,14 @@ public class EsSearchServiceImpl implements SearchService {
                         } catch (Exception e) {
                             // leave mostRecentItem as it is
                             LOGGER.error("Reindex fails for " + pickedItem.getIdentifier(), e);
+                        } finally {
+                            reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
                         }
                     }
-
+                    
                     LOGGER.info("REINDEX status: " + reindexStatus.getIndexedCount() + " indexed out of "
                             + reindexStatus.getTotalCount() + ".");
-                } while (reindexStatus.getIndexedCount() < reindexStatus.getTotalCount()
-                        && !reindexStatus.isStopSignalReceived());
+                } while (!reindexStatus.isStopSignalReceived() && !bufferListItems.isEmpty());
 
                 // If in the meanwhile some new object has been inserted, reindex the new Items
                 if (!reindexStatus.isStopSignalReceived()) {

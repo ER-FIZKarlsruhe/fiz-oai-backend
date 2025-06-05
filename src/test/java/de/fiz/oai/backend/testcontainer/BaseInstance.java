@@ -188,6 +188,23 @@ public abstract class BaseInstance extends TestContainerManager {
 
     }
 
+
+    protected void reindexItem(String itemIdentifier, int expectedResponseCode) throws IOException {
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/reindex/item/" + URLEncoder.encode(itemIdentifier, "UTF-8");;
+
+        System.out.println("reindexItem " );
+        CloseableHttpResponse response;
+        EntityBuilder builder = EntityBuilder.create();
+        builder.setText("");
+        HttpClientContext context = HttpClientContext.create();
+
+        HttpPost post = new HttpPost(baseUrl);
+        CloseableHttpResponse postResponse = getHttpResponse(post, builder, context, false);
+        Assertions.assertEquals(expectedResponseCode, postResponse.getStatusLine().getStatusCode());
+        postResponse.close();
+    }
+
+
     protected void checkItemsInIndex(int expectedItems) throws IOException {
         String esUrl = "http://localhost:" + ElasticsearchTestContainer.container.getMappedPort(9200) +"/";
 
