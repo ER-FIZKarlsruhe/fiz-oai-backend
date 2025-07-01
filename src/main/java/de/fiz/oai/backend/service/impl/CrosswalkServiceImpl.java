@@ -22,8 +22,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.tinkerpop.shaded.minlog.Log;
-import jakarta.inject.Singleton;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +44,7 @@ import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.service.TransformerService;
 import de.fiz.oai.backend.utils.Configuration;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Service
 @Singleton
@@ -165,10 +164,10 @@ public class CrosswalkServiceImpl implements CrosswalkService {
      * 
      */
     public void process(String name, boolean updateItemTimestamp, Date from, Date until) throws IOException {
-        Log.info("Start process crosswalk for " + name);
-        Log.info("updateItemTimestamp " + updateItemTimestamp);
-        Log.info("from " + from);
-        Log.info("until " + until);
+        LOGGER.info("Start process crosswalk for " + name);
+        LOGGER.info("updateItemTimestamp " + updateItemTimestamp);
+        LOGGER.info("from " + from);
+        LOGGER.info("until " + until);
 
         Crosswalk crosswalk = read(name);
         if (crosswalk == null) {
@@ -178,11 +177,11 @@ public class CrosswalkServiceImpl implements CrosswalkService {
         String searchMark = "";
 
         do {
-            Log.info("search more items to process with searchMark " + searchMark);
+            LOGGER.info("search more items to process with searchMark " + searchMark);
 
             final SearchResult<String> result = searchService.search(100, null, crosswalk.getFormatFrom(), from, until, searchMark);
-            Log.info("result total: " + result.getTotal());
-            Log.info("result size: " + result.getSize());
+            LOGGER.info("result total: " + result.getTotal());
+            LOGGER.info("result size: " + result.getSize());
             
             if (result.getSize() > 0) {
                 Iterator<String> itemIterator = result.getData().iterator();
@@ -196,10 +195,10 @@ public class CrosswalkServiceImpl implements CrosswalkService {
             searchMark = result.getSearchMark();
         } while (StringUtils.isNotBlank(searchMark));
 
-        Log.info("End process crosswalk for " + name);
+        LOGGER.info("End process crosswalk for " + name);
 
         if (updateItemTimestamp) {
-            Log.warn("You have to reindex your search index manually to refresh the items timestamps!");
+            LOGGER.warn("You have to reindex your search index manually to refresh the items timestamps!");
         }
 
         return;
@@ -207,12 +206,12 @@ public class CrosswalkServiceImpl implements CrosswalkService {
 
     private void processCrosswalkForItem(Crosswalk crosswalk, String itemId, boolean updateItemTimestamp)
             throws IOException {
-        Log.info("processCrosswalkForItem " + itemId);
+        LOGGER.info("processCrosswalkForItem " + itemId);
         try {
             // Update content
             Content content = contentService.read(itemId, crosswalk.getFormatFrom());
             String newXml = transformerService.transform(content.getContent(), crosswalk.getName());
-            Log.debug("newXml " + newXml);
+            LOGGER.debug("newXml " + newXml);
             if (StringUtils.isNotBlank(newXml)) {
                 Content crosswalkConten = new Content();
                 crosswalkConten.setContent(newXml);
@@ -227,12 +226,12 @@ public class CrosswalkServiceImpl implements CrosswalkService {
             if (updateItemTimestamp) {
                 Item item = itemService.read(itemId, null, false);
                 String datestamp = Configuration.getDateformat().format(new Date());
-                Log.info("Updateing item datestamp " + datestamp);
+                LOGGER.info("Updateing item datestamp " + datestamp);
                 item.setDatestamp(datestamp);
                 daoItem.create(item); //In Cassandra create and update are the same!
             }
         } catch (Exception e) {
-            Log.error("Exception", e);
+            LOGGER.error("Exception", e);
             throw e;
         }
     }
