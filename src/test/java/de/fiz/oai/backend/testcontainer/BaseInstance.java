@@ -143,7 +143,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
 
 
-    protected void reindexElasticsearch(String expectIndexName) throws IOException {
+    protected void reindexElasticsearch(String expectIndexName, String continueIndexName) throws IOException {
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/reindex/";
 
         System.out.println("reindex " );
@@ -152,8 +152,11 @@ public abstract class BaseInstance extends TestContainerManager {
         //httpEntity = new StringEntity("", StandardCharsets.UTF_8);
         builder.setText("");
         HttpClientContext context = HttpClientContext.create();
-
-        HttpPost post = new HttpPost(baseUrl + "start");
+        String url = baseUrl + "start";
+        if (StringUtils.isNotBlank(continueIndexName)) {
+            url += "?indexName=" + continueIndexName;
+        }
+        HttpPost post = new HttpPost(url);
         CloseableHttpResponse postResponse = getHttpResponse(post, builder, context, false);
         postResponse.getEntity().getContent().readAllBytes();
         Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode());
@@ -167,12 +170,17 @@ public abstract class BaseInstance extends TestContainerManager {
 
         String esUrl = "http://localhost:" + ElasticsearchTestContainer.container.getMappedPort(9200) +"/";
 
+        String indexNameToCheck = expectIndexName;
+        if (StringUtils.isNotBlank(continueIndexName)) {
+            indexNameToCheck = continueIndexName;
+        }
+
         HttpGet get = new HttpGet(esUrl + "_cat/indices");
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
         InputStream is = getResponse.getEntity().getContent();
         String indices = new String(is.readAllBytes(), StandardCharsets.UTF_8);
         System.out.println("indices: " + indices);
-        Assertions.assertTrue(indices.contains(expectIndexName));
+        Assertions.assertTrue(indices.contains(indexNameToCheck));
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
 
@@ -182,7 +190,7 @@ public abstract class BaseInstance extends TestContainerManager {
         is = getResponse.getEntity().getContent();
         String aliases = new String(is.readAllBytes(), StandardCharsets.UTF_8);
         System.out.println("aliases: " + aliases);
-        Assertions.assertTrue(aliases.contains("items " + expectIndexName));
+        Assertions.assertTrue(aliases.contains("items " + indexNameToCheck));
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
 

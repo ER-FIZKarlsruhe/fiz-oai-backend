@@ -44,12 +44,13 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         Assertions.assertTrue(result.contains("\"searchMark\":null"));
         Assertions.assertTrue(result.contains("\"total\":1,\"size\":1"));
 
-        reindexElasticsearch("items2");
-        reindexElasticsearch("items3");
-
         for(int i = 0; i <= 100; i++) {
             createItem("10.5072/38238_" + i, template);
         }
+
+        reindexElasticsearch("items2", null);
+        reindexElasticsearch("", "items2");
+        reindexElasticsearch("items3", null);
 
         //Wait a bit, that ES has all documents in the index
         try {
@@ -76,6 +77,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         }
 
         Assertions.assertEquals(2,countSearchWithMarks);
+
     }
 
 
