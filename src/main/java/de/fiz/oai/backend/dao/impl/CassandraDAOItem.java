@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.fiz.oai.backend.service.impl.EsSearchServiceImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 
@@ -35,6 +36,8 @@ import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.utils.ClusterManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class CassandraDAOItem implements DAOItem {
@@ -48,6 +51,8 @@ public class CassandraDAOItem implements DAOItem {
   public static final String TABLENAME_ITEM = "oai_item";
 
   private Map<String, PreparedStatement> preparedStatements = new HashMap<String, PreparedStatement>();
+
+  private static Logger LOGGER = LoggerFactory.getLogger(CassandraDAOItem.class);
 
   public Item read(String identifier) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
@@ -197,7 +202,7 @@ public class CassandraDAOItem implements DAOItem {
   }
 
   public List<Item> getItemsFromResultSet(ResultSet resultSet, int itemsToRetrieve) throws IOException {
-
+    long time = System.currentTimeMillis();
     List<Item> itemsRetrieved = new ArrayList<Item>();
     int i = 0;
 
@@ -211,7 +216,7 @@ public class CassandraDAOItem implements DAOItem {
             break;
         }
     }
-    
+    LOGGER.info("Getting " + i + " Items from resultSet needed " + (System.currentTimeMillis() - time) + " ms");
 
     return itemsRetrieved;
   }
