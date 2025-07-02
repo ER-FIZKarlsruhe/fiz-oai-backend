@@ -45,6 +45,11 @@ public interface SearchService {
     boolean reindexAll();
 
     /**
+     * Reindex all documents
+     */
+    boolean reindexAll(String indexName);
+
+    /**
      * Reindex status
      */
     String getReindexStatusVerbose();
