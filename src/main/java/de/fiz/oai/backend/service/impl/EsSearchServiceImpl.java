@@ -532,6 +532,9 @@ public class EsSearchServiceImpl implements SearchService {
                                 itemService.addFormatsAndSets(pickedItem);
                                 indexDocument(pickedItem, reindexStatus.getNewIndexName());
                             }
+                            else {
+                                LOGGER.debug("Don't reindex " + pickedItem.getIdentifier() + " as it already exists in the index");
+                            }
 
                             // Keep the most recent Item
                             if (mostRecentItem == null) {
