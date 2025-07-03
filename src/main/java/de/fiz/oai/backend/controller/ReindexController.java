@@ -54,15 +54,14 @@ public class ReindexController extends AbstractController {
           @ApiResponse(responseCode = "200", description = "Reindexing process started successfully"),
           @ApiResponse(responseCode = "500", description = "Not able to start reindex process, maybe it is already started. Please check with /status command.")
   })
-  public void startReindexAll() {
-
-      if (searchService.reindexAll()) {
+  public void startReindexAll(
+          @Parameter(description = "Name of the Index (used to continue an interrupted reindex-process)")
+          @QueryParam("indexName") String indexName) {
+    if (searchService.reindexAll(indexName)) {
         throw new WebApplicationException("Reindex process correctly started.", Status.OK);
       }
       throw new WebApplicationException("Not able to start reindex process, maybe is already started. Please check with /status command.", Status.INTERNAL_SERVER_ERROR);
-
   }
-
 
   @POST
   @Path("/item/{identifier}")

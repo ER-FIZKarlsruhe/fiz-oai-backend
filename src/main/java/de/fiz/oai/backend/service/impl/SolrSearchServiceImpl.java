@@ -269,6 +269,11 @@ public class SolrSearchServiceImpl implements SearchService {
 
     @Override
     public boolean reindexAll() {
+        return reindexAll(null);
+    }
+
+    @Override
+    public boolean reindexAll(String indexName) {
         return true;
     }
 

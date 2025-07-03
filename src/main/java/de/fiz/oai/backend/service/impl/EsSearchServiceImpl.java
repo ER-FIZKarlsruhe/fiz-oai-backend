@@ -39,9 +39,7 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.get.MultiGetItemResponse;
-import org.elasticsearch.action.get.MultiGetRequest;
-import org.elasticsearch.action.get.MultiGetResponse;
+import org.elasticsearch.action.get.*;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
@@ -466,6 +464,12 @@ public class EsSearchServiceImpl implements SearchService {
 
     @Override
     public boolean reindexAll() {
+        return reindexAll(null);
+    }
+
+
+    @Override
+    public boolean reindexAll(String indexName) {
         if (reindexStatus != null && StringUtils.isBlank(reindexStatus.getEndTime())) {
             LOGGER.warn("REINDEX status: Reindex process already started since " + reindexStatus.getStartTime()
                     + ". Cannot continue until it finishes!");
@@ -483,70 +487,21 @@ public class EsSearchServiceImpl implements SearchService {
 
         reindexAllFuture = CompletableFuture.supplyAsync(() -> {
 
-            RestHighLevelClient client = null;
+            RestHighLevelClient client = getElasticsearchClient();
             try {
-                client = getElasticsearchClient();
-                GetIndexRequest requestAllIndices = new GetIndexRequest("*");
-                GetIndexResponse responseAllIndices = client.indices().get(requestAllIndices, RequestOptions.DEFAULT);
-                String[] allIndices = responseAllIndices.getIndices();
-
-                LOGGER.info("REINDEX status: Found " + allIndices.length + " indexes:");
-                int maximumIndexFound = 0;
-                for (final String pickedIndex : allIndices) {
-                    LOGGER.info("REINDEX status: {}", pickedIndex);
-                    if (pickedIndex.startsWith(ITEMS_ALIAS_INDEX_NAME)) {
-                        final String suffixIndex = pickedIndex.substring(ITEMS_ALIAS_INDEX_NAME.length());
-                        LOGGER.info("REINDEX status: " + pickedIndex + " -> suffix: " + suffixIndex);
-                        if (!StringUtils.isBlank(suffixIndex) && StringUtils.isNumeric(suffixIndex)) {
-                            int pickedNumIndexFound = Integer.parseInt(suffixIndex);
-                            if (pickedNumIndexFound > maximumIndexFound) {
-                                maximumIndexFound = pickedNumIndexFound;
-                                reindexStatus.setOriginalIndexName(pickedIndex);
-                            }
-                        }
-                    }
-                }
-
-                int newIndexVersion = maximumIndexFound + 1;
-                final StringBuilder newIndexName = new StringBuilder();
-                newIndexName.append(ITEMS_ALIAS_INDEX_NAME);
-                newIndexName.append(String.valueOf(newIndexVersion));
-                reindexStatus.setNewIndexName(newIndexName.toString());
-                LOGGER.info("REINDEX status: New index name: {}", reindexStatus.getNewIndexName());
-
-                if (StringUtils.isBlank(reindexStatus.getNewIndexName())) {
-                    LOGGER.error("Not able to determine index names: original (" + reindexStatus.getOriginalIndexName()
-                            + ") or new (" + reindexStatus.getNewIndexName() + ")");
-                    return false;
-                }
-
-                final String filenameItemsMapping = ITEMS_MAPPING_V7_FILENAME_UPDATE_MAPPING;
-                final String mapping = ResourcesUtils.getResourceFileAsString(filenameItemsMapping, servletContext);
-                if (StringUtils.isBlank(mapping)) {
-                    LOGGER.error("REINDEX status: Not able to retrieve mapping {}", filenameItemsMapping);
-                }
-
-                RestClient lowLevelClient = client.getLowLevelClient();
-
-                if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())) {
-                    LOGGER.warn("No previous indices found.");
-                    reindexStatus.setOriginalIndexName(ITEMS_ALIAS_INDEX_NAME + "0");
-                    if (!createIndex(reindexStatus.getOriginalIndexName(), mapping)) {
-                        LOGGER.error("REINDEX status: Something went wrong while creating the first index " + reindexStatus.getOriginalIndexName());
+                if (StringUtils.isBlank(indexName)) {
+                    if (!createNewIndex(client)) {
                         return false;
                     }
-                    Request requestNewAlias = new Request("POST", "/_aliases");
-                    requestNewAlias.setJsonEntity(
-                            "{\n" + "    \"actions\" : [\n" + "        { \"add\" : { \"index\" : \"" + reindexStatus.getOriginalIndexName()
-                                    + "\", \"alias\" : \"" + ITEMS_ALIAS_INDEX_NAME + "\" } }\n" + "    ]\n" + "}");
-                    lowLevelClient.performRequest(requestNewAlias);
+                }
+                else {
+                    if (!checkIndexExists(client, indexName)) {
+                        LOGGER.error("Index with name {} doesnt exist", indexName);
+                        return false;
+                    }
+                    reindexStatus.setNewIndexName(indexName);
                 }
 
-                if (!createIndex(reindexStatus.getNewIndexName(), mapping)) {
-                    LOGGER.error(
-                            "REINDEX status: Something went wrong while creating the new index " + reindexStatus.getNewIndexName());
-                    return false;
-                }
 
                 reindexStatus.setTotalCount(daoItem.getCount());
                 reindexStatus.setItemResultSet(daoItem.getAllItemsResultSet());
@@ -565,43 +520,37 @@ public class EsSearchServiceImpl implements SearchService {
 
                 Item mostRecentItem = null;
                 List<Item> bufferListItems = null;
-                
+
                 do {
-                    bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
+                    bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 500);
 
-                    for (final Item pickedItem : bufferListItems) {
+                    bufferListItems.parallelStream().forEach(item -> {
                         try {
-                            LOGGER.debug("Reindex now " + pickedItem.getIdentifier());
-
-                            itemService.addFormatsAndSets(pickedItem);
-                            indexDocument(pickedItem, reindexStatus.getNewIndexName());
-                            
-                            // Keep the most recent Item
-                            if (mostRecentItem == null) {
-                                mostRecentItem = pickedItem;
-                            } else {
-                                if (Configuration.getDateformat().parse(mostRecentItem.getDatestamp())
-                                        .before(Configuration.getDateformat().parse(pickedItem.getDatestamp()))) {
-                                    mostRecentItem = pickedItem;
-                                }
+                            if (StringUtils.isBlank(indexName) || !itemExistsInIndex(client, indexName, item.getIdentifier())) {
+                                LOGGER.debug("Reindex now " + item.getIdentifier());
+                                itemService.addFormatsAndSets(item);
+                                indexDocument(item, reindexStatus.getNewIndexName());
+                            }
+                            else {
+                                LOGGER.debug("Don't reindex " + item.getIdentifier() + " as it already exists in the index");
                             }
                         } catch (Exception e) {
-                            // leave mostRecentItem as it is
-                            LOGGER.error("Reindex fails for " + pickedItem.getIdentifier(), e);
+                            LOGGER.error("Reindex fails for " + item.getIdentifier(), e);
                         } finally {
                             reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
                         }
-                    }
-                    
+                    });
+
                     LOGGER.info("REINDEX status: " + reindexStatus.getIndexedCount() + " indexed out of "
                             + reindexStatus.getTotalCount() + ".");
                 } while (!reindexStatus.isStopSignalReceived() && !bufferListItems.isEmpty());
 
                 // If in the meanwhile some new object has been inserted, reindex the new Items
                 if (!reindexStatus.isStopSignalReceived()) {
-
+                    RestClient lowLevelClient = client.getLowLevelClient();
                     // Switch alias from old index to new one
                     LOGGER.info("REINDEX status: Remove all old aliases of {}", ITEMS_ALIAS_INDEX_NAME);
+                    List<String> allIndices = getAllIndexNames(client);
                     for (final String pickedIndex : allIndices) {
                         Request requestDeleteOldAlias = new Request("POST", "/_aliases");
                         requestDeleteOldAlias
@@ -754,12 +703,137 @@ public class EsSearchServiceImpl implements SearchService {
     }
 
     /**
+     * Check if a Document with given identifier exists in index.
+     *
+     * @param client
+     * @param itemIdentifier
+     * @return
+     */
+    private boolean itemExistsInIndex(RestHighLevelClient client, String indexName, String itemIdentifier) throws IOException {
+        GetRequest getRequest = new GetRequest(indexName, itemIdentifier);
+        GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
+        return getResponse.isExists();
+    }
+
+    /**
+     * Get all Index-Names.
+     *
+     * @param client
+     * @return
+     * @throws IOException
+     */
+    private List<String> getAllIndexNames(RestHighLevelClient client) throws IOException {
+        GetIndexRequest requestIndex = new GetIndexRequest("*");
+        GetIndexResponse responseIndex = client.indices().get(requestIndex, RequestOptions.DEFAULT);
+        String[] index = responseIndex.getIndices();
+        return List.of(index);
+    }
+
+    /**
+     * Check if Index with given indexName exists.
+     *
+     * @param client
+     * @param indexName
+     * @return
+     * @throws IOException
+     */
+    private boolean checkIndexExists(RestHighLevelClient client, String indexName) throws IOException {
+        GetIndexRequest requestIndex = new GetIndexRequest(indexName);
+        GetIndexResponse responseIndex = client.indices().get(requestIndex, RequestOptions.DEFAULT);
+        String[] index = responseIndex.getIndices();
+        if (index != null && index.length > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     *
+     * @return
+     */
+    private boolean createNewIndex(RestHighLevelClient client) throws IOException {
+        List<String> allIndices = getAllIndexNames(client);
+
+        LOGGER.info("REINDEX status: Found " + allIndices.size() + " indexes:");
+        int maximumIndexFound = 0;
+        for (final String pickedIndex : allIndices) {
+            LOGGER.info("REINDEX status: {}", pickedIndex);
+            if (pickedIndex.startsWith(ITEMS_ALIAS_INDEX_NAME)) {
+                final String suffixIndex = pickedIndex.substring(ITEMS_ALIAS_INDEX_NAME.length());
+                LOGGER.info("REINDEX status: " + pickedIndex + " -> suffix: " + suffixIndex);
+                if (!StringUtils.isBlank(suffixIndex) && StringUtils.isNumeric(suffixIndex)) {
+                    int pickedNumIndexFound = Integer.parseInt(suffixIndex);
+                    if (pickedNumIndexFound > maximumIndexFound) {
+                        maximumIndexFound = pickedNumIndexFound;
+                        reindexStatus.setOriginalIndexName(pickedIndex);
+                    }
+                }
+            }
+        }
+
+        int newIndexVersion = maximumIndexFound + 1;
+        final StringBuilder newIndexName = new StringBuilder();
+        newIndexName.append(ITEMS_ALIAS_INDEX_NAME);
+        newIndexName.append(String.valueOf(newIndexVersion));
+        reindexStatus.setNewIndexName(newIndexName.toString());
+        LOGGER.info("REINDEX status: New index name: {}", reindexStatus.getNewIndexName());
+
+        if (StringUtils.isBlank(reindexStatus.getNewIndexName())) {
+            LOGGER.error("Not able to determine index names: original (" + reindexStatus.getOriginalIndexName()
+                                 + ") or new (" + reindexStatus.getNewIndexName() + ")");
+            return false;
+        }
+        final String filenameItemsMapping = ITEMS_MAPPING_V7_FILENAME_UPDATE_MAPPING;
+        final String mapping = ResourcesUtils.getResourceFileAsString(filenameItemsMapping, servletContext);
+        if (StringUtils.isBlank(mapping)) {
+            LOGGER.error("REINDEX status: Not able to retrieve mapping {}", filenameItemsMapping);
+        }
+
+        RestClient lowLevelClient = client.getLowLevelClient();
+
+        if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())) {
+            if (!createFirstAliasForIndex(lowLevelClient, mapping)) {
+                return false;
+            }
+        }
+
+        if (!createIndex(reindexStatus.getNewIndexName(), mapping)) {
+            LOGGER.error(
+                    "REINDEX status: Something went wrong while creating the new index " + reindexStatus.getNewIndexName());
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Execute if first Alias for index is created. Create Alias.
+     *
+     * @param lowLevelClient
+     * @param mapping
+     * @throws IOException
+     */
+    private boolean createFirstAliasForIndex(RestClient lowLevelClient, String mapping) throws IOException {
+        LOGGER.warn("No previous indices found.");
+        reindexStatus.setOriginalIndexName(ITEMS_ALIAS_INDEX_NAME + "0");
+        if (!createIndex(reindexStatus.getOriginalIndexName(), mapping)) {
+            LOGGER.error("REINDEX status: Something went wrong while creating the first index " + reindexStatus.getOriginalIndexName());
+            return false;
+        }
+        Request requestNewAlias = new Request("POST", "/_aliases");
+        requestNewAlias.setJsonEntity(
+                "{\n" + "    \"actions\" : [\n" + "        { \"add\" : { \"index\" : \"" + reindexStatus.getOriginalIndexName()
+                        + "\", \"alias\" : \"" + ITEMS_ALIAS_INDEX_NAME + "\" } }\n" + "    ]\n" + "}");
+        lowLevelClient.performRequest(requestNewAlias);
+        return true;
+    }
+
+    /**
      * Check elasticsearchClient synchronized and return it.
      *
      * @return RestHighLevelClient
      * @throws IOException
      */
-    private synchronized RestHighLevelClient getElasticsearchClient() throws IOException {
+    private synchronized RestHighLevelClient getElasticsearchClient() {
 //        if (elasticsearchClient == null) {
 //            elasticsearchClient = new RestHighLevelClient(
 //                    RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http"))
