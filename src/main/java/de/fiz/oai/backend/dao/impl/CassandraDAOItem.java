@@ -202,7 +202,6 @@ public class CassandraDAOItem implements DAOItem {
   }
 
   public List<Item> getItemsFromResultSet(ResultSet resultSet, int itemsToRetrieve) throws IOException {
-    long time = System.currentTimeMillis();
     List<Item> itemsRetrieved = new ArrayList<Item>();
     int i = 0;
 
@@ -216,7 +215,6 @@ public class CassandraDAOItem implements DAOItem {
             break;
         }
     }
-    LOGGER.info("Getting " + i + " Items from resultSet needed " + (System.currentTimeMillis() - time) + " ms");
 
     return itemsRetrieved;
   }

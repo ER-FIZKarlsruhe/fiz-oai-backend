@@ -487,9 +487,8 @@ public class EsSearchServiceImpl implements SearchService {
 
         reindexAllFuture = CompletableFuture.supplyAsync(() -> {
 
-            RestHighLevelClient client = null;
+            RestHighLevelClient client = getElasticsearchClient();
             try {
-                client = getElasticsearchClient();
                 if (StringUtils.isBlank(indexName)) {
                     if (!createNewIndex(client)) {
                         return false;
@@ -521,38 +520,27 @@ public class EsSearchServiceImpl implements SearchService {
 
                 Item mostRecentItem = null;
                 List<Item> bufferListItems = null;
-                
-                do {
-                    bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 100);
 
-                    for (final Item pickedItem : bufferListItems) {
+                do {
+                    bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 500);
+
+                    bufferListItems.parallelStream().forEach(item -> {
                         try {
-                            if (StringUtils.isBlank(indexName) || !itemExistsInIndex(client, indexName, pickedItem.getIdentifier())) {
-                                LOGGER.debug("Reindex now " + pickedItem.getIdentifier());
-                                itemService.addFormatsAndSets(pickedItem);
-                                indexDocument(pickedItem, reindexStatus.getNewIndexName());
+                            if (StringUtils.isBlank(indexName) || !itemExistsInIndex(client, indexName, item.getIdentifier())) {
+                                LOGGER.debug("Reindex now " + item.getIdentifier());
+                                itemService.addFormatsAndSets(item);
+                                indexDocument(item, reindexStatus.getNewIndexName());
                             }
                             else {
-                                LOGGER.debug("Don't reindex " + pickedItem.getIdentifier() + " as it already exists in the index");
-                            }
-
-                            // Keep the most recent Item
-                            if (mostRecentItem == null) {
-                                mostRecentItem = pickedItem;
-                            } else {
-                                if (Configuration.getDateformat().parse(mostRecentItem.getDatestamp())
-                                        .before(Configuration.getDateformat().parse(pickedItem.getDatestamp()))) {
-                                    mostRecentItem = pickedItem;
-                                }
+                                LOGGER.debug("Don't reindex " + item.getIdentifier() + " as it already exists in the index");
                             }
                         } catch (Exception e) {
-                            // leave mostRecentItem as it is
-                            LOGGER.error("Reindex fails for " + pickedItem.getIdentifier(), e);
+                            LOGGER.error("Reindex fails for " + item.getIdentifier(), e);
                         } finally {
                             reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
                         }
-                    }
-                    
+                    });
+
                     LOGGER.info("REINDEX status: " + reindexStatus.getIndexedCount() + " indexed out of "
                             + reindexStatus.getTotalCount() + ".");
                 } while (!reindexStatus.isStopSignalReceived() && !bufferListItems.isEmpty());
@@ -845,7 +833,7 @@ public class EsSearchServiceImpl implements SearchService {
      * @return RestHighLevelClient
      * @throws IOException
      */
-    private synchronized RestHighLevelClient getElasticsearchClient() throws IOException {
+    private synchronized RestHighLevelClient getElasticsearchClient() {
 //        if (elasticsearchClient == null) {
 //            elasticsearchClient = new RestHighLevelClient(
 //                    RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http"))
