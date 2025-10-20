@@ -33,6 +33,8 @@ cassandra.datacenter=datacenter1
 
 elasticsearch.host=elasticsearch-oai
 elasticsearch.port=9200
+# Decide if complete reindexing-process should stop when indexing one single Item fails.
+elasticsearch.reindexAllStopOnException=false
 
 class.impl.search=de.fiz.oai.backend.service.impl.EsSearchServiceImpl
 

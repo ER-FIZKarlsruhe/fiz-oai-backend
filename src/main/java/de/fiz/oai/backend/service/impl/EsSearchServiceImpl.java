@@ -29,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -518,13 +519,15 @@ public class EsSearchServiceImpl implements SearchService {
                 reindexStatus.setStartTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
                 LOGGER.info("REINDEX status: Start Time: {}", reindexStatus.getStartTime());
 
-                Item mostRecentItem = null;
                 List<Item> bufferListItems = null;
 
                 do {
                     bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 500);
-
+                    boolean reindexAllStopOnException = Boolean.parseBoolean(Configuration.getInstance().getProperty(
+                            "elasticsearch.reindexAllStopOnException", "false"));
+                    AtomicBoolean stop = new AtomicBoolean(false);
                     bufferListItems.parallelStream().forEach(item -> {
+                        if (stop.get()) return;
                         try {
                             if (StringUtils.isBlank(indexName) || !itemExistsInIndex(client, indexName, item.getIdentifier())) {
                                 LOGGER.debug("Reindex now " + item.getIdentifier());
@@ -536,6 +539,9 @@ public class EsSearchServiceImpl implements SearchService {
                             }
                         } catch (Exception e) {
                             LOGGER.error("Reindex fails for " + item.getIdentifier(), e);
+                            if (reindexAllStopOnException) {
+                                stop.set(true);
+                            }
                         } finally {
                             reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
                         }
