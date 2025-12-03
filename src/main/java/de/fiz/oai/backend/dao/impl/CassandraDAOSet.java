@@ -49,7 +49,7 @@ public class CassandraDAOSet implements DAOSet {
 
   private Map<String, PreparedStatement> preparedStatements = new HashMap<String, PreparedStatement>();
 
-  public Set read(String name) throws IOException {
+  public Set read(String setSpec) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
     CqlSession session = manager.getCassandraSession();
 
@@ -58,12 +58,14 @@ public class CassandraDAOSet implements DAOSet {
       final StringBuilder selectStmt = new StringBuilder();
       selectStmt.append("SELECT * FROM ");
       selectStmt.append(TABLENAME_SET);
-      selectStmt.append(" WHERE name=?");
+      selectStmt.append(" WHERE ");
+      selectStmt.append(SET_SPEC);
+      selectStmt.append("=?");
 
       prepared = session.prepare(selectStmt.toString());
       preparedStatements.put("read", prepared);
     }
-    BoundStatement bound = prepared.bind(name);
+    BoundStatement bound = prepared.bind(setSpec);
 
     ResultSet rs = session.execute(bound);
     Row resultRow = rs.one();
@@ -116,9 +118,9 @@ public class CassandraDAOSet implements DAOSet {
       insertStmt.append("INSERT INTO ");
       insertStmt.append(TABLENAME_SET);
       insertStmt.append(" (");
-      insertStmt.append(SET_NAME);
-      insertStmt.append(", ");
       insertStmt.append(SET_SPEC);
+      insertStmt.append(", ");
+      insertStmt.append(SET_NAME);
       insertStmt.append(", ");
       insertStmt.append(SET_DESCRIPTION);
       insertStmt.append(", ");
@@ -130,16 +132,16 @@ public class CassandraDAOSet implements DAOSet {
       prepared = session.prepare(insertStmt.toString());
       preparedStatements.put("create", prepared);
     }
-    BoundStatement bound = prepared.bind(set.getName(), set.getSpec(), set.getDescription(), set.getxPaths(),set.getTags());
+    BoundStatement bound = prepared.bind(set.getSpec(), set.getName(), set.getDescription(), set.getxPaths(),set.getTags());
     session.execute(bound);
 
     return set;
   }
 
-  public void delete(String name) throws IOException {
+  public void delete(String setSpec) throws IOException {
 
-    if (StringUtils.isBlank(name)) {
-      throw new IOException("Set's name to delete cannot be empty!");
+    if (StringUtils.isBlank(setSpec)) {
+      throw new IOException("Set's setSpec to delete cannot be empty!");
     }
 
     ClusterManager manager = ClusterManager.getInstance();
@@ -151,13 +153,13 @@ public class CassandraDAOSet implements DAOSet {
       deleteStmt.append("DELETE FROM ");
       deleteStmt.append(TABLENAME_SET);
       deleteStmt.append(" WHERE ");
-      deleteStmt.append(SET_NAME);
+      deleteStmt.append(SET_SPEC);
       deleteStmt.append("=?");
 
       prepared = session.prepare(deleteStmt.toString());
       preparedStatements.put("delete", prepared);
     }
-    BoundStatement bound = prepared.bind(name);
+    BoundStatement bound = prepared.bind(setSpec);
     ResultSet result = session.execute(bound);
 
     if (!result.wasApplied()) {
