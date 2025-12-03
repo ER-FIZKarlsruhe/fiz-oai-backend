@@ -63,4 +63,11 @@ public interface SetService {
    * @param name the name
    */
   void delete(String name) throws IOException;
+
+  /**
+   * Migrate Cassandra-Table oai_set to get set_spec as primkey.
+   *
+   */
+  void migrateOaiSets() throws IOException;
+
 }

@@ -58,4 +58,11 @@ public interface DAOSet {
      *            the name
      */
     void delete(String name) throws IOException;
+
+    /**
+     * Migrate Cassandra-Table oai_set to get set_spec as primkey.
+     *
+     */
+    void migrate() throws IOException;
+
 }

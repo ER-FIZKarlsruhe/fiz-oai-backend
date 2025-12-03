@@ -93,4 +93,8 @@ public class SetServiceImpl implements SetService {
     daoSet.delete(name);
   }
 
+  @Override
+  public void migrateOaiSets() throws IOException {
+    daoSet.migrate();
+  }
 }

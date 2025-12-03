@@ -193,5 +193,18 @@ public class SetController extends AbstractController {
     
     return updateSet;
   }
-  
+
+  @POST
+  @Path("/migrateOaiSets")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @Operation(summary = "Change Primkey of oai_set by migrating table", description = "Change Primkey of oai_set by migrating table")
+  @ApiResponses({
+          @ApiResponse(responseCode = "200", description = "successful"),
+          @ApiResponse(responseCode = "500", description = "Bad request")
+  })
+  public void migrateOaiSets() throws IOException {
+    setService.migrateOaiSets();
+  }
+
 }
