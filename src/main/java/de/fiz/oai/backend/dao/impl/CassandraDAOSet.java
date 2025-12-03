@@ -168,8 +168,7 @@ public class CassandraDAOSet implements DAOSet {
   @Override
   public void migrate() throws IOException {
     String tablenameOrig = CassandraDAOSet.TABLENAME_SET + "_orig";
-    //For Production tablenameNew should be = CassandraDAOSet.TABLENAME_SET
-    String tablenameNew = CassandraDAOSet.TABLENAME_SET + "_new";
+    String tablenameNew = CassandraDAOSet.TABLENAME_SET;
 
     ClusterManager manager = ClusterManager.getInstance();
     CqlSession session = manager.getCassandraSession();
