@@ -81,7 +81,7 @@ public class CassandraUtils {
         createTableSetStmt.append(" map<text, text>, ");
         createTableSetStmt.append(CassandraDAOSet.SET_TAGS);
         createTableSetStmt.append(" list<text>, PRIMARY KEY (");
-        createTableSetStmt.append(CassandraDAOSet.SET_NAME);
+        createTableSetStmt.append(CassandraDAOSet.SET_SPEC);
         createTableSetStmt.append("));");
         session.execute(createTableSetStmt.toString());
 
