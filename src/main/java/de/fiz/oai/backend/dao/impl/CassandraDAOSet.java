@@ -164,4 +164,108 @@ public class CassandraDAOSet implements DAOSet {
       throw new NotFoundException("The deletion was not applied for the given identifier and format.");
     }
   }
+
+  @Override
+  public void migrate() throws IOException {
+    String tablenameOrig = CassandraDAOSet.TABLENAME_SET + "_orig";
+    //For Production tablenameNew should be = CassandraDAOSet.TABLENAME_SET
+    String tablenameNew = CassandraDAOSet.TABLENAME_SET + "_new";
+
+    ClusterManager manager = ClusterManager.getInstance();
+    CqlSession session = manager.getCassandraSession();
+
+    //Create backup table
+    final StringBuilder createTableSetStmt = new StringBuilder();
+    createTableSetStmt.append("CREATE TABLE IF NOT EXISTS ");
+    createTableSetStmt.append(tablenameOrig);
+    createTableSetStmt.append(" (");
+    createTableSetStmt.append(CassandraDAOSet.SET_NAME);
+    createTableSetStmt.append(" text, ");
+    createTableSetStmt.append(CassandraDAOSet.SET_SPEC);
+    createTableSetStmt.append(" text, ");
+    createTableSetStmt.append(CassandraDAOSet.SET_DESCRIPTION);
+    createTableSetStmt.append(" text, ");
+    createTableSetStmt.append(CassandraDAOSet.SET_XPATHS);
+    createTableSetStmt.append(" map<text, text>, ");
+    createTableSetStmt.append(CassandraDAOSet.SET_TAGS);
+    createTableSetStmt.append(" list<text>, PRIMARY KEY (");
+    createTableSetStmt.append(CassandraDAOSet.SET_NAME);
+    createTableSetStmt.append("));");
+    session.execute(createTableSetStmt.toString());
+
+    //Prepare Insert-Statement
+    StringBuilder insertStmt = new StringBuilder();
+    insertStmt.append("INSERT INTO ");
+    insertStmt.append(tablenameOrig);
+    insertStmt.append(" (");
+    insertStmt.append(SET_NAME);
+    insertStmt.append(", ");
+    insertStmt.append(SET_SPEC);
+    insertStmt.append(", ");
+    insertStmt.append(SET_DESCRIPTION);
+    insertStmt.append(", ");
+    insertStmt.append(SET_XPATHS);
+    insertStmt.append(", ");
+    insertStmt.append(SET_TAGS);
+    insertStmt.append(") VALUES (?, ?, ?, ?, ?)");
+    PreparedStatement prepared = session.prepare(insertStmt.toString());
+
+    //Copy Data
+    String query = "SELECT * FROM " + TABLENAME_SET;
+    ResultSet rs = session.execute(query);
+    for (final Row row : rs) {
+      final Set set = populateSet(row);
+      BoundStatement bound = prepared.bind(set.getName(), set.getSpec(), set.getDescription(), set.getxPaths(),set.getTags());
+      session.execute(bound);
+    }
+
+    //Delete Table
+    session.execute("DROP TABLE IF EXISTS " + tablenameNew);
+
+    //Recreate Table
+    final StringBuilder createNewTableSetStmt = new StringBuilder();
+    createNewTableSetStmt.append("CREATE TABLE IF NOT EXISTS ");
+    createNewTableSetStmt.append(tablenameNew);
+    createNewTableSetStmt.append(" (");
+    createNewTableSetStmt.append(CassandraDAOSet.SET_NAME);
+    createNewTableSetStmt.append(" text, ");
+    createNewTableSetStmt.append(CassandraDAOSet.SET_SPEC);
+    createNewTableSetStmt.append(" text, ");
+    createNewTableSetStmt.append(CassandraDAOSet.SET_DESCRIPTION);
+    createNewTableSetStmt.append(" text, ");
+    createNewTableSetStmt.append(CassandraDAOSet.SET_XPATHS);
+    createNewTableSetStmt.append(" map<text, text>, ");
+    createNewTableSetStmt.append(CassandraDAOSet.SET_TAGS);
+    createNewTableSetStmt.append(" list<text>, PRIMARY KEY (");
+    createNewTableSetStmt.append(CassandraDAOSet.SET_SPEC);
+    createNewTableSetStmt.append("));");
+    session.execute(createNewTableSetStmt.toString());
+
+    //Prepare new Insert-Statement
+    StringBuilder insertNewStmt = new StringBuilder();
+    insertNewStmt.append("INSERT INTO ");
+    insertNewStmt.append(tablenameNew);
+    insertNewStmt.append(" (");
+    insertNewStmt.append(SET_NAME);
+    insertNewStmt.append(", ");
+    insertNewStmt.append(SET_SPEC);
+    insertNewStmt.append(", ");
+    insertNewStmt.append(SET_DESCRIPTION);
+    insertNewStmt.append(", ");
+    insertNewStmt.append(SET_XPATHS);
+    insertNewStmt.append(", ");
+    insertNewStmt.append(SET_TAGS);
+    insertNewStmt.append(") VALUES (?, ?, ?, ?, ?)");
+    PreparedStatement preparedNew = session.prepare(insertNewStmt.toString());
+
+    //Copy Data
+    String queryNew = "SELECT * FROM " + tablenameOrig;
+    ResultSet rs1 = session.execute(queryNew);
+    for (final Row row : rs1) {
+      final Set set = populateSet(row);
+      BoundStatement bound = preparedNew.bind(set.getName(), set.getSpec(), set.getDescription(), set.getxPaths(),set.getTags());
+      session.execute(bound);
+    }
+  }
+
 }
