@@ -284,7 +284,7 @@ public class CassandraDAOSet implements DAOSet {
 
         PreparedStatement selectAllSets = session.prepare(
                 "SELECT name, description, spec, tags, xpaths " +
-                        "FROM fizoaibackend.oai_set"
+                        "FROM oai_set"
         );
 
         BoundStatement stmt = selectAllSets.bind().setPageSize(PAGE_SIZE);

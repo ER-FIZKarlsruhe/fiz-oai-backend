@@ -2,10 +2,16 @@ package de.fiz.oai.backend.testcontainer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 
@@ -140,5 +146,74 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         updateSet("testset1", "testset1chenged", "Changed testset1", List.of( "testtag"));
         deleteSet("testset1");
     }
+
+    @Test
+    public void testSetSearchWithResumptionToken() throws Exception {
+
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" +
+                tomcatContainer.getMappedPort(8080) + "/oai-backend/set/";
+
+        // --------------------------
+        // 1. CREATE 200 SETS
+        // --------------------------
+        for (int i = 1; i <= 200; i++) {
+            String name = "set" + i;
+            createSet(name, "spec_" + i, "description_" + i, List.of("tag"));
+        }
+
+        // --------------------------
+        // 2. CALL /search ENDPOINT
+        // --------------------------
+        String searchUrlBase = "http://" + tomcatContainer.getHost() + ":" +
+                tomcatContainer.getMappedPort(8080) + "/oai-backend/set/search";
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        int totalCount = 0;
+        String token = null;
+
+        do {
+            String url = token == null
+                    ? searchUrlBase
+                    : searchUrlBase + "?resumptionToken=" + token;
+
+            // PRINT the URL being requested
+            System.out.println("REQUESTING: " + url);
+
+            CloseableHttpClient client = HttpClients.createDefault();
+            HttpGet get = new HttpGet(url);
+            get.addHeader("Accept", "application/json");
+
+            try (CloseableHttpResponse resp = client.execute(get)) {
+                Assertions.assertEquals(HttpStatus.SC_OK,
+                        resp.getStatusLine().getStatusCode());
+
+                String json = EntityUtils.toString(resp.getEntity());
+                JsonNode root = mapper.readTree(json);
+
+                JsonNode sets = root.get("sets");
+                Assertions.assertNotNull(sets);
+                totalCount += sets.size();
+
+                JsonNode tokenNode = root.get("resumptionToken");
+                token = tokenNode != null && !tokenNode.isNull()
+                        ? tokenNode.asText()
+                        : null;
+
+                // PRINT the resumption token received
+                System.out.println("RECEIVED resumptionToken: " + token);
+                System.out.println("-------------------------------------");
+            }
+
+        } while (token != null);
+
+        // --------------------------
+        // 3. VERIFY 200 SETS RETURNED
+        // --------------------------
+        Assertions.assertEquals(200, totalCount,
+                "Expected exactly 200 sets across all pages");
+    }
+
+
 
 }
