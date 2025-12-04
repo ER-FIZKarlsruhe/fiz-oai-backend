@@ -19,20 +19,12 @@ import java.io.IOException;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import de.fiz.oai.backend.models.ListSetsResult;
 import jakarta.inject.Inject;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response.Status;
@@ -102,6 +94,22 @@ public class SetController extends AbstractController {
     
     return setList;
   }
+
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Search sets by resumptionToken", description = "Retrieve all sets.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Sets retrieved successfully"),
+            @ApiResponse(responseCode = "400", description = "Bad request")
+    })
+    public ListSetsResult searchSets(
+            @Parameter(description = "Search mark for pagination", required = false) @QueryParam("resumptionToken") String resumptionToken,
+            @Context HttpServletRequest request,
+            @Context HttpServletResponse response) throws IOException {
+        final ListSetsResult setList = setService.listSets(resumptionToken);
+        return setList;
+    }
   
   
   @DELETE

@@ -21,14 +21,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.datastax.oss.driver.api.core.cql.*;
+import de.fiz.oai.backend.models.ListSetsResult;
+import de.fiz.oai.backend.utils.SetResumptionTokenCodec;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.cql.BoundStatement;
-import com.datastax.oss.driver.api.core.cql.PreparedStatement;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
-import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.session.Session;
 
 import de.fiz.oai.backend.dao.DAOSet;
@@ -46,6 +45,9 @@ public class CassandraDAOSet implements DAOSet {
   public static final String SET_TAGS = "tags";
 
   public static final String TABLENAME_SET = "oai_set";
+
+  //TODO Make it configurable in properties
+  private static final int PAGE_SIZE = 100;
 
   private Map<String, PreparedStatement> preparedStatements = new HashMap<String, PreparedStatement>();
 
@@ -269,5 +271,54 @@ public class CassandraDAOSet implements DAOSet {
       session.execute(bound);
     }
   }
+
+    /**
+
+     * @param resumptionToken OAI-PMH resumptionToken or null if first page
+
+     */
+
+    public ListSetsResult listSets(String resumptionToken) {
+        ClusterManager manager = ClusterManager.getInstance();
+        CqlSession session = manager.getCassandraSession();
+
+        PreparedStatement selectAllSets = session.prepare(
+                "SELECT name, description, spec, tags, xpaths " +
+                        "FROM fizoaibackend.oai_set"
+        );
+
+        BoundStatement stmt = selectAllSets.bind().setPageSize(PAGE_SIZE);
+        int cursor = 0;
+
+        if (resumptionToken != null && !resumptionToken.isBlank()) {
+            SetResumptionTokenCodec.TokenPayload payload = SetResumptionTokenCodec.decode(resumptionToken);
+            cursor = payload.cursor;
+
+            PagingState pagingState = PagingState.fromString(payload.pagingState);
+            stmt = stmt.setPagingState(pagingState);
+        }
+
+        ResultSet rs = session.execute(stmt);
+
+        // Read ONLY the current page:
+        List<Set> sets = new ArrayList<>();
+        int pageCount = rs.getAvailableWithoutFetching();
+
+        for (int i = 0; i < pageCount; i++) {
+            Row row = rs.one();
+            sets.add(populateSet(row));
+        }
+
+        String nextToken = null;
+        PagingState nextPagingState = rs.getExecutionInfo().getSafePagingState();
+        if (nextPagingState != null) {
+            nextToken = SetResumptionTokenCodec.encode(
+                    nextPagingState.toString(),cursor + sets.size()
+            );
+        }
+
+        return new ListSetsResult(sets, nextToken, cursor, null);
+    }
+
 
 }

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 
+import de.fiz.oai.backend.models.ListSetsResult;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 
@@ -96,5 +97,11 @@ public class SetServiceImpl implements SetService {
   @Override
   public void migrateOaiSets() throws IOException {
     daoSet.migrate();
+  }
+
+  @Override
+  public ListSetsResult listSets(String resumptionToken){
+      ListSetsResult result = daoSet.listSets(resumptionToken);
+      return result;
   }
 }
