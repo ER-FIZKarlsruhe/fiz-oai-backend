@@ -97,6 +97,7 @@ public class SetController extends AbstractController {
 
 
     @GET
+    @Path("/search")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Search sets by resumptionToken", description = "Retrieve all sets.")
     @ApiResponses({
