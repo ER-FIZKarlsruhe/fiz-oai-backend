@@ -47,8 +47,8 @@ public class SetServiceImpl implements SetService {
   SearchService searchService;
 
   @Override
-  public Set read(String name) throws IOException {
-    Set set = daoSet.read(name);
+  public Set read(String setSpec) throws IOException {
+    Set set = daoSet.read(setSpec);
 
     return set;
   }
@@ -57,21 +57,21 @@ public class SetServiceImpl implements SetService {
   public Set create(Set set) throws IOException {
 	  
 	// Check for existing set
-	Set oldSet = read(set.getName());
+	Set oldSet = read(set.getSpec());
 	if (oldSet != null) {
-		throw new AlreadyExistsException("Set " + oldSet.getName() + " already exists");
+		throw new AlreadyExistsException("Set " + oldSet.getSpec() + " already exists");
 	}
 	
     daoSet.create(set);
 
-    LOGGER.info("Creating Set " + set.getName() + ". Triggering complete reindexing.");
+    LOGGER.info("Creating Set " + set.getSpec() + ". Triggering complete reindexing.");
 
     return set;
   }
 
   @Override
   public Set update(Set set) throws IOException {
-    Set oldSet = daoSet.read(set.getName());
+    Set oldSet = daoSet.read(set.getSpec());
 
     if (oldSet == null) {
       throw new NotFoundException();
@@ -90,8 +90,8 @@ public class SetServiceImpl implements SetService {
   }
 
   @Override
-  public void delete(String name) throws IOException {
-    daoSet.delete(name);
+  public void delete(String setSpec) throws IOException {
+    daoSet.delete(setSpec);
   }
 
   @Override

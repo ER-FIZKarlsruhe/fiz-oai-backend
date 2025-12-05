@@ -103,22 +103,22 @@ public class SetControllerIT extends JerseyTest {
     set.setSpec("fiz:iee");
     set.setDescription("This set contains the organization unit IEE");
 
-    when(setService.read("iee")).thenReturn(set);
+    when(setService.read("fiz:iee")).thenReturn(set);
 
-    Response response = target("/set/iee").request().get();
+    Response response = target("/set/fiz:iee").request().get();
 
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
     assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON,
         response.getHeaderString(HttpHeaders.CONTENT_TYPE));
 
     Set result = response.readEntity(Set.class);
-    assertEquals("Set name should be: ", "iee", result.getName());
     assertEquals("Set spec should be: ", "fiz:iee", result.getSpec());
+    assertEquals("Set name should be: ", "iee", result.getName());
     assertEquals("Set description should be: ", "This set contains the organization unit IEE", result.getDescription());
   }
 
   @Test
-  public void testGetSetEmptyName() throws Exception {
+  public void testGetSetEmptySpec() throws Exception {
 
     Response response = target("/set/%20").request().get();
 
@@ -159,7 +159,7 @@ public class SetControllerIT extends JerseyTest {
   }
 
   @Test
-  public void testDeleteSetEmptyName() throws Exception {
+  public void testDeleteSetEmptySpec() throws Exception {
     doThrow(IOException.class).when(setService).delete("%20");
 
     Response response = target("/set/%20").request().delete();
@@ -179,14 +179,14 @@ public class SetControllerIT extends JerseyTest {
   @Test
   public void testCreateSet() throws Exception {
     Set set = new Set();
-    set.setName("iee");
     set.setSpec("fiz:iee");
+    set.setName("iee");
     set.setDescription("This set contains the organization unit IEE");
 
     when(setService.create(any())).thenReturn(set);
 
     Response response = target("set").request().post(Entity.json(
-        "{\"name\":\"iee\",\"spec\":\"fiz:iee\",\"description\":\"This set contains the organization unit IEE\"}"));
+        "{\"spec\":\"fiz:iee\",\"name\":\"iee\",\"description\":\"This set contains the organization unit IEE\"}"));
 
     assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
   }
@@ -196,7 +196,7 @@ public class SetControllerIT extends JerseyTest {
     doThrow(AlreadyExistsException.class).when(setService).create(any());
 
     Response response = target("set").request().post(Entity.json(
-            "{\"name\":\"iee\",\"spec\":\"fiz:iee\",\"description\":\"This set contains the organization unit IEE\"}"));
+            "{\"spec\":\"fiz:iee\",\"name\":\"iee\",\"description\":\"This set contains the organization unit IEE\"}"));
 
     assertEquals("Http Response should be 409: ", Status.CONFLICT.getStatusCode(), response.getStatus());
   }
@@ -220,7 +220,7 @@ public class SetControllerIT extends JerseyTest {
   @Test
   public void testCreateSetInvalidSpec() throws Exception {
     Response response = target("set").request().post(Entity.json(
-        "{\"name\":\"iee\",\"spec\":\"fiz iee\",\"description\":\"This set contains the organization unit IEE\"}")); //spec must not have whitespace!
+        "{\"spec\":\"fiz iee\",\"name\":\"iee\",\"description\":\"This set contains the organization unit IEE\"}")); //spec must not have whitespace!
 
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
@@ -229,14 +229,14 @@ public class SetControllerIT extends JerseyTest {
   @Test
   public void testUpdateSet() throws Exception {
     Set set = new Set();
-    set.setName("iee");
     set.setSpec("fiz:iee");
+    set.setName("iee");
     set.setDescription("This set contains the organization unit IEE");
 
     when(setService.update(any())).thenReturn(set);
     
-    Response response = target("set/iee").request().put(Entity.json(
-        "{\"name\":\"iee\",\"spec\":\"fiz:iee\",\"description\":\"This set contains the organization unit IEE\"}"));
+    Response response = target("set/fiz:iee").request().put(Entity.json(
+        "{\"spec\":\"fiz:iee\",\"name\":\"iee\",\"description\":\"This set contains the organization unit IEE\"}"));
 
     String content = response.readEntity(String.class);
     LOGGER.info("testUpdateSet content: " + content);
@@ -245,7 +245,7 @@ public class SetControllerIT extends JerseyTest {
   
   @Test
   public void testUpdateSetNoName() throws Exception {
-    Response response = target("set/iee").request()
+    Response response = target("set/fiz:iee").request()
         .put(Entity.json("{\"spec\":\"fiz:iee\",\"description\":\"This set contains the organization unit IEE\"}"));
 
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
@@ -253,7 +253,7 @@ public class SetControllerIT extends JerseyTest {
   
   @Test
   public void testUpdateSetNoSpec() throws Exception {
-    Response response = target("set/iee").request().put(Entity.json(
+    Response response = target("set/fiz:iee").request().put(Entity.json(
         "{\"name\":\"iee\",\"description\":\"This set contains the organization unit IEE\"}"));
 
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
@@ -261,16 +261,16 @@ public class SetControllerIT extends JerseyTest {
   
   @Test
   public void testUpdateSetInvalidSpec() throws Exception {
-    Response response = target("set/iee").request().put(Entity.json(
-        "{\"name\":\"iee\",\"spec\":\"fiz iee\",\"description\":\"This set contains the organization unit IEE\"}")); //spec must not have whitespace!
+    Response response = target("set/fiz:iee").request().put(Entity.json(
+        "{\"spec\":\"fiz iee\",\"name\":\"iee\",\"description\":\"This set contains the organization unit IEE\"}")); //spec must not have whitespace!
 
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
   public void testUpdateSetNameDoesNotMatch() throws Exception {
-    Response response = target("set/ieee").request().put(Entity.json(
-        "{\"name\":\"iee\",\"spec\":\"fiz:iee\",\"description\":\"This set contains the organization unit IEE\"}")); //spec must not have whitespace!
+    Response response = target("set/fiz:ieee").request().put(Entity.json(
+        "{\"spec\":\"fiz:iee\",\"name\":\"iee\",\"description\":\"This set contains the organization unit IEE\"}")); //spec must not have whitespace!
     String content = response.readEntity(String.class);
     LOGGER.info("testCreateUpdateNameDoesNotMatch content: " + content);
     assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
@@ -280,8 +280,8 @@ public class SetControllerIT extends JerseyTest {
   public void testUpdateSetNotFound() throws Exception {
     doThrow(NotFoundException.class).when(setService).update(any());
     
-    Response response = target("set/iee").request().put(Entity.json(
-        "{\"name\":\"iee\",\"spec\":\"fiz:iee\",\"description\":\"This set contains the organization unit IEE\"}"));
+    Response response = target("set/fiz:iee").request().put(Entity.json(
+        "{\"spec\":\"fiz:iee\",\"name\":\"iee\",\"description\":\"This set contains the organization unit IEE\"}"));
 
     assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }

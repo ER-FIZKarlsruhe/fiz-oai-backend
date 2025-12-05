@@ -53,24 +53,24 @@ public class SetController extends AbstractController {
   SetService setService;
 
   @GET
-  @Path("/{name}")
+  @Path("/{setSpec}")
   @Produces(MediaType.APPLICATION_JSON)
-  @Operation(summary = "Get set by name", description = "Retrieve a set based on its name.")
+  @Operation(summary = "Get set by setSpec", description = "Retrieve a set based on its setSpec.")
   @ApiResponses({
           @ApiResponse(responseCode = "200", description = "Set retrieved successfully"),
           @ApiResponse(responseCode = "404", description = "Set not found"),
           @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public Set getSet(
-      @Parameter(description = "Name of the set", required = true) @PathParam("name") String name,
+      @Parameter(description = "setSpec of the set", required = true) @PathParam("setSpec") String setSpec,
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
-    if (name == null || StringUtils.isBlank(name)) {
-      throw new BadRequestException("name QueryParam cannot be empty!");
+    if (setSpec == null || StringUtils.isBlank(setSpec)) {
+      throw new BadRequestException("setSpec QueryParam cannot be empty!");
     }
     
-    final Set set = setService.read(name);
+    final Set set = setService.read(setSpec);
     
     if (set == null) {
       throw new WebApplicationException(Status.NOT_FOUND);
@@ -114,22 +114,22 @@ public class SetController extends AbstractController {
   
   
   @DELETE
-  @Path("/{name}")
-  @Operation(summary = "Delete set by name", description = "Deletes a set based on its name.")
+  @Path("/{setSpec}")
+  @Operation(summary = "Delete set by setSpec", description = "Deletes a set based on its setSpec.")
   @ApiResponses({
           @ApiResponse(responseCode = "204", description = "Set deleted successfully"),
           @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public void deleteSet(
-      @Parameter(description = "Name of the set to delete", required = true) @PathParam("name") String name,
+      @Parameter(description = "setSpec of the set to delete", required = true) @PathParam("setSpec") String setSpec,
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
 
-    if (StringUtils.isBlank(name)) {
+    if (StringUtils.isBlank(setSpec)) {
       throw new BadRequestException("name to delete cannot be empty!");
     }
 
-    setService.delete(name);
+    setService.delete(setSpec);
   }
   
   
@@ -145,15 +145,15 @@ public class SetController extends AbstractController {
       @Parameter(description = "Set to create", required = true) Set set,
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
-    
-    if (StringUtils.isBlank( set.getName())) {
-      throw new WebApplicationException("Set name cannot be empty!", Status.BAD_REQUEST);
-    }
 
     if (StringUtils.isBlank(set.getSpec())) {
       throw new WebApplicationException("Set spec cannot be empty!", Status.BAD_REQUEST);
     }
-    
+
+    if (StringUtils.isBlank( set.getName())) {
+      throw new WebApplicationException("Set name cannot be empty!", Status.BAD_REQUEST);
+    }
+
     if (!Pattern.matches( "([A-Za-z0-9\\-_\\.!~\\*'\\(\\)])+(:[A-Za-z0-9\\-_\\.!~\\*'\\(\\)]+)*", set.getSpec() ) ) {
       throw new WebApplicationException("Set spec does not match regex!", Status.BAD_REQUEST);
     }
@@ -166,7 +166,7 @@ public class SetController extends AbstractController {
   
   
   @PUT
-  @Path("/{name}")
+  @Path("/{setSpec}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @Operation(summary = "Update existing set", description = "Updates an existing set.")
@@ -175,7 +175,7 @@ public class SetController extends AbstractController {
           @ApiResponse(responseCode = "400", description = "Bad request")
   })
   public Set updateSet(
-      @Parameter(description = "Name of the set", required = true) @PathParam("name") String name,
+      @Parameter(description = "setSpec of the set", required = true) @PathParam("setSpec") String setSpec,
       @Parameter(description = "Set to update", required = true) Set set,
       @Context HttpServletRequest request,
       @Context HttpServletResponse response) throws IOException {
@@ -187,13 +187,13 @@ public class SetController extends AbstractController {
     if (StringUtils.isBlank(set.getSpec())) {
       throw new WebApplicationException("Set spec cannot be empty!", Status.BAD_REQUEST);
     }
-    
+
     if (!Pattern.matches( "([A-Za-z0-9\\-_\\.!~\\*'\\(\\)])+(:[A-Za-z0-9\\-_\\.!~\\*'\\(\\)]+)*", set.getSpec() ) ) {
       throw new WebApplicationException("Set spec does not match regex!", Status.BAD_REQUEST);
     }
 
-    if (!name.equals(set.getName())) {
-      throw new WebApplicationException("The name in the path and the set json does not match!", Status.BAD_REQUEST);
+    if (!setSpec.equals(set.getSpec())) {
+      throw new WebApplicationException("The setSpec in the path and the set json does not match!", Status.BAD_REQUEST);
     }
     
     Set updateSet = null;
