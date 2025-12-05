@@ -18,6 +18,7 @@ package de.fiz.oai.backend.dao;
 import java.io.IOException;
 import java.util.List;
 
+import de.fiz.oai.backend.models.ListSetsResult;
 import org.jvnet.hk2.annotations.Contract;
 
 import de.fiz.oai.backend.models.Set;
@@ -65,4 +66,10 @@ public interface DAOSet {
      */
     void migrate() throws IOException;
 
+    /**
+     * List all sets matching the  resumptionToken
+     * @param resumptionToken
+     * @return
+     */
+    ListSetsResult listSets(String resumptionToken);
 }
