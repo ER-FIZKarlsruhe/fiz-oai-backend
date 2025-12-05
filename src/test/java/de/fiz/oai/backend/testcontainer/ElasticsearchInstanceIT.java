@@ -35,7 +35,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         createCrosswalk("Radar2datacite", "radar", "datacite", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
         createCrosswalk("Radar2OAI_DC_v09", "radar", "oai_dc", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
 
-        createSet("testset", "testset", "this is a testset", List.of( "testtag"));
+        createSet("testset", "testset", "this is a testset", List.of("testtag"));
 
         createItem("10.5072/38238", template);
 
@@ -142,8 +142,8 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
     @Test
     public void testCrudSets() throws IOException {
-        createSet("testset1", "testset1", "this is a testset1", List.of( "testtag"));
-        updateSet("testset1", "testset1chenged", "Changed testset1", List.of( "testtag"));
+        createSet("testset1", "testset1", "this is a testset1", List.of("testtag"));
+        updateSet("testset1", "testset1chenged", "Changed testset1", List.of("testtag"));
         deleteSet("testset1");
     }
 
@@ -158,7 +158,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         // --------------------------
         for (int i = 1; i <= 200; i++) {
             String name = "set" + i;
-            createSet(name, "spec_" + i, "description_" + i, List.of("tag"));
+            createSet("spec_" + i, name, "description_" + i, List.of("tag"));
         }
 
         // --------------------------

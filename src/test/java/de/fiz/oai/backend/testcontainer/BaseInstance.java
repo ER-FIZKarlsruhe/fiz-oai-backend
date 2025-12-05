@@ -358,8 +358,8 @@ public abstract class BaseInstance extends TestContainerManager {
         getResponse.close();
     }
 
-    protected void deleteSet(String setName) throws IOException{
-        System.out.println("deleteSet " + setName);
+    protected void deleteSet(String spec) throws IOException{
+        System.out.println("deleteSet " + spec);
 
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
@@ -369,14 +369,14 @@ public abstract class BaseInstance extends TestContainerManager {
         HttpClientContext context = HttpClientContext.create();
 
         CloseableHttpResponse putResponse;
-        HttpDelete delete = new HttpDelete(baseUrl + setName);
+        HttpDelete delete = new HttpDelete(baseUrl + spec);
         delete.addHeader("Accept", "application/json");
         putResponse = getHttpResponse(delete, builder, context, false);
 
         Assertions.assertEquals(204, putResponse.getStatusLine().getStatusCode());
         putResponse.close();
 
-        HttpGet get = new HttpGet(baseUrl + setName);
+        HttpGet get = new HttpGet(baseUrl + spec);
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
         getResponse.getEntity().getContent().readAllBytes();
         Assertions.assertEquals(HttpStatus.SC_NOT_FOUND, getResponse.getStatusLine().getStatusCode());
@@ -384,17 +384,17 @@ public abstract class BaseInstance extends TestContainerManager {
     }
 
 
-    protected void createSet(String name, String spec, String description, List<String> tags) throws IOException{
+    protected void createSet(String spec, String name, String description, List<String> tags) throws IOException{
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/set/";
-        System.out.println("Set " + name);
+        System.out.println("Set " + spec);
 
 
         final ObjectMapper mapper = new ObjectMapper();
         ObjectNode node = mapper.createObjectNode();
-        node.put("name", name);
         node.put("spec", spec);
+        node.put("name", name);
         node.put("description", description);
         if (tags != null && !tags.isEmpty()) {
             node.putPOJO("tags", tags); // More efficient for lists
@@ -420,24 +420,24 @@ public abstract class BaseInstance extends TestContainerManager {
         Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode());
         postResponse.close();
 
-        HttpGet get = new HttpGet(baseUrl + name);
+        HttpGet get = new HttpGet(baseUrl + spec);
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
         getResponse.getEntity().getContent().readAllBytes();
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
     }
 
-    protected void updateSet(String name, String spec, String description, List<String> tags) throws IOException{
+    protected void updateSet(String spec, String name, String description, List<String> tags) throws IOException{
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/set/";
-        System.out.println("Set " + name);
+        System.out.println("Set " + spec);
 
 
         final ObjectMapper mapper = new ObjectMapper();
         ObjectNode node = mapper.createObjectNode();
-        node.put("name", name);
         node.put("spec", spec);
+        node.put("name", name);
         node.put("description", description);
         if (tags != null && !tags.isEmpty()) {
             node.putPOJO("tags", tags); // More efficient for lists
@@ -453,7 +453,7 @@ public abstract class BaseInstance extends TestContainerManager {
         HttpClientContext context = HttpClientContext.create();
 
         CloseableHttpResponse postResponse;
-        HttpPut put = new HttpPut(baseUrl + name);
+        HttpPut put = new HttpPut(baseUrl + spec);
         put.addHeader("Accept", "application/json");
         postResponse = getHttpResponse(put, builder, context, false);
 
