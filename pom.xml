@@ -22,7 +22,7 @@
     <activation.version>1.1.1</activation.version>
 
     <junit.version>4.13.2</junit.version>
-    <mockito.version>5.15.2</mockito.version>
+    <mockito.version>5.20.0</mockito.version>
     <swagger.version>2.2.28</swagger.version>
 
     <testcontainers.version>1.19.8</testcontainers.version>
