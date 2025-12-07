@@ -1,4 +1,4 @@
-FROM tomcat:11-jre21-temurin
+FROM tomcat:11-jre25-temurin
 MAINTAINER "FIZ-Karlsruhe"
 
 ARG UNAME=oai_backend

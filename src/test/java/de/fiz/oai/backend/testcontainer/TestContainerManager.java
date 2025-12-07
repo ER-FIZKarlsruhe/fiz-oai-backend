@@ -92,7 +92,7 @@ public abstract class TestContainerManager  {
             MountableFile configFiles = MountableFile.forHostPath(new File(CONFIG_FILE_PATH).getAbsolutePath());
             MountableFile serverFile = MountableFile.forHostPath(new File(SERVER_FILE_PATH).getAbsolutePath());
 
-            tomcatContainer = new GenericContainer<>("tomcat:11-jre21-temurin")
+            tomcatContainer = new GenericContainer<>("tomcat:11-jre25-temurin")
                     .withExposedPorts(8080)
                     .withNetwork(TestContainerManager.network)
                     .withCopyFileToContainer(warFile, "/usr/local/tomcat/webapps/oai-backend.war")
