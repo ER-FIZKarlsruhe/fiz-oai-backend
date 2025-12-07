@@ -18,7 +18,10 @@ import org.junit.jupiter.api.Assertions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 public class ElasticsearchInstanceIT extends BaseInstance {
@@ -150,69 +153,97 @@ public class ElasticsearchInstanceIT extends BaseInstance {
     @Test
     public void testSetSearchWithResumptionToken() throws Exception {
 
+        ObjectMapper mapper = new ObjectMapper();
+
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" +
                 tomcatContainer.getMappedPort(8080) + "/oai-backend/set/";
 
-        // --------------------------
+        // -----------------------------------------
         // 1. CREATE 200 SETS
-        // --------------------------
-        for (int i = 1; i <= 200; i++) {
+        // -----------------------------------------
+        for (int i = 1; i <= 2000; i++) {
             String name = "set" + i;
             createSet("spec_" + i, name, "description_" + i, List.of("tag"));
         }
 
-        // --------------------------
-        // 2. CALL /search ENDPOINT
-        // --------------------------
+        // -----------------------------------------
+        // 2. GET ALL SETS FROM /oai-backend/set
+        // -----------------------------------------
+        CloseableHttpClient client = HttpClients.createDefault();
+        HttpGet getAll = new HttpGet(baseUrl);
+        getAll.addHeader("Accept", "application/json");
+
+        List<String> expectedFullSetNames;
+
+        try (CloseableHttpResponse resp = client.execute(getAll)) {
+            Assertions.assertEquals(HttpStatus.SC_OK, resp.getStatusLine().getStatusCode());
+
+            String json = EntityUtils.toString(resp.getEntity());
+            JsonNode root = mapper.readTree(json);
+
+            Assertions.assertTrue(root.isArray(), "Expected /set to return JSON array");
+
+            expectedFullSetNames = new ArrayList<>();
+            for (JsonNode node : root) {
+                expectedFullSetNames.add(node.get("spec").asText() + ":" + node.get("name").asText());
+            }
+
+            Assertions.assertEquals(2000, expectedFullSetNames.size(),
+                    "Expected 200 sets returned by /set");
+        }
+
+        // -----------------------------------------
+        // 3. GET ALL SETS FROM /search WITH TOKENS
+        // -----------------------------------------
         String searchUrlBase = "http://" + tomcatContainer.getHost() + ":" +
                 tomcatContainer.getMappedPort(8080) + "/oai-backend/set/search";
 
-        ObjectMapper mapper = new ObjectMapper();
-
-        int totalCount = 0;
+        List<String> foundSetNames = new ArrayList<>();
         String token = null;
 
         do {
-            String url = token == null
-                    ? searchUrlBase
-                    : searchUrlBase + "?resumptionToken=" + token;
-
-            // PRINT the URL being requested
-            System.out.println("REQUESTING: " + url);
-
-            CloseableHttpClient client = HttpClients.createDefault();
+            String url = token == null ? searchUrlBase : searchUrlBase + "?resumptionToken=" + token;
+            System.out.println("Next search call: " + url);
+            CloseableHttpClient searchClient = HttpClients.createDefault();
             HttpGet get = new HttpGet(url);
             get.addHeader("Accept", "application/json");
 
-            try (CloseableHttpResponse resp = client.execute(get)) {
-                Assertions.assertEquals(HttpStatus.SC_OK,
-                        resp.getStatusLine().getStatusCode());
+            try (CloseableHttpResponse resp = searchClient.execute(get)) {
+
+                Assertions.assertEquals(HttpStatus.SC_OK, resp.getStatusLine().getStatusCode());
 
                 String json = EntityUtils.toString(resp.getEntity());
                 JsonNode root = mapper.readTree(json);
 
+                // Now "sets" exists in the search endpoint
                 JsonNode sets = root.get("sets");
-                Assertions.assertNotNull(sets);
-                totalCount += sets.size();
+                Assertions.assertNotNull(sets, "Expected 'sets' field in /search response");
+                Assertions.assertTrue(sets.isArray());
+
+                for (JsonNode s : sets) {
+                    foundSetNames.add(s.get("spec").asText() + ":" + s.get("name").asText());
+                }
 
                 JsonNode tokenNode = root.get("resumptionToken");
-                token = tokenNode != null && !tokenNode.isNull()
-                        ? tokenNode.asText()
-                        : null;
-
-                // PRINT the resumption token received
-                System.out.println("RECEIVED resumptionToken: " + token);
-                System.out.println("-------------------------------------");
+                token = tokenNode != null && !tokenNode.isNull() ? tokenNode.asText() : null;
             }
 
         } while (token != null);
 
-        // --------------------------
-        // 3. VERIFY 200 SETS RETURNED
-        // --------------------------
-        Assertions.assertEquals(200, totalCount,
-                "Expected exactly 200 sets across all pages");
+        // -----------------------------------------
+        // 4. Compare results
+        // -----------------------------------------
+        Assertions.assertEquals(expectedFullSetNames.size(), foundSetNames.size(),
+                "Search+token must return the same total items as /set");
+
+        Assertions.assertTrue(
+                foundSetNames.containsAll(expectedFullSetNames)
+                        && expectedFullSetNames.containsAll(foundSetNames),
+                "Search+token result must match /set result exactly"
+        );
     }
+
+
 
 
 
