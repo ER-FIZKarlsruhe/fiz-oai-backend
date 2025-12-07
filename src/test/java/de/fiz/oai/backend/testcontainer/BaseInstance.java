@@ -22,6 +22,8 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.output.OutputFrame;
 
 import java.io.BufferedReader;
@@ -37,13 +39,14 @@ import java.util.List;
 
 public abstract class BaseInstance extends TestContainerManager {
 
+    private Logger LOGGER = LoggerFactory.getLogger(BaseInstance.class);
 
     @Test
     public void testTomcatIsRunningAndWarDeployed() {
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/info/version";
-        System.out.println("Tomcat is running with deployed WAR at: " + baseUrl);
+        LOGGER.info("Tomcat is running with deployed WAR at: " + baseUrl);
 
         Client client = ClientBuilder.newClient();
         Response response = client.target(baseUrl).request().get(); // Replace with your endpoint
@@ -62,8 +65,7 @@ public abstract class BaseInstance extends TestContainerManager {
     protected void createItem(String identifier, String template) throws IOException {
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/item/";
 
-        System.out.println("createItem " + identifier);
-
+        LOGGER.info("createItem {}", identifier);
 
         String xml = template.replace("@@doi@@", identifier);
 
@@ -80,7 +82,7 @@ public abstract class BaseInstance extends TestContainerManager {
         HttpClientContext context = HttpClientContext.create();
 
         String identifierUrlEncoded = URLEncoder.encode(identifier, "UTF-8");
-        System.out.println("identifierUrlEncoded: " + identifierUrlEncoded);
+        LOGGER.info("identifierUrlEncoded: {}", identifierUrlEncoded);
         CloseableHttpResponse response;
         HttpPost post = new HttpPost(baseUrl);
         response = getHttpResponse(post, builder, context, false);
@@ -114,7 +116,7 @@ public abstract class BaseInstance extends TestContainerManager {
             url += "&searchMark=" + searchMark;
         }
 
-        System.out.println("searchItems " );
+        LOGGER.info("searchItems " );
 
         String result = null;
         EntityBuilder builder = EntityBuilder.create();
@@ -134,7 +136,7 @@ public abstract class BaseInstance extends TestContainerManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("searchItems " + result);
+        LOGGER.info("searchItems {}", result);
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
 
@@ -146,7 +148,7 @@ public abstract class BaseInstance extends TestContainerManager {
     protected void reindexElasticsearch(String expectIndexName, String continueIndexName) throws IOException {
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/reindex/";
 
-        System.out.println("reindex " );
+        LOGGER.info("reindex " );
         CloseableHttpResponse response;
         EntityBuilder builder = EntityBuilder.create();
         //httpEntity = new StringEntity("", StandardCharsets.UTF_8);
@@ -179,7 +181,7 @@ public abstract class BaseInstance extends TestContainerManager {
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
         InputStream is = getResponse.getEntity().getContent();
         String indices = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-        System.out.println("indices: " + indices);
+        LOGGER.info("indices: {}", indices);
         Assertions.assertTrue(indices.contains(indexNameToCheck));
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
@@ -189,7 +191,7 @@ public abstract class BaseInstance extends TestContainerManager {
         getResponse = getHttpResponse(get, builder, context, false);
         is = getResponse.getEntity().getContent();
         String aliases = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-        System.out.println("aliases: " + aliases);
+        LOGGER.info("aliases: {}", aliases);
         Assertions.assertTrue(aliases.contains("items " + indexNameToCheck));
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
@@ -200,7 +202,7 @@ public abstract class BaseInstance extends TestContainerManager {
     protected void reindexItem(String itemIdentifier, int expectedResponseCode) throws IOException {
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/reindex/item/" + URLEncoder.encode(itemIdentifier, "UTF-8");;
 
-        System.out.println("reindexItem " );
+        LOGGER.info("reindexItem " );
         CloseableHttpResponse response;
         EntityBuilder builder = EntityBuilder.create();
         builder.setText("");
@@ -223,7 +225,7 @@ public abstract class BaseInstance extends TestContainerManager {
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
         InputStream is = getResponse.getEntity().getContent();
         String searchResult = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-        System.out.println("search result: " + searchResult);
+        LOGGER.info("search result: {}", searchResult);
         Assertions.assertTrue(searchResult.contains("total\":{\"value\":"+ expectedItems ));
 
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
@@ -236,7 +238,7 @@ public abstract class BaseInstance extends TestContainerManager {
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/format/";
-        System.out.println("createFormat " + prefix);
+        LOGGER.info("createFormat {}", prefix);
 
 
         final ObjectMapper mapper = new ObjectMapper();
@@ -272,7 +274,7 @@ public abstract class BaseInstance extends TestContainerManager {
     }
 
     protected void updateFormat(String prefix, String schemaLocation, String namespace) throws IOException{
-        System.out.println("updateFormat " + prefix);
+        LOGGER.info("updateFormat {}", prefix);
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/format/";
@@ -308,7 +310,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
 
     protected void deleteFormat(String prefix) throws IOException{
-        System.out.println("deleteFormat " + prefix);
+        LOGGER.info("deleteFormat {}", prefix);
 
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
@@ -334,7 +336,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
 
     protected void deleteCrosswalk(String prefix) throws IOException{
-        System.out.println("deleteCrosswalk " + prefix);
+        LOGGER.info("deleteCrosswalk {}", prefix);
 
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
@@ -359,7 +361,7 @@ public abstract class BaseInstance extends TestContainerManager {
     }
 
     protected void deleteSet(String spec) throws IOException{
-        System.out.println("deleteSet " + spec);
+        LOGGER.info("deleteSet {}", spec);
 
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
@@ -388,7 +390,7 @@ public abstract class BaseInstance extends TestContainerManager {
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/set/";
-        System.out.println("Set " + spec);
+        LOGGER.info("Set {}", spec);
 
 
         final ObjectMapper mapper = new ObjectMapper();
@@ -431,7 +433,7 @@ public abstract class BaseInstance extends TestContainerManager {
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/set/";
-        System.out.println("Set " + spec);
+        LOGGER.info("Set {}", spec);
 
 
         final ObjectMapper mapper = new ObjectMapper();
@@ -466,7 +468,7 @@ public abstract class BaseInstance extends TestContainerManager {
     protected void createCrosswalk(String name, String formatFrom, String formatTo, String xsltStylesheet) throws IOException {
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
-        System.out.println("createCrosswalk " + name);
+        LOGGER.info("createCrosswalk {}", name);
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/crosswalk/";
         String dataciteXslt = new String(Files.readAllBytes(Paths.get(xsltStylesheet)));
@@ -503,7 +505,7 @@ public abstract class BaseInstance extends TestContainerManager {
     protected void updateCrosswalk(String name, String formatFrom, String formatTo, String xsltStylesheet) throws IOException {
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
-        System.out.println("updateCrosswalk " + name);
+        LOGGER.info("updateCrosswalk {}", name);
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/crosswalk/";
         String dataciteXslt = new String(Files.readAllBytes(Paths.get(xsltStylesheet)));

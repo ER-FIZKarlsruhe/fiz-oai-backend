@@ -23,6 +23,7 @@ import java.util.Map;
 
 import com.datastax.oss.driver.api.core.cql.*;
 import de.fiz.oai.backend.models.ListSetsResult;
+import de.fiz.oai.backend.utils.Configuration;
 import de.fiz.oai.backend.utils.SetResumptionTokenCodec;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
@@ -34,6 +35,8 @@ import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.exceptions.NotFoundException;
 import de.fiz.oai.backend.models.Set;
 import de.fiz.oai.backend.utils.ClusterManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class CassandraDAOSet implements DAOSet {
@@ -46,10 +49,9 @@ public class CassandraDAOSet implements DAOSet {
 
   public static final String TABLENAME_SET = "oai_set";
 
-  //TODO Make it configurable in properties
-  private static final int PAGE_SIZE = 100;
-
   private Map<String, PreparedStatement> preparedStatements = new HashMap<String, PreparedStatement>();
+
+  private Logger LOGGER = LoggerFactory.getLogger(CassandraDAOSet.class);
 
   public Set read(String setSpec) throws IOException {
     ClusterManager manager = ClusterManager.getInstance();
@@ -275,21 +277,22 @@ public class CassandraDAOSet implements DAOSet {
   }
 
     /**
-
      * @param resumptionToken OAI-PMH resumptionToken or null if first page
-
      */
-
     public ListSetsResult listSets(String resumptionToken) {
         ClusterManager manager = ClusterManager.getInstance();
         CqlSession session = manager.getCassandraSession();
+
+        Configuration config = Configuration.getInstance();
+        int setPaginationSize = Integer.parseInt(config.getProperty("set.pagination.size", "100"));
+        LOGGER.info("listSets setPaginationSize: {}", setPaginationSize);
 
         PreparedStatement selectAllSets = session.prepare(
                 "SELECT name, description, spec, tags, xpaths " +
                         "FROM oai_set"
         );
 
-        BoundStatement stmt = selectAllSets.bind().setPageSize(PAGE_SIZE);
+        BoundStatement stmt = selectAllSets.bind().setPageSize(setPaginationSize);
         int cursor = 0;
 
         if (resumptionToken != null && !resumptionToken.isBlank()) {

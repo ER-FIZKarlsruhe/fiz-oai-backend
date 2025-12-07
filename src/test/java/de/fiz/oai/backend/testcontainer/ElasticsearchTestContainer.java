@@ -18,6 +18,7 @@ import java.nio.file.Paths;
  * This class configures the Elasticsearch test-container.
  */
 public class ElasticsearchTestContainer {
+
     public static final GenericContainer<ElasticsearchContainer> container =
             new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.17.13"))
                     .withExposedPorts(9200)
