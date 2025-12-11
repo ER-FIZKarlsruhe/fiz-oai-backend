@@ -110,10 +110,14 @@ public abstract class BaseInstance extends TestContainerManager {
     }
 
 
-    protected String searchItems(String format, boolean content, String searchMark) throws IOException {
+    protected String searchItems(String format, String set, boolean content, String searchMark) throws IOException {
         String url = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/item?format=" + format + "&content=" + content;
         if (StringUtils.isNotBlank(searchMark)) {
             url += "&searchMark=" + searchMark;
+        }
+
+        if (StringUtils.isNotBlank(searchMark)) {
+            url += "&set=" + set;
         }
 
         LOGGER.info("searchItems " );
@@ -232,15 +236,100 @@ public abstract class BaseInstance extends TestContainerManager {
         getResponse.close();
     }
 
+    /**
+     * Retrieves a specific item from the Elasticsearch 'items' index by its identifier.
+     *
+     * @param itemIdentifier The ID of the item to retrieve.
+     * @param expectedResponseCode The expected HTTP response code (e.g., HttpStatus.SC_OK).
+     * @return The content of the retrieved item as a String.
+     * @throws IOException If an I/O error occurs during the HTTP request.
+     */
+    protected String retrieveItemFromES(String itemIdentifier, int expectedResponseCode) throws IOException {
+        // 1. Construct the base Elasticsearch URL
+        String esUrl = "http://localhost:" + ElasticsearchTestContainer.container.getMappedPort(9200) +"/";
+
+        // 2. *** FIX: URL Encode the identifier ***
+        String encodedIdentifier = URLEncoder.encode(itemIdentifier, StandardCharsets.UTF_8.toString());
+
+        // 3. Build the specific GET request URL for the document using the encoded identifier
+        String documentUrl = esUrl + "items/_doc/" + encodedIdentifier; // Use encodedIdentifier here
+
+        LOGGER.info("Retrieving item from ES with URL: {}", documentUrl);
+
+        EntityBuilder builder = EntityBuilder.create();
+        HttpClientContext context = HttpClientContext.create();
+
+        // 3. Create the HTTP GET request
+        HttpGet get = new HttpGet(documentUrl);
+
+        CloseableHttpResponse getResponse = null;
+        String itemContent = null;
+
+        try {
+            // 4. Execute the request (assuming getHttpResponse is your utility method)
+            getResponse = getHttpResponse(get, builder, context, false);
+
+            // 5. Assert the expected response status code
+            Assertions.assertEquals(expectedResponseCode, getResponse.getStatusLine().getStatusCode());
+
+            // 6. If the response is successful (200 OK), read the content
+            if (expectedResponseCode == HttpStatus.SC_OK && getResponse.getEntity() != null) {
+                InputStream is = getResponse.getEntity().getContent();
+                itemContent = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                LOGGER.info("Successfully retrieved item content: {}", itemContent);
+            } else if (getResponse.getEntity() != null) {
+                // Log response body even for non-OK status for debugging
+                InputStream is = getResponse.getEntity().getContent();
+                LOGGER.warn("ES response body (status: {}): {}", expectedResponseCode, new String(is.readAllBytes(), StandardCharsets.UTF_8));
+            }
+
+        } finally {
+            // 7. Ensure the response is closed
+            if (getResponse != null) {
+                getResponse.close();
+            }
+        }
+
+        return itemContent;
+    }
 
 
-    protected void createFormat(String prefix, String schemaLocation, String namespace) throws IOException{
+    protected void createFormatIfNotExisting(String prefix, String schemaLocation, String namespace) throws IOException {
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/format/";
-        LOGGER.info("createFormat {}", prefix);
+        LOGGER.info("Attempting to create format {} if it does not exist.", prefix);
+
+        // --- 1. CHECK IF FORMAT ALREADY EXISTS ---
+        HttpClientContext context = HttpClientContext.create();
+        EntityBuilder builder = EntityBuilder.create();
+        builder.setText(""); // Empty body for GET request
+        builder.setContentType(ContentType.APPLICATION_JSON);
+
+        HttpGet getCheck = new HttpGet(baseUrl + prefix);
+        CloseableHttpResponse getCheckResponse = getHttpResponse(getCheck, builder, context, false);
+
+        try {
+            int checkStatusCode = getCheckResponse.getStatusLine().getStatusCode();
+
+            if (checkStatusCode == HttpStatus.SC_OK) {
+                // Format already exists, no need to create it.
+                LOGGER.info("Format {} already exists (status {}). Skipping creation.", prefix, checkStatusCode);
+                return;
+            } else if (checkStatusCode == HttpStatus.SC_NOT_FOUND) {
+                // Format does not exist, proceed to create it.
+                LOGGER.info("Format {} does not exist (status {}). Proceeding to create.", prefix, checkStatusCode);
+                // Fall through to creation logic
+            } else {
+                // Unexpected status code on check, we might want to fail or log a warning
+                LOGGER.warn("Unexpected status code ({}) when checking for format {}. Proceeding to create.", checkStatusCode, prefix);
+            }
+        } finally {
+            getCheckResponse.close();
+        }
 
 
+        // --- 2. CREATE THE FORMAT (If check failed or returned 404) ---
         final ObjectMapper mapper = new ObjectMapper();
         ObjectNode node = mapper.createObjectNode();
         node.put("metadataPrefix", prefix);
@@ -249,28 +338,44 @@ public abstract class BaseInstance extends TestContainerManager {
         node.put("identifierXpath", "/");
         String json = node.toString();
 
-        EntityBuilder builder = EntityBuilder.create();
+        // Rebuild builder for POST request with JSON payload
+        builder = EntityBuilder.create();
         builder.setText(json);
         builder.setContentType(ContentType.APPLICATION_JSON);
-        HttpClientContext context = HttpClientContext.create();
 
         CloseableHttpResponse postResponse;
         HttpPost post = new HttpPost(baseUrl);
         post.addHeader("Accept", "application/json");
         postResponse = getHttpResponse(post, builder, context, false);
 
-        final String logs = tomcatContainer.getLogs(OutputFrame.OutputType.STDOUT);
-        final String errlogs = tomcatContainer.getLogs(OutputFrame.OutputType.STDERR);
+        try {
+            // Logging for debugging (optional, based on your original method)
+            final String logs = tomcatContainer.getLogs(OutputFrame.OutputType.STDOUT);
+            final String errlogs = tomcatContainer.getLogs(OutputFrame.OutputType.STDERR);
 
-        Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode());
-        postResponse.close();
+            // Assert that the creation was successful (HTTP 200 OK)
+            Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode(), "Failed to create format " + prefix);
+            LOGGER.info("Format {} successfully created.", prefix);
+        } finally {
+            postResponse.close();
+        }
 
-        HttpGet get = new HttpGet(baseUrl + prefix);
-        CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
-        getResponse.getEntity().getContent().readAllBytes();
-        Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
-        getResponse.close();
+        // --- 3. VERIFY CREATION (Optional, based on your original method) ---
+        // The original method verified immediately after creation.
+        // I am keeping this verification step for consistency.
 
+        HttpGet getVerify = new HttpGet(baseUrl + prefix);
+        CloseableHttpResponse getVerifyResponse = getHttpResponse(getVerify, builder, context, false);
+
+        try {
+            // Read the content to fully consume the entity, then assert status.
+            // Reading all bytes can prevent issues with connection reuse.
+            getVerifyResponse.getEntity().getContent().readAllBytes();
+            Assertions.assertEquals(HttpStatus.SC_OK, getVerifyResponse.getStatusLine().getStatusCode(), "Verification GET failed for format " + prefix);
+            LOGGER.info("Format {} successfully verified.", prefix);
+        } finally {
+            getVerifyResponse.close();
+        }
     }
 
     protected void updateFormat(String prefix, String schemaLocation, String namespace) throws IOException{
@@ -465,12 +570,39 @@ public abstract class BaseInstance extends TestContainerManager {
 
 
 
-    protected void createCrosswalk(String name, String formatFrom, String formatTo, String xsltStylesheet) throws IOException {
+    protected void createCrosswalkIfNotExisting(String name, String formatFrom, String formatTo, String xsltStylesheet) throws IOException {
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
-        LOGGER.info("createCrosswalk {}", name);
+        LOGGER.info("createCrosswalkIfNotExisting {}", name);
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/crosswalk/";
+        HttpClientContext context = HttpClientContext.create();
+
+        // 1. Check if the crosswalk already exists
+        HttpGet getCheck = new HttpGet(baseUrl + name);
+        try (CloseableHttpResponse getCheckResponse = getHttpResponse(getCheck, null, context, false)) {
+            int statusCode = getCheckResponse.getStatusLine().getStatusCode();
+
+            // If the crosswalk is found (e.g., HTTP 200 OK), then we don't need to create it.
+            if (statusCode == HttpStatus.SC_OK) {
+                LOGGER.info("Crosswalk {} already exists. Skipping creation.", name);
+                // Ensure the response entity is consumed and the response is closed
+                getCheckResponse.getEntity().getContent().readAllBytes();
+                return;
+            }
+
+            // If the crosswalk is not found (e.g., HTTP 404 Not Found), proceed to creation.
+            // We will assert that the status is NOT_FOUND if we expect it to be new.
+            Assertions.assertEquals(HttpStatus.SC_NOT_FOUND, statusCode,
+                    "Expected status 404 Not Found if crosswalk is new.");
+
+            // Ensure the response entity is consumed
+            getCheckResponse.getEntity().getContent().readAllBytes();
+        }
+
+        // 2. If it does not exist, proceed with creation (POST)
+        LOGGER.info("Crosswalk {} not found. Creating it...", name);
+
         String dataciteXslt = new String(Files.readAllBytes(Paths.get(xsltStylesheet)));
 
         final ObjectMapper mapper = new ObjectMapper();
@@ -485,21 +617,27 @@ public abstract class BaseInstance extends TestContainerManager {
         EntityBuilder builder = EntityBuilder.create();
         builder.setText(json);
         builder.setContentType(ContentType.APPLICATION_JSON);
-        HttpClientContext context = HttpClientContext.create();
 
         HttpPost post = new HttpPost(baseUrl);
         post.addHeader("Accept", "application/json");
-        CloseableHttpResponse postResponse = getHttpResponse(post, builder, context, false);
 
-        postResponse.getEntity().getContent().readAllBytes();
-        Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode());
-        postResponse.close();
+        try (CloseableHttpResponse postResponse = getHttpResponse(post, builder, context, false)) {
 
-        HttpGet get = new HttpGet(baseUrl + name);
-        CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
-        getResponse.getEntity().getContent().readAllBytes();
-        Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
-        getResponse.close();
+            // Assert that the creation POST was successful (HTTP 200 OK)
+            postResponse.getEntity().getContent().readAllBytes();
+            Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode(),
+                    "Expected status 200 OK after successful crosswalk creation.");
+        }
+
+        // 3. Final verification (GET) to ensure it was created successfully
+        HttpGet getVerify = new HttpGet(baseUrl + name);
+        try (CloseableHttpResponse getVerifyResponse = getHttpResponse(getVerify, null, context, false)) {
+
+            // Assert that the created crosswalk is now retrievable (HTTP 200 OK)
+            getVerifyResponse.getEntity().getContent().readAllBytes();
+            Assertions.assertEquals(HttpStatus.SC_OK, getVerifyResponse.getStatusLine().getStatusCode(),
+                    "Expected status 200 OK after verifying created crosswalk.");
+        }
     }
 
     protected void updateCrosswalk(String name, String formatFrom, String formatTo, String xsltStylesheet) throws IOException {

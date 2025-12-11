@@ -18,10 +18,7 @@ import org.junit.jupiter.api.Assertions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 public class ElasticsearchInstanceIT extends BaseInstance {
@@ -31,12 +28,12 @@ public class ElasticsearchInstanceIT extends BaseInstance {
     public void testReindexAll() throws IOException {
         String template = new String(Files.readAllBytes(Paths.get("src/test/resources/radar-md-template.xml")));
 
-        createFormat("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/");
-        createFormat("radar", "https://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/", "http://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/");
-        createFormat("datacite", "https://schema.datacite.org/meta/kernel-4.0/metadata.xsd", "http://datacite.org/schema/kernel-4");
+        createFormatIfNotExisting("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/");
+        createFormatIfNotExisting("radar", "https://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/", "http://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/");
+        createFormatIfNotExisting("datacite", "https://schema.datacite.org/meta/kernel-4.0/metadata.xsd", "http://datacite.org/schema/kernel-4");
 
-        createCrosswalk("Radar2datacite", "radar", "datacite", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
-        createCrosswalk("Radar2OAI_DC_v09", "radar", "oai_dc", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
+        createCrosswalkIfNotExisting("Radar2datacite", "radar", "datacite", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
+        createCrosswalkIfNotExisting("Radar2OAI_DC_v09", "radar", "oai_dc", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
 
         createSet("testset", "testset", "this is a testset", List.of("testtag"));
 
@@ -49,7 +46,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         }
 
         checkItemsInIndex(1);
-        String result = searchItems("radar", true, null);
+        String result = searchItems("radar", null,true, null);
         Assertions.assertTrue(result.contains("\"searchMark\":null"));
         Assertions.assertTrue(result.contains("\"total\":1,\"size\":1"));
 
@@ -71,7 +68,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         checkItemsInIndex(102);
 
         int countSearchWithMarks = 1;
-        result = searchItems("oai_dc" , false, null);
+        result = searchItems("oai_dc" , null,false, null);
         SearchResult<Item> itemResult = convertStringToSearchResult(result);
         String searchMark = itemResult.getSearchMark();
         Assertions.assertTrue(searchMark != null);
@@ -79,7 +76,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
         while (searchMark != null) {
             countSearchWithMarks++;
-            result = searchItems("oai_dc" , false, searchMark);
+            result = searchItems("oai_dc" , null,false, searchMark);
             itemResult = convertStringToSearchResult(result);
             searchMark = itemResult.getSearchMark();
             System.out.println("searchMark " + searchMark);
@@ -103,7 +100,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         }
 
         checkItemsInIndex(1);
-        String result = searchItems("radar", true, null);
+        String result = searchItems("radar",null, true, null);
         Assertions.assertFalse(result.contains("\"searchMark\":null"));
 
         //reindex item okay
@@ -129,16 +126,16 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
     @Test
     public void testCrudFormats() throws IOException {
-        createFormat("test_format", "http://abc.de/", "http://abc.de/test_format");
+        createFormatIfNotExisting("test_format", "http://abc.de/", "http://abc.de/test_format");
         updateFormat("test_format", "http://adc.de/new", "http://adc.de/test_format");
         deleteFormat("test_format");
     }
 
     @Test
     public void testCrudCrosswalks() throws IOException {
-        createFormat("test_format1", "http://abc.de/", "http://abc.de/test_format");
-        createFormat("test_format2", "http://abc.de/", "http://abc.de/test_format");
-        createCrosswalk("format1ToFormat2", "test_format1", "test_format2", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
+        createFormatIfNotExisting("test_format1", "http://abc.de/", "http://abc.de/test_format");
+        createFormatIfNotExisting("test_format2", "http://abc.de/", "http://abc.de/test_format");
+        createCrosswalkIfNotExisting("format1ToFormat2", "test_format1", "test_format2", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
         updateCrosswalk("format1ToFormat2", "test_format1", "test_format2", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
         deleteCrosswalk("format1ToFormat2");
     }
@@ -243,7 +240,69 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         );
     }
 
+    @Test
+    public void testSetHierarchy() throws IOException {
+        String template = new String(Files.readAllBytes(Paths.get("src/test/resources/radar-md-template.xml")));
 
+        createFormatIfNotExisting("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/");
+        createFormatIfNotExisting("radar", "https://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/", "http://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/");
+        createFormatIfNotExisting("datacite", "https://schema.datacite.org/meta/kernel-4.0/metadata.xsd", "http://datacite.org/schema/kernel-4");
+
+        createCrosswalkIfNotExisting("Radar2datacite", "radar", "datacite", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
+        createCrosswalkIfNotExisting("Radar2OAI_DC_v09", "radar", "oai_dc", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
+
+        createSet("FIZ:ER:FD", "Forschungsdaten", "Forschungsdaten", List.of("testtag"));
+        createSet("FIZ:ER:FD:RADAR", "RADAR", "RADAR", List.of("testtag"));
+        createSet("FIZ:ER:DG", "Digitale Geisteswissenschaften", "Digitale Geisteswissenschaften", List.of("testtag"));
+        createSet("FIZ:ER:DG:DDB", "Deutsche Digitale Bibliothek", "Deutsche Digitale Bibliothek", List.of("testtag"));
+        createSet("FIZ:ISE:DITRARE", "Digital Transformation of Research", "Digital Transformation of Research (DiTraRe) ", List.of("testtag"));
+
+        createItem("10.5072/38238", template);
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        checkItemsInIndex(1);
+        String result = searchItems("radar",null, true, null);
+        Assertions.assertTrue(result.contains("\"searchMark\":null"));
+        Assertions.assertTrue(result.contains("\"total\":1,\"size\":1"));
+
+        String content = retrieveItemFromES("10.5072/38238", 200);
+
+        List<String> expectedSubstrings = Arrays.asList(
+                // Explicit sets
+                "\"FIZ:ER:FD\"",
+                "\"FIZ:ER:FD:RADAR\"",
+                "\"FIZ:ER:DG\"",
+                "\"FIZ:ER:DG:DDB\"",
+                "\"FIZ:ISE:DITRARE\"",
+
+                // Implicit/Parent sets
+                "\"FIZ:ER:FD\"", // implicitly belongs to FIZ:ER - Note: this line seems redundant
+                // if the first block already checked it for the same reason.
+                // I've kept it to match your original set of checks,
+                // but you might want to review if it's needed twice.
+                "\"FIZ:ER:DG\"",  // implicitly belongs to FIZ:ER
+                "\"FIZ:ER\"",
+                "\"FIZ:ISE\"",
+                "\"FIZ\""
+        );
+
+        for (String expectedSubstring : expectedSubstrings) {
+            String errorMessage = String.format(
+                    "Content should contain the substring: %s",
+                    expectedSubstring
+            );
+
+            Assertions.assertTrue(content.contains(expectedSubstring), errorMessage);
+        }
+
+        Assertions.assertEquals(10, expectedSubstrings.size(), "The number of expected assertions is incorrect.");
+
+    }
 
 
 
