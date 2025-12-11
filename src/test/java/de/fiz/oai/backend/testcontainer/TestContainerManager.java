@@ -31,6 +31,9 @@ public abstract class TestContainerManager {
 
     @BeforeClass
     public static void setup() throws IOException, InterruptedException {
+        System.setProperty("docker.host", "npipe:////./pipe/docker_engine");
+        System.setProperty("org.testcontainers.dockerclient.providerConfig", "windows");
+
         // 1. Network setup (Only create if not already handled)
         if (network == null) {
             network = Network.builder()
