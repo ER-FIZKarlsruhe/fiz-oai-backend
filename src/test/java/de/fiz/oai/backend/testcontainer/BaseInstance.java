@@ -62,7 +62,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
 
 
-    protected void createItem(String identifier, String template) throws IOException {
+    protected void createItem(String identifier, String template, String setTag) throws IOException {
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/item/";
 
         LOGGER.info("createItem {}", identifier);
@@ -73,7 +73,7 @@ public abstract class BaseInstance extends TestContainerManager {
         ObjectNode node = mapper.createObjectNode();
         node.put("identifier", identifier);
         node.put("ingestFormat", "radar");
-        node.putPOJO("tags", List.of( "testtag"));
+        node.putPOJO("tags", List.of( setTag));
         String json = node.toString();
 
         MultipartEntityBuilder builder = MultipartEntityBuilder.create();

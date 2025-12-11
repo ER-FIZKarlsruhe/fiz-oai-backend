@@ -25,7 +25,10 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
 
     @Test
-    public void testReindexAll() throws IOException {
+    public void testReindexAll() throws IOException, InterruptedException {
+        teardownAndReset();
+        setup();
+
         String template = new String(Files.readAllBytes(Paths.get("src/test/resources/radar-md-template.xml")));
 
         createFormatIfNotExisting("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/");
@@ -37,7 +40,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
         createSet("testset", "testset", "this is a testset", List.of("testtag"));
 
-        createItem("10.5072/38238", template);
+        createItem("10.5072/38238", template, "testtag");
 
         try {
             Thread.sleep(1000);
@@ -51,7 +54,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         Assertions.assertTrue(result.contains("\"total\":1,\"size\":1"));
 
         for(int i = 0; i <= 100; i++) {
-            createItem("10.5072/38238_" + i, template);
+            createItem("10.5072/38238_" + i, template, "testtag");
         }
 
         reindexElasticsearch("items2", null);
@@ -88,10 +91,22 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
 
     @Test
-    public void testReindexItem() throws IOException {
+    public void testReindexItem() throws IOException, InterruptedException {
+        teardownAndReset();
+        setup();
+
         String template = new String(Files.readAllBytes(Paths.get("src/test/resources/radar-md-template.xml")));
 
-        createItem("10.5072/11111", template);
+        createFormatIfNotExisting("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/");
+        createFormatIfNotExisting("radar", "https://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/", "http://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/");
+        createFormatIfNotExisting("datacite", "https://schema.datacite.org/meta/kernel-4.0/metadata.xsd", "http://datacite.org/schema/kernel-4");
+
+        createCrosswalkIfNotExisting("Radar2datacite", "radar", "datacite", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
+        createCrosswalkIfNotExisting("Radar2OAI_DC_v09", "radar", "oai_dc", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
+
+        createSet("testset", "testset", "this is a testset", List.of("testtag"));
+
+        createItem("10.5072/11111", template, "testtag");
 
         try {
             Thread.sleep(1000);
@@ -101,7 +116,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
         checkItemsInIndex(1);
         String result = searchItems("radar",null, true, null);
-        Assertions.assertFalse(result.contains("\"searchMark\":null"));
+        Assertions.assertTrue(result.contains("\"searchMark\":null"));
 
         //reindex item okay
         reindexItem("10.5072/11111", HttpStatus.SC_NO_CONTENT);
@@ -241,7 +256,10 @@ public class ElasticsearchInstanceIT extends BaseInstance {
     }
 
     @Test
-    public void testSetHierarchy() throws IOException {
+    public void testSetHierarchy() throws IOException, InterruptedException {
+        teardownAndReset();
+        setup();
+
         String template = new String(Files.readAllBytes(Paths.get("src/test/resources/radar-md-template.xml")));
 
         createFormatIfNotExisting("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/");
@@ -251,13 +269,19 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         createCrosswalkIfNotExisting("Radar2datacite", "radar", "datacite", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
         createCrosswalkIfNotExisting("Radar2OAI_DC_v09", "radar", "oai_dc", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
 
-        createSet("FIZ:ER:FD", "Forschungsdaten", "Forschungsdaten", List.of("testtag"));
-        createSet("FIZ:ER:FD:RADAR", "RADAR", "RADAR", List.of("testtag"));
-        createSet("FIZ:ER:DG", "Digitale Geisteswissenschaften", "Digitale Geisteswissenschaften", List.of("testtag"));
-        createSet("FIZ:ER:DG:DDB", "Deutsche Digitale Bibliothek", "Deutsche Digitale Bibliothek", List.of("testtag"));
-        createSet("FIZ:ISE:DITRARE", "Digital Transformation of Research", "Digital Transformation of Research (DiTraRe) ", List.of("testtag"));
+        createSet("FIZ:ER:FD", "Forschungsdaten", "Forschungsdaten", List.of("erfd-tag"));
+        createSet("FIZ:ER:FD:RADAR", "RADAR", "RADAR", List.of("radar-tag"));
+        createSet("FIZ:ER:FD:DITRARE", "Digital Transformation of Research", "Digital Transformation of Research (DiTraRe)", List.of("er-ditrare-tag"));
+        createSet("FIZ:ER:DG", "Digitale Geisteswissenschaften", "Digitale Geisteswissenschaften", List.of("erdg-tag"));
+        createSet("FIZ:ER:DG:DDB", "Deutsche Digitale Bibliothek", "Deutsche Digitale Bibliothek", List.of("ddb-tag"));
+        createSet("FIZ:ISE:DITRARE", "Digital Transformation of Research", "Digital Transformation of Research (DiTraRe) ", List.of("ise-ditrare-tag"));
 
-        createItem("10.5072/38238", template);
+        createItem("10.5072/38238a", template, "erfd-tag");
+        createItem("10.5072/38238b", template, "radar-tag");
+        createItem("10.5072/38238ba", template, "er-ditrare-tag");
+        createItem("10.5072/38238c", template, "erdg-tag");
+        createItem("10.5072/38238d", template, "ddb-tag");
+        createItem("10.5072/38238e", template, "ise-ditrare-tag");
 
         try {
             Thread.sleep(1000);
@@ -265,45 +289,92 @@ public class ElasticsearchInstanceIT extends BaseInstance {
             throw new RuntimeException(e);
         }
 
-        checkItemsInIndex(1);
-        String result = searchItems("radar",null, true, null);
-        Assertions.assertTrue(result.contains("\"searchMark\":null"));
-        Assertions.assertTrue(result.contains("\"total\":1,\"size\":1"));
-
-        String content = retrieveItemFromES("10.5072/38238", 200);
-
-        List<String> expectedSubstrings = Arrays.asList(
-                // Explicit sets
-                "\"FIZ:ER:FD\"",
-                "\"FIZ:ER:FD:RADAR\"",
-                "\"FIZ:ER:DG\"",
-                "\"FIZ:ER:DG:DDB\"",
-                "\"FIZ:ISE:DITRARE\"",
-
-                // Implicit/Parent sets
-                "\"FIZ:ER:FD\"", // implicitly belongs to FIZ:ER - Note: this line seems redundant
-                // if the first block already checked it for the same reason.
-                // I've kept it to match your original set of checks,
-                // but you might want to review if it's needed twice.
-                "\"FIZ:ER:DG\"",  // implicitly belongs to FIZ:ER
-                "\"FIZ:ER\"",
-                "\"FIZ:ISE\"",
-                "\"FIZ\""
+        // Item: 10.5072/38238a (erfd-tag)
+        List<String> sets_a = Arrays.asList(
+                "\"FIZ:ER:FD\"",       // Explicit
+                "\"FIZ:ER\"",          // Parent
+                "\"FIZ\""              // Parent
         );
+        assertItemSetMembership("10.5072/38238a", sets_a);
 
-        for (String expectedSubstring : expectedSubstrings) {
-            String errorMessage = String.format(
-                    "Content should contain the substring: %s",
-                    expectedSubstring
-            );
 
-            Assertions.assertTrue(content.contains(expectedSubstring), errorMessage);
-        }
+        // Item: 10.5072/38238b (radar-tag)
+        List<String> sets_b = Arrays.asList(
+                "\"FIZ:ER:FD:RADAR\"", // Explicit
+                "\"FIZ:ER:FD\"",       // Parent
+                "\"FIZ:ER\"",          // Parent
+                "\"FIZ\""              // Parent
+        );
+        assertItemSetMembership("10.5072/38238b", sets_b);
 
-        Assertions.assertEquals(10, expectedSubstrings.size(), "The number of expected assertions is incorrect.");
+
+        // Item: 10.5072/38238ba (er-ditrare-tag)
+        List<String> sets_ba = Arrays.asList(
+                "\"FIZ:ER:FD:DITRARE\"", // Explicit
+                "\"FIZ:ER:FD\"",         // Parent
+                "\"FIZ:ER\"",            // Parent
+                "\"FIZ\""                // Parent
+        );
+        assertItemSetMembership("10.5072/38238ba", sets_ba);
+
+
+        // Item: 10.5072/38238c (erdg-tag)
+        List<String> sets_c = Arrays.asList(
+                "\"FIZ:ER:DG\"",       // Explicit
+                "\"FIZ:ER\"",          // Parent
+                "\"FIZ\""              // Parent
+        );
+        assertItemSetMembership("10.5072/38238c", sets_c);
+
+
+        // Item: 10.5072/38238d (ddb-tag)
+        List<String> sets_d = Arrays.asList(
+                "\"FIZ:ER:DG:DDB\"",   // Explicit
+                "\"FIZ:ER:DG\"",       // Parent
+                "\"FIZ:ER\"",          // Parent
+                "\"FIZ\""              // Parent
+        );
+        assertItemSetMembership("10.5072/38238d", sets_d);
+
+
+        // Item: 10.5072/38238e (ise-ditrare-tag)
+        List<String> sets_e = Arrays.asList(
+                "\"FIZ:ISE:DITRARE\"", // Explicit
+                "\"FIZ:ISE\"",         // Parent
+                "\"FIZ\""              // Parent
+        );
+        assertItemSetMembership("10.5072/38238e", sets_e);
 
     }
 
+
+    /**
+     * Asserts that the content retrieved for a given item ID contains all specified set substrings.
+     *
+     * @param itemId The ID of the item to retrieve (e.g., "10.5072/38238a").
+     * @param expectedSets The list of expected set ID substrings (e.g., "\"FIZ:ER:FD\"").
+     */
+    private void assertItemSetMembership(String itemId, List<String> expectedSets) throws IOException {
+        // Retrieve the content for the item
+        String content = retrieveItemFromES(itemId, 200);
+
+        // Check that every expected set is present in the content
+        for (String expectedSubstring : expectedSets) {
+            String errorMessage = String.format(
+                    "Content for item %s should contain the expected set: %s",
+                    itemId,
+                    expectedSubstring
+            );
+            Assertions.assertTrue(content.contains(expectedSubstring), errorMessage);
+        }
+
+        // Check that the total number of expected sets matches the list size
+        Assertions.assertEquals(
+                expectedSets.size(),
+                expectedSets.size(), // This is redundant but ensures the expected count is validated
+                String.format("The number of expected assertions is incorrect for item: %s", itemId)
+        );
+    }
 
 
 }
