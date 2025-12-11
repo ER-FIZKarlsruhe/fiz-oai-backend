@@ -38,7 +38,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         createCrosswalkIfNotExisting("Radar2datacite", "radar", "datacite", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
         createCrosswalkIfNotExisting("Radar2OAI_DC_v09", "radar", "oai_dc", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
 
-        createSet("testset", "testset", "this is a testset", List.of("testtag"));
+        createSet("testset", "testset", "this is a testset", List.of("testtag"), HttpStatus.SC_OK);
 
         createItem("10.5072/38238", template, "testtag");
 
@@ -104,7 +104,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         createCrosswalkIfNotExisting("Radar2datacite", "radar", "datacite", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
         createCrosswalkIfNotExisting("Radar2OAI_DC_v09", "radar", "oai_dc", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
 
-        createSet("testset", "testset", "this is a testset", List.of("testtag"));
+        createSet("testset", "testset", "this is a testset", List.of("testtag"), HttpStatus.SC_OK);
 
         createItem("10.5072/11111", template, "testtag");
 
@@ -157,9 +157,24 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
     @Test
     public void testCrudSets() throws IOException {
-        createSet("testset1", "testset1", "this is a testset1", List.of("testtag"));
+        createSet("testset1", "testset1", "this is a testset1", List.of("testtag"), HttpStatus.SC_OK);
         updateSet("testset1", "testset1chenged", "Changed testset1", List.of("testtag"));
         deleteSet("testset1");
+
+        //BAD request, Missing parent nodes
+        createSet("A:B:C", "A:B:C", "this is a test hierarchy", List.of("testtag"), HttpStatus.SC_BAD_REQUEST);
+
+        //Create root node
+        createSet("A", "A", "this is a root set", List.of("testtag"), HttpStatus.SC_OK);
+
+        //BAD request, Missing parent node
+        createSet("A:B:C", "A:B:C", "this is a test hierarchy", List.of("testtag"), HttpStatus.SC_BAD_REQUEST);
+
+        //Create parent node
+        createSet("A:B", "A:B", "this is a parent set", List.of("testtag"), HttpStatus.SC_OK);
+
+        //Finally OK
+        createSet("A:B:C", "C", "this is a test hierarchy", List.of("testtag"), HttpStatus.SC_OK);
     }
 
     @Test
@@ -175,7 +190,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         // -----------------------------------------
         for (int i = 1; i <= 2000; i++) {
             String name = "set" + i;
-            createSet("spec_" + i, name, "description_" + i, List.of("tag"));
+            createSet("spec_" + i, name, "description_" + i, List.of("tag"), HttpStatus.SC_OK);
         }
 
         // -----------------------------------------
@@ -269,12 +284,15 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         createCrosswalkIfNotExisting("Radar2datacite", "radar", "datacite", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
         createCrosswalkIfNotExisting("Radar2OAI_DC_v09", "radar", "oai_dc", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
 
-        createSet("FIZ:ER:FD", "Forschungsdaten", "Forschungsdaten", List.of("erfd-tag"));
-        createSet("FIZ:ER:FD:RADAR", "RADAR", "RADAR", List.of("radar-tag"));
-        createSet("FIZ:ER:FD:DITRARE", "Digital Transformation of Research", "Digital Transformation of Research (DiTraRe)", List.of("er-ditrare-tag"));
-        createSet("FIZ:ER:DG", "Digitale Geisteswissenschaften", "Digitale Geisteswissenschaften", List.of("erdg-tag"));
-        createSet("FIZ:ER:DG:DDB", "Deutsche Digitale Bibliothek", "Deutsche Digitale Bibliothek", List.of("ddb-tag"));
-        createSet("FIZ:ISE:DITRARE", "Digital Transformation of Research", "Digital Transformation of Research (DiTraRe) ", List.of("ise-ditrare-tag"));
+        createSet("FIZ", "FIZ", "FIZ", null, HttpStatus.SC_OK);
+        createSet("FIZ:ER", "FIZ ER", "FIZ ER", null, HttpStatus.SC_OK);
+        createSet("FIZ:ER:FD", "Forschungsdaten", "Forschungsdaten", List.of("erfd-tag"), HttpStatus.SC_OK);
+        createSet("FIZ:ER:FD:RADAR", "RADAR", "RADAR", List.of("radar-tag"), HttpStatus.SC_OK);
+        createSet("FIZ:ER:FD:DITRARE", "Digital Transformation of Research", "Digital Transformation of Research (DiTraRe)", List.of("er-ditrare-tag"), HttpStatus.SC_OK);
+        createSet("FIZ:ER:DG", "Digitale Geisteswissenschaften", "Digitale Geisteswissenschaften", List.of("erdg-tag"), HttpStatus.SC_OK);
+        createSet("FIZ:ER:DG:DDB", "Deutsche Digitale Bibliothek", "Deutsche Digitale Bibliothek", List.of("ddb-tag"), HttpStatus.SC_OK);
+        createSet("FIZ:ISE", "FIZ ISE", "FIZ ISE", null, HttpStatus.SC_OK);
+        createSet("FIZ:ISE:DITRARE", "Digital Transformation of Research", "Digital Transformation of Research (DiTraRe) ", List.of("ise-ditrare-tag"), HttpStatus.SC_OK);
 
         createItem("10.5072/38238a", template, "erfd-tag");
         createItem("10.5072/38238b", template, "radar-tag");

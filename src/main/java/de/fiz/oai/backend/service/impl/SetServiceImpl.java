@@ -21,6 +21,7 @@ import java.util.List;
 
 import de.fiz.oai.backend.models.ListSetsResult;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 
 import jakarta.inject.Singleton;
@@ -39,7 +40,9 @@ import de.fiz.oai.backend.service.SetService;
 public class SetServiceImpl implements SetService {
 
   private static Logger LOGGER = LoggerFactory.getLogger(SetServiceImpl.class);
-  
+
+  private static final String MISSING_PARENT_SETS_MESSAGE = "Missing parent sets. Please create these sets.";
+
   @Inject
   DAOSet daoSet;
 
@@ -48,23 +51,24 @@ public class SetServiceImpl implements SetService {
 
   @Override
   public Set read(String setSpec) throws IOException {
-    Set set = daoSet.read(setSpec);
-
-    return set;
+    return daoSet.read(setSpec);
   }
 
   @Override
   public Set create(Set set) throws IOException {
-	  
-	// Check for existing set
-	Set oldSet = read(set.getSpec());
-	if (oldSet != null) {
-		throw new AlreadyExistsException("Set " + oldSet.getSpec() + " already exists");
-	}
-	
+
+    // Check for existing set
+    Set oldSet = read(set.getSpec());
+    if (oldSet != null) {
+      throw new AlreadyExistsException("Set " + oldSet.getSpec() + " already exists");
+    }
+
+    // Check parent hierarchy → should be 400 if missing
+    validateParentSetsExist(set);
+
     daoSet.create(set);
 
-    LOGGER.info("Creating Set " + set.getSpec() + ". Triggering complete reindexing.");
+    LOGGER.info("Creating Set {}. Triggering complete reindexing.", set.getSpec());
 
     return set;
   }
@@ -73,9 +77,14 @@ public class SetServiceImpl implements SetService {
   public Set update(Set set) throws IOException {
     Set oldSet = daoSet.read(set.getSpec());
 
+    // If the *set itself* does not exist → 404
     if (oldSet == null) {
       throw new NotFoundException();
     }
+
+    // If parent(s) are missing → 400
+    validateParentSetsExist(set);
+
     daoSet.create(set);
 
     return set;
@@ -100,8 +109,50 @@ public class SetServiceImpl implements SetService {
   }
 
   @Override
-  public ListSetsResult listSets(String resumptionToken){
-      ListSetsResult result = daoSet.listSets(resumptionToken);
-      return result;
+  public ListSetsResult listSets(String resumptionToken) {
+    ListSetsResult result = daoSet.listSets(resumptionToken);
+    return result;
+  }
+
+
+  /**
+   * Validates that all parent setSpecs of the given set exist.
+   * Example: for "FIZ:ER:DG" it checks that "FIZ" and "FIZ:ER" exist.
+   *
+   * If a parent is missing, this is considered a client error (400).
+   */
+  private void validateParentSetsExist(Set set) throws IOException {
+    if (set == null) {
+      return;
+    }
+
+    String spec = set.getSpec();
+    if (spec == null || !spec.contains(":")) {
+      // No hierarchy → nothing to validate
+      return;
+    }
+
+    String[] parts = spec.split(":");
+    if (parts.length <= 1) {
+      return;
+    }
+
+    StringBuilder parentSpecBuilder = new StringBuilder();
+
+    // Go up to (but not including) the full spec
+    for (int i = 0; i < parts.length - 1; i++) {
+      if (i > 0) {
+        parentSpecBuilder.append(":");
+      }
+      parentSpecBuilder.append(parts[i]);
+
+      String currentParentSpec = parentSpecBuilder.toString();
+      Set parentSet = daoSet.read(currentParentSpec);
+      if (parentSet == null) {
+        LOGGER.warn("Parent set '{}' for '{}' does not exist.", currentParentSpec, spec);
+        // -> 400 Bad Request for missing parent sets
+        throw new BadRequestException(MISSING_PARENT_SETS_MESSAGE);
+      }
+    }
   }
 }

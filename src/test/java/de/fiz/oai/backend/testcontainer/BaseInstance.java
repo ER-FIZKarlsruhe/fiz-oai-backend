@@ -491,7 +491,7 @@ public abstract class BaseInstance extends TestContainerManager {
     }
 
 
-    protected void createSet(String spec, String name, String description, List<String> tags) throws IOException{
+    protected void createSet(String spec, String name, String description, List<String> tags, int expectedResponse) throws IOException{
         Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/set/";
@@ -524,14 +524,16 @@ public abstract class BaseInstance extends TestContainerManager {
         final String logs = tomcatContainer.getLogs(OutputFrame.OutputType.STDOUT);
         final String errlogs = tomcatContainer.getLogs(OutputFrame.OutputType.STDERR);
 
-        Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode());
+        Assertions.assertEquals(expectedResponse, postResponse.getStatusLine().getStatusCode());
         postResponse.close();
 
-        HttpGet get = new HttpGet(baseUrl + spec);
-        CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
-        getResponse.getEntity().getContent().readAllBytes();
-        Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
-        getResponse.close();
+        if (postResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+            HttpGet get = new HttpGet(baseUrl + spec);
+            CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
+            getResponse.getEntity().getContent().readAllBytes();
+            Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
+            getResponse.close();
+        }
     }
 
     protected void updateSet(String spec, String name, String description, List<String> tags) throws IOException{
