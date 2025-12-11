@@ -319,7 +319,7 @@ public class ItemServiceImpl implements ItemService {
     
           // Add all the matching sets
           List<de.fiz.oai.backend.models.Set> allSets = daoSet.readAll();
-          List<String> itemSets = new ArrayList<>();
+          Set<String> itemSets = new HashSet<>();
           if (allSets != null && !allSets.isEmpty()) {
     
               for (final de.fiz.oai.backend.models.Set pickedSet : allSets) {
@@ -348,9 +348,29 @@ public class ItemServiceImpl implements ItemService {
                       }
                   }
               }
-    
+
+              //Expand set hierarchy
+              //So if itemSets contained only: ["KIT:IMK:ABC"]
+              //after this block it will contain ["KIT", "KIT:IMK", "KIT:IMK:ABC"]
+              Set<String> expanded = new HashSet<>();
+
+              for (String spec : itemSets) {
+                  String[] parts = spec.split(":");
+                  StringBuilder current = new StringBuilder();
+
+                  for (int i = 0; i < parts.length; i++) {
+                      if (i > 0) {
+                          current.append(":");
+                      }
+                      current.append(parts[i]);
+                      expanded.add(current.toString());
+                  }
+              }
+
+              itemSets.addAll(expanded);
           }
-          item.setSets(itemSets);
+
+          item.setSets(itemSets.stream().toList());
       } catch(SAXException| XPathExpressionException e) {
           //Rethrow Exceptions from XPathHelper as IOException
           throw new IOException(e);
