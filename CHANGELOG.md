@@ -1,36 +1,53 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
+
 ## [1.6.0] – 2025-12-12
 
-### Fix wrong database schema for Set table
-In previous versions the set table has the "name" column as primary key set.
-This was wrong and has been changed to the "spec" column.
+### Added
 
-After starting the new backend version, the system administrator has to call the following endpoint:
-oai-backend/set/migrateOaiSets
+* Support for `resumptionToken` in the OAI-PMH `ListSets` verb, allowing large set lists to be retrieved in multiple requests.
+  See: [https://www.openarchives.org/OAI/openarchivesprotocol.html#ListSets](https://www.openarchives.org/OAI/openarchivesprotocol.html#ListSets)
+* Full support for hierarchical `setSpec` values as defined in the OAI-PMH specification.
+  See: [https://www.openarchives.org/OAI/openarchivesprotocol.html#Set](https://www.openarchives.org/OAI/openarchivesprotocol.html#Set)
 
-It will migrate the sets table to the new schema.
+### Changed
 
-### Java 25 LTS
-The service is running now with Java 25 LTS
+* The service now runs on **Java 25 LTS**.
+* The default pagination size for `ListSets` responses is **100**.
+  This can be configured via the backend property:
 
-### Set resumption token
-As defined in the OAI-PMH specification, the ListSets verb supports resumptionToken as an parameter.
-Which gives the harvester the possibility to call huge sets lists in multiple steps
+  ```properties
+  set.pagination.size=500
+  ```
 
-https://www.openarchives.org/OAI/openarchivesprotocol.html#ListSets
+### Fixed
 
-By default the set pagination has a value of 100.
-You can this in the backend property to another value:
-set.pagination.size=500
+* Corrected the database schema for the `set` table.
+  The primary key was previously incorrectly set to the `name` column and is now correctly set to the `spec` column.
 
-### Set hierarchy
-As defined in the OAI-PMH specification, sets can be defined using hierarchies
-https://www.openarchives.org/OAI/openarchivesprotocol.html#Set
+### Breaking Changes
 
-The OAI-Backend now fully supports setSpec with hierarchies.
+* Due to the corrected primary key in the `set` table, a **manual migration is required** after upgrading.
 
-Be aware, when creating hierarchies, all parent nodes have to be created before a leaf node!
-E.g if you want to create the setSpec "FIZ:ER:FD"
-You have to create first "FIZ", than "FIZ:ER" before you can create "FIZ:ER:FD".
-If one of the parent nodes is missing a 400 response will indicate this.
+  After starting the new backend version, the system administrator must execute:
+
+  ```bash
+  curl -X POST http://localhost:8080/oai-backend/set/migrateOaiSets
+  ```
+
+  This endpoint migrates existing data to the new schema.
+
+### Notes
+
+* When creating hierarchical sets, **all parent sets must exist before creating a child set**.
+
+  **Example:**
+  To create `FIZ:ER:FD`, the following sets must be created in order:
+
+    1. `FIZ`
+    2. `FIZ:ER`
+    3. `FIZ:ER:FD`
+
+  If a required parent set is missing, the backend responds with **HTTP 400 (Bad Request)**.
