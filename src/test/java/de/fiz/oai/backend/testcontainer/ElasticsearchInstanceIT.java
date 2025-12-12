@@ -179,6 +179,8 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
     @Test
     public void testSetSearchWithResumptionToken() throws Exception {
+        teardownAndReset();
+        setup();
 
         ObjectMapper mapper = new ObjectMapper();
 
