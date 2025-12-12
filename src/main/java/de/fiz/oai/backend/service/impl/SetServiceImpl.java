@@ -82,9 +82,6 @@ public class SetServiceImpl implements SetService {
       throw new NotFoundException();
     }
 
-    // If parent(s) are missing → 400
-    validateParentSetsExist(set);
-
     daoSet.create(set);
 
     return set;
