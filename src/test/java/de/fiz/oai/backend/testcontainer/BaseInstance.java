@@ -19,6 +19,7 @@ import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
@@ -672,6 +673,39 @@ public abstract class BaseInstance extends TestContainerManager {
         Assertions.assertEquals(HttpStatus.SC_OK, putResponse.getStatusLine().getStatusCode());
         putResponse.close();
     }
+
+
+    protected void processCrosswalk(String crosswalkName, int expectedResponseCode) throws IOException {
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/crosswalk/" +crosswalkName + "/process?updateItemTimestamp=true" ;
+
+        LOGGER.info("process crosswalk {} ", crosswalkName );
+        CloseableHttpResponse response;
+        EntityBuilder builder = EntityBuilder.create();
+        builder.setText("");
+        HttpClientContext context = HttpClientContext.create();
+
+        HttpPut post = new HttpPut(baseUrl);
+        CloseableHttpResponse postResponse = getHttpResponse(post, builder, context, false);
+        Assertions.assertEquals(expectedResponseCode, postResponse.getStatusLine().getStatusCode());
+        postResponse.close();
+    }
+
+
+    protected String getCrosswalkStatus(String crosswalkName) throws IOException {
+        String url = "http://" + tomcatContainer.getHost() + ":" +
+                tomcatContainer.getMappedPort(8080) +
+                "/oai-backend/crosswalk/status";
+        LOGGER.info("process crosswalk {} ", crosswalkName );
+        EntityBuilder builder = EntityBuilder.create();
+        builder.setText("");
+        HttpClientContext context = HttpClientContext.create();
+        HttpGet get = new HttpGet(url);
+        try (CloseableHttpResponse response = getHttpResponse(get, builder, context, false)) {
+            Assertions.assertEquals(200, response.getStatusLine().getStatusCode());
+            return EntityUtils.toString(response.getEntity());
+        }
+    }
+
 
     protected CloseableHttpResponse getHttpResponse(
             HttpRequestBase requestBase, Object builder, HttpClientContext context, boolean useProxy) throws IOException {

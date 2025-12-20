@@ -61,8 +61,13 @@ public interface CrosswalkService {
    * 
    * @return the Crosswalk created
    */
-  void process(String name, boolean keepItemTimestamp, Date from, Date until) throws IOException;
+  boolean process(String name, boolean keepItemTimestamp, Date from, Date until) throws IOException;
 
+
+    /**
+     * Processing status
+     */
+    String getCrosswalkProcessingStatusVerbose();
   
   /**
    * Read all Crosswalks.

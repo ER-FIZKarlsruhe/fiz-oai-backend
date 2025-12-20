@@ -201,7 +201,7 @@ public class CrosswalkController extends AbstractController {
           @ApiResponse(responseCode = "200", description = "Crosswalk processed successfully"),
           @ApiResponse(responseCode = "400", description = "Bad request")
   })
-  public void process(
+  public String process(
       @Parameter(description = "Name of the crosswalk", required = true) @PathParam("name") String name,
       @Parameter(description = "Update item timestamp", required = true) @QueryParam("updateItemTimestamp") String updateItemTimestampParam,
       @Parameter(description = "Start date for processing") @QueryParam("from") String from,
@@ -249,7 +249,18 @@ public class CrosswalkController extends AbstractController {
 
     crosswalkService.process(name, updateItemTimestamp, fromDate, untilDate);
 
-    return;
+    return "Crosswalk processing started";
   }
+
+    @GET
+    @Path("/status")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Operation(summary = "Get reindexing status", description = "Retrieves the current reindexing status.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Reindexing status retrieved successfully")
+    })
+    public String getStatus() {
+        return crosswalkService.getCrosswalkProcessingStatusVerbose();
+    }
   
 }

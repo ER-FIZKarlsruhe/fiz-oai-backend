@@ -17,10 +17,14 @@ package de.fiz.oai.backend.service.impl;
 
 import java.io.IOException;
 import java.security.InvalidParameterException;
+import java.time.Duration;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
+import de.fiz.oai.backend.models.crosswalk.CrosswalkProcessingStatus;
 import org.apache.commons.lang3.StringUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -75,6 +79,10 @@ public class CrosswalkServiceImpl implements CrosswalkService {
 
     @Inject
     TransformerService transformerService;
+
+    private CrosswalkProcessingStatus crosswalkProcessingStatus = null;
+
+    private CompletableFuture<Boolean> processCrosswalkFuture;
 
     @Override
     public Crosswalk read(String name) throws IOException {
@@ -155,7 +163,6 @@ public class CrosswalkServiceImpl implements CrosswalkService {
     /**
      * Process a Crosswalk for a set of items
      *
-     * @param content             String name of the Crosswalk to process
      * @param updateItemTimestamp <code>true</true> if the related item timestamp should be updated
      * @param from                together with the until parameter, it defines a time range for searching items by the
      *                            datestamp, where the related crosswalkshould be processed
@@ -163,45 +170,173 @@ public class CrosswalkServiceImpl implements CrosswalkService {
      *                            datestamps, where the related crosswalkshould be processed
      * 
      */
-    public void process(String name, boolean updateItemTimestamp, Date from, Date until) throws IOException {
-        LOGGER.info("Start process crosswalk for " + name);
-        LOGGER.info("updateItemTimestamp " + updateItemTimestamp);
-        LOGGER.info("from " + from);
-        LOGGER.info("until " + until);
+    public boolean process(String name, boolean updateItemTimestamp, Date from, Date until) throws IOException {
+        LOGGER.info("[PROCESS] Starting crosswalk processing: crosswalkName={}", name);
+
+        LOGGER.debug("[PROCESS] Parameters: updateItemTimestamp={}, from={}, until={}",
+                updateItemTimestamp, from, until);
 
         Crosswalk crosswalk = read(name);
         if (crosswalk == null) {
             throw new InvalidParameterException("Cannot find crosswalk by the given name");
         }
 
-        String searchMark = "";
+        if (crosswalkProcessingStatus != null &&
+                StringUtils.isBlank(crosswalkProcessingStatus.getEndTime())) {
 
-        do {
-            LOGGER.info("search more items to process with searchMark " + searchMark);
+            LOGGER.warn("[STATUS] Crosswalk '{}' already running since {} – aborting new start",
+                    crosswalkProcessingStatus.getCrosswalkName(),
+                    crosswalkProcessingStatus.getStartTime());
+            return false;
+        }
 
-            final SearchResult<String> result = searchService.search(100, null, crosswalk.getFormatFrom(), from, until, searchMark);
-            LOGGER.info("result total: " + result.getTotal());
-            LOGGER.info("result size: " + result.getSize());
-            
-            if (result.getSize() > 0) {
-                Iterator<String> itemIterator = result.getData().iterator();
-                String itemId = null;
-                while (itemIterator.hasNext()) {
-                    itemId = itemIterator.next();
-                    processCrosswalkForItem(crosswalk, itemId, updateItemTimestamp);
+        crosswalkProcessingStatus = new CrosswalkProcessingStatus();
+        crosswalkProcessingStatus.setCrosswalkName(name);
+        crosswalkProcessingStatus.setStopSignalReceived(false);
+        crosswalkProcessingStatus.setProcessedCount(0);
+        crosswalkProcessingStatus.setStartTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
+
+        LOGGER.info("[STATUS] Processing initialized: crosswalk={}, startTime={}",
+                name, crosswalkProcessingStatus.getStartTime());
+
+        processCrosswalkFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                String searchMark = "";
+
+                do {
+                    LOGGER.debug("[SEARCH] Requesting next batch (searchMark={})", searchMark);
+
+                    SearchResult<String> result = searchService.search(
+                            100,
+                            null,
+                            crosswalk.getFormatFrom(),
+                            from,
+                            until,
+                            searchMark
+                    );
+
+                    LOGGER.debug("[SEARCH] Batch received: total={}, batchSize={}, nextSearchMark={}",
+                            result.getTotal(), result.getSize(), result.getSearchMark());
+
+                    crosswalkProcessingStatus.setTotalCount(result.getTotal());
+
+                    for (String itemId : result.getData()) {
+                        LOGGER.trace("[ITEM] Processing itemId={}", itemId);
+                        processCrosswalkForItem(crosswalk, itemId, updateItemTimestamp);
+                        crosswalkProcessingStatus.setProcessedCount(
+                                crosswalkProcessingStatus.getProcessedCount() + 1
+                        );
+                    }
+
+                    searchMark = result.getSearchMark();
+
+                    LOGGER.debug("[STATUS] Progress: processed={}/{}",
+                            crosswalkProcessingStatus.getProcessedCount(),
+                            crosswalkProcessingStatus.getTotalCount());
+
+                } while (StringUtils.isNotBlank(searchMark));
+
+                LOGGER.info("[PROCESS] Crosswalk '{}' processing completed successfully", name);
+
+                if (updateItemTimestamp) {
+                    LOGGER.warn("[PROCESS] Item timestamps updated – manual search reindex required");
+                }
+
+            } catch (IOException e) {
+                LOGGER.error("[PROCESS] Error while processing crosswalk '{}'",
+                        crosswalkProcessingStatus.getCrosswalkName(), e);
+                return false;
+            } finally {
+                crosswalkProcessingStatus.setEndTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
+                LOGGER.info("[STATUS] Processing finished: crosswalk={}, endTime={}",
+                        crosswalkProcessingStatus.getCrosswalkName(),
+                        crosswalkProcessingStatus.getEndTime());
+            }
+
+            return true;
+        });
+
+        return true;
+    }
+
+
+
+
+    @Override
+    public String getCrosswalkProcessingStatusVerbose() {
+        StringBuilder statusString = new StringBuilder();
+        if (crosswalkProcessingStatus == null) {
+            statusString.append("Crosswalk process not started.");
+        } else {
+            statusString.append("Crosswalk process STARTED on ");
+            statusString.append(crosswalkProcessingStatus.getStartTime());
+            if (!StringUtils.isBlank(crosswalkProcessingStatus.getEndTime())) {
+                statusString.append(" and FINISHED on ");
+                statusString.append(crosswalkProcessingStatus.getEndTime());
+
+            }
+            statusString.append(".\n");
+            statusString.append("Crosswalk ");
+            statusString.append(crosswalkProcessingStatus.getCrosswalkName());
+
+            statusString.append(crosswalkProcessingStatus.getTotalCount());
+            statusString.append(".\n");
+
+            double percProgress = 0;
+            if (crosswalkProcessingStatus.getProcessedCount() > 0 && crosswalkProcessingStatus.getTotalCount() > 0) {
+                percProgress = ((double) crosswalkProcessingStatus.getProcessedCount() / crosswalkProcessingStatus.getTotalCount()) * 100;
+            }
+
+            long hours = 0;
+            long minutesOfHours = 0;
+            int secondsOfMinutes = 0;
+            long totalSecondsSoFar = 0;
+            ZonedDateTime startZDT = null;
+            if (StringUtils.isNotBlank(crosswalkProcessingStatus.getStartTime())) {
+                startZDT = ZonedDateTime.parse(crosswalkProcessingStatus.getStartTime());
+            }
+
+            Duration timeLapsed = null;
+            if (startZDT != null) {
+                timeLapsed = Duration.between(startZDT,
+                        StringUtils.isBlank(crosswalkProcessingStatus.getEndTime()) ? ZonedDateTime.now(ZoneOffset.UTC)
+                                : ZonedDateTime.parse(crosswalkProcessingStatus.getEndTime()));
+                hours = timeLapsed.toHours();
+                minutesOfHours = timeLapsed.toMinutesPart();
+                secondsOfMinutes = timeLapsed.toSecondsPart();
+                totalSecondsSoFar = timeLapsed.toSeconds();
+            }
+
+            statusString.append("Progress: ");
+            statusString.append(String.format("%.2f", percProgress));
+            statusString.append(" % in ");
+            statusString.append(hours);
+            statusString.append(":");
+            statusString.append(String.format("%02d", minutesOfHours));
+            statusString.append(":");
+            statusString.append(String.format("%02d", secondsOfMinutes));
+            statusString.append(".\n");
+
+            String eta = "";
+            if (StringUtils.isBlank(crosswalkProcessingStatus.getEndTime()) && percProgress > 0 && totalSecondsSoFar > 0
+                    && startZDT != null) {
+                final double estimatedTotalSeconds = ((double) totalSecondsSoFar / percProgress) * 100;
+                final ZonedDateTime etaZDT = startZDT.plusSeconds((long) estimatedTotalSeconds)
+                        .withZoneSameInstant(ZoneOffset.UTC);
+                if (etaZDT != null) {
+                    eta = etaZDT.toString();
                 }
             }
 
-            searchMark = result.getSearchMark();
-        } while (StringUtils.isNotBlank(searchMark));
-
-        LOGGER.info("End process crosswalk for " + name);
-
-        if (updateItemTimestamp) {
-            LOGGER.warn("You have to reindex your search index manually to refresh the items timestamps!");
+            statusString.append("ETA: ");
+            statusString.append(eta);
+            statusString.append(".\n");
+            statusString.append("Stop signal sent: ");
+            statusString.append(crosswalkProcessingStatus.isStopSignalReceived());
+            statusString.append(".\n");
         }
 
-        return;
+        return statusString.toString();
     }
 
     private void processCrosswalkForItem(Crosswalk crosswalk, String itemId, boolean updateItemTimestamp)
@@ -226,7 +361,7 @@ public class CrosswalkServiceImpl implements CrosswalkService {
             if (updateItemTimestamp) {
                 Item item = itemService.read(itemId, null, false);
                 String datestamp = Configuration.getDateformat().format(new Date());
-                LOGGER.info("Updateing item datestamp " + datestamp);
+                LOGGER.debug("Updateing item datestamp " + datestamp);
                 item.setDatestamp(datestamp);
                 daoItem.create(item); //In Cassandra create and update are the same!
             }
