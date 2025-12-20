@@ -675,20 +675,41 @@ public abstract class BaseInstance extends TestContainerManager {
     }
 
 
-    protected void processCrosswalk(String crosswalkName, int expectedResponseCode) throws IOException {
-        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/crosswalk/" +crosswalkName + "/process?updateItemTimestamp=true" ;
+    protected boolean processCrosswalk(String crosswalkName, int expectedResponseCode)
+            throws IOException {
 
-        LOGGER.info("process crosswalk {} ", crosswalkName );
-        CloseableHttpResponse response;
+        String baseUrl =
+                "http://" + tomcatContainer.getHost()
+                        + ":" + tomcatContainer.getMappedPort(8080)
+                        + "/oai-backend/crosswalk/"
+                        + crosswalkName
+                        + "/process?updateItemTimestamp=true";
+
+        LOGGER.info("process crosswalk {}", crosswalkName);
+
         EntityBuilder builder = EntityBuilder.create();
         builder.setText("");
-        HttpClientContext context = HttpClientContext.create();
 
-        HttpPut post = new HttpPut(baseUrl);
-        CloseableHttpResponse postResponse = getHttpResponse(post, builder, context, false);
-        Assertions.assertEquals(expectedResponseCode, postResponse.getStatusLine().getStatusCode());
-        postResponse.close();
+        HttpClientContext context = HttpClientContext.create();
+        HttpPut put = new HttpPut(baseUrl);
+
+        try (CloseableHttpResponse response =
+                     getHttpResponse(put, builder, context, false)) {
+
+            int statusCode = response.getStatusLine().getStatusCode();
+
+            Assertions.assertEquals(
+                    expectedResponseCode,
+                    statusCode,
+                    "Unexpected HTTP response code when starting crosswalk"
+            );
+
+            // 200 → started
+            // anything else (e.g. 409) → rejected
+            return statusCode == HttpStatus.SC_OK;
+        }
     }
+
 
 
     protected String getCrosswalkStatus(String crosswalkName) throws IOException {

@@ -23,6 +23,7 @@ import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import de.fiz.oai.backend.models.crosswalk.CrosswalkProcessingStatus;
 import org.apache.commons.lang3.StringUtils;
@@ -80,8 +81,9 @@ public class CrosswalkServiceImpl implements CrosswalkService {
     @Inject
     TransformerService transformerService;
 
-    private CrosswalkProcessingStatus crosswalkProcessingStatus = null;
+    private final AtomicBoolean processingRunning = new AtomicBoolean(false);
 
+    private volatile CrosswalkProcessingStatus crosswalkProcessingStatus;
     private CompletableFuture<Boolean> processCrosswalkFuture;
 
     @Override
@@ -170,42 +172,49 @@ public class CrosswalkServiceImpl implements CrosswalkService {
      *                            datestamps, where the related crosswalkshould be processed
      * 
      */
-    public boolean process(String name, boolean updateItemTimestamp, Date from, Date until) throws IOException {
-        LOGGER.info("[PROCESS] Starting crosswalk processing: crosswalkName={}", name);
+    @Override
+    public boolean process(String name,
+                           boolean updateItemTimestamp,
+                           Date from,
+                           Date until) throws IOException {
 
-        LOGGER.debug("[PROCESS] Parameters: updateItemTimestamp={}, from={}, until={}",
-                updateItemTimestamp, from, until);
+        LOGGER.info("[PROCESS] Starting crosswalk processing: crosswalkName={}", name);
 
         Crosswalk crosswalk = read(name);
         if (crosswalk == null) {
             throw new InvalidParameterException("Cannot find crosswalk by the given name");
         }
 
-        if (crosswalkProcessingStatus != null &&
-                StringUtils.isBlank(crosswalkProcessingStatus.getEndTime())) {
-
-            LOGGER.warn("[STATUS] Crosswalk '{}' already running since {} – aborting new start",
-                    crosswalkProcessingStatus.getCrosswalkName(),
-                    crosswalkProcessingStatus.getStartTime());
+        // ------------------------------------------------------
+        // Atomic guard – only one process allowed at a time
+        // ------------------------------------------------------
+        if (!processingRunning.compareAndSet(false, true)) {
+            LOGGER.warn("[STATUS] Crosswalk '{}' already running – aborting new start", name);
             return false;
         }
 
+        // ------------------------------------------------------
+        // Initialize status
+        // ------------------------------------------------------
         crosswalkProcessingStatus = new CrosswalkProcessingStatus();
         crosswalkProcessingStatus.setCrosswalkName(name);
         crosswalkProcessingStatus.setStopSignalReceived(false);
         crosswalkProcessingStatus.setProcessedCount(0);
-        crosswalkProcessingStatus.setStartTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
+        crosswalkProcessingStatus.setStartTime(
+                ZonedDateTime.now(ZoneOffset.UTC).toString()
+        );
 
         LOGGER.info("[STATUS] Processing initialized: crosswalk={}, startTime={}",
                 name, crosswalkProcessingStatus.getStartTime());
 
+        // ------------------------------------------------------
+        // Run async job
+        // ------------------------------------------------------
         processCrosswalkFuture = CompletableFuture.supplyAsync(() -> {
             try {
                 String searchMark = "";
 
                 do {
-                    LOGGER.debug("[SEARCH] Requesting next batch (searchMark={})", searchMark);
-
                     SearchResult<String> result = searchService.search(
                             100,
                             null,
@@ -215,14 +224,12 @@ public class CrosswalkServiceImpl implements CrosswalkService {
                             searchMark
                     );
 
-                    LOGGER.debug("[SEARCH] Batch received: total={}, batchSize={}, nextSearchMark={}",
-                            result.getTotal(), result.getSize(), result.getSearchMark());
-
                     crosswalkProcessingStatus.setTotalCount(result.getTotal());
 
                     for (String itemId : result.getData()) {
-                        LOGGER.trace("[ITEM] Processing itemId={}", itemId);
-                        processCrosswalkForItem(crosswalk, itemId, updateItemTimestamp);
+                        processCrosswalkForItem(
+                                crosswalk, itemId, updateItemTimestamp
+                        );
                         crosswalkProcessingStatus.setProcessedCount(
                                 crosswalkProcessingStatus.getProcessedCount() + 1
                         );
@@ -230,34 +237,32 @@ public class CrosswalkServiceImpl implements CrosswalkService {
 
                     searchMark = result.getSearchMark();
 
-                    LOGGER.debug("[STATUS] Progress: processed={}/{}",
-                            crosswalkProcessingStatus.getProcessedCount(),
-                            crosswalkProcessingStatus.getTotalCount());
-
                 } while (StringUtils.isNotBlank(searchMark));
 
                 LOGGER.info("[PROCESS] Crosswalk '{}' processing completed successfully", name);
+                return true;
 
-                if (updateItemTimestamp) {
-                    LOGGER.warn("[PROCESS] Item timestamps updated – manual search reindex required");
-                }
-
-            } catch (IOException e) {
-                LOGGER.error("[PROCESS] Error while processing crosswalk '{}'",
-                        crosswalkProcessingStatus.getCrosswalkName(), e);
+            } catch (Exception e) {
+                LOGGER.error("[PROCESS] Error while processing crosswalk '{}'", name, e);
                 return false;
-            } finally {
-                crosswalkProcessingStatus.setEndTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
-                LOGGER.info("[STATUS] Processing finished: crosswalk={}, endTime={}",
-                        crosswalkProcessingStatus.getCrosswalkName(),
-                        crosswalkProcessingStatus.getEndTime());
-            }
 
-            return true;
+            } finally {
+                // --------------------------------------------------
+                // Always clear running flag
+                // --------------------------------------------------
+                crosswalkProcessingStatus.setEndTime(
+                        ZonedDateTime.now(ZoneOffset.UTC).toString()
+                );
+                processingRunning.set(false);
+
+                LOGGER.info("[STATUS] Processing finished: crosswalk={}, endTime={}",
+                        name, crosswalkProcessingStatus.getEndTime());
+            }
         });
 
         return true;
     }
+
 
 
 

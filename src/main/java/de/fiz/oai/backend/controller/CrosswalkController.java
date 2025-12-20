@@ -38,6 +38,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang3.StringUtils;
@@ -193,64 +194,50 @@ public class CrosswalkController extends AbstractController {
       }
   }
 
-  
-  @PUT
-  @Path("/{name}/process")
-  @Operation(summary = "Process crosswalk by name", description = "Process crosswalk by name.")
-  @ApiResponses({
-          @ApiResponse(responseCode = "200", description = "Crosswalk processed successfully"),
-          @ApiResponse(responseCode = "400", description = "Bad request")
-  })
-  public String process(
-      @Parameter(description = "Name of the crosswalk", required = true) @PathParam("name") String name,
-      @Parameter(description = "Update item timestamp", required = true) @QueryParam("updateItemTimestamp") String updateItemTimestampParam,
-      @Parameter(description = "Start date for processing") @QueryParam("from") String from,
-      @Parameter(description = "End date for processing") @QueryParam("until") String until,
-      @Context HttpServletRequest request,
-      @Context HttpServletResponse response) throws IOException {
 
-    LOGGER.info("name: {}", name);
-    LOGGER.info("from: {}", from);
-    LOGGER.info("until: {}", until);
-  
-    
-    Date fromDate = null;
-    Date untilDate = null;
-    Boolean updateItemTimestamp = null;
+    @PUT
+    @Path("/{name}/process")
+    public Response process(
+            @PathParam("name") String name,
+            @QueryParam("updateItemTimestamp") String updateItemTimestampParam,
+            @QueryParam("from") String from,
+            @QueryParam("until") String until
+    ) throws IOException {
 
-    if (StringUtils.isBlank(name)) {
-      throw new BadRequestException("name PathParam cannot be empty!");
-    }
-    
-    if (StringUtils.isBlank(updateItemTimestampParam)) {
-        throw new BadRequestException("updateItemTimestamp QueryParam cannot be empty!");
-    } else {
-        updateItemTimestamp = Boolean.valueOf(updateItemTimestampParam);
-    }
-    
+        if (StringUtils.isBlank(name)) {
+            throw new BadRequestException("name PathParam cannot be empty!");
+        }
+        if (StringUtils.isBlank(updateItemTimestampParam)) {
+            throw new BadRequestException("updateItemTimestamp QueryParam cannot be empty!");
+        }
 
-    try {
-      if (!StringUtils.isBlank(from)) {
-        fromDate = Configuration.getDateformat().parse(from);
-      }
-    } catch (ParseException e) {
-      throw new BadRequestException("Invalid from QueryParam!");
-    }
+        Boolean updateItemTimestamp = Boolean.valueOf(updateItemTimestampParam);
 
-    try {
-      if (!StringUtils.isBlank(until)) {
-        untilDate = Configuration.getDateformat().parse(until);
-      }
-    } catch (ParseException e) {
-      throw new BadRequestException("Invalid until QueryParam!");
+        Date fromDate = null;
+        Date untilDate = null;
+
+        try {
+            if (StringUtils.isNotBlank(from)) {
+                fromDate = Configuration.getDateformat().parse(from);
+            }
+            if (StringUtils.isNotBlank(until)) {
+                untilDate = Configuration.getDateformat().parse(until);
+            }
+        } catch (ParseException e) {
+            throw new BadRequestException("Invalid date format!");
+        }
+
+        boolean started = crosswalkService.process(name, updateItemTimestamp, fromDate, untilDate);
+
+        if (!started) {
+            return Response.status(Response.Status.CONFLICT)
+                    .entity("Crosswalk processing already running")
+                    .build();
+        } else {
+            return Response.ok("Crosswalk processing started").build();
+        }
     }
 
-
-
-    crosswalkService.process(name, updateItemTimestamp, fromDate, untilDate);
-
-    return "Crosswalk processing started";
-  }
 
     @GET
     @Path("/status")
