@@ -28,6 +28,15 @@ import java.util.List;
 public class CrosswalkIT extends BaseInstance {
 
     @Test
+    public void testCrudCrosswalks() throws IOException {
+        createFormatIfNotExisting("test_format1", "http://abc.de/", "http://abc.de/test_format");
+        createFormatIfNotExisting("test_format2", "http://abc.de/", "http://abc.de/test_format");
+        createCrosswalkIfNotExisting("format1ToFormat2", "test_format1", "test_format2", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
+        updateCrosswalk("format1ToFormat2", "test_format1", "test_format2", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
+        deleteCrosswalk("format1ToFormat2");
+    }
+
+    @Test
     public void testProcessCrosswalk() throws IOException, InterruptedException {
         teardownAndReset();
         setup();
