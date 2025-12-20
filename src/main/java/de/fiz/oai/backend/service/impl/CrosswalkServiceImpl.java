@@ -198,7 +198,6 @@ public class CrosswalkServiceImpl implements CrosswalkService {
         // ------------------------------------------------------
         crosswalkProcessingStatus = new CrosswalkProcessingStatus();
         crosswalkProcessingStatus.setCrosswalkName(name);
-        crosswalkProcessingStatus.setStopSignalReceived(false);
         crosswalkProcessingStatus.setProcessedCount(0);
         crosswalkProcessingStatus.setStartTime(
                 ZonedDateTime.now(ZoneOffset.UTC).toString()
@@ -335,9 +334,6 @@ public class CrosswalkServiceImpl implements CrosswalkService {
 
             statusString.append("ETA: ");
             statusString.append(eta);
-            statusString.append(".\n");
-            statusString.append("Stop signal sent: ");
-            statusString.append(crosswalkProcessingStatus.isStopSignalReceived());
             statusString.append(".\n");
         }
 

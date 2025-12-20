@@ -19,103 +19,71 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 
 public class CrosswalkProcessingStatus {
 
-  private ResultSet itemResultSet = null;
+    private String crosswalkName = null;
 
-  private String crosswalkName = null;
+    private long totalCount;
 
-  private long totalCount;
+    private long processedCount;
 
-  private long processedCount;
+    private String startTime;
 
-  private String startTime;
+    private String endTime;
 
-  private String endTime;
+    /**
+     * @return the totalCount
+     */
+    public long getTotalCount() {
+        return totalCount;
+    }
 
-  private boolean stopSignalReceived;
+    /**
+     * @param totalCount the totalCount to set
+     */
+    public void setTotalCount(long totalCount) {
+        this.totalCount = totalCount;
+    }
 
-  /**
-   * @return the totalCount
-   */
-  public long getTotalCount() {
-    return totalCount;
-  }
+    /**
+     * @return the indexedCount
+     */
+    public long getProcessedCount() {
+        return processedCount;
+    }
 
-  /**
-   * @param totalCount the totalCount to set
-   */
-  public void setTotalCount(long totalCount) {
-    this.totalCount = totalCount;
-  }
+    /**
+     * @param processedCount the indexedCount to set
+     */
+    public void setProcessedCount(long processedCount) {
+        this.processedCount = processedCount;
+    }
 
-  /**
-   * @return the indexedCount
-   */
-  public long getProcessedCount() {
-    return processedCount;
-  }
+    /**
+     * @return the startTime
+     */
+    public String getStartTime() {
+        return startTime;
+    }
 
-  /**
-   * @param processedCount the indexedCount to set
-   */
-  public void setProcessedCount(long processedCount) {
-    this.processedCount = processedCount;
-  }
+    /**
+     * @param startTime the startTime to set
+     */
+    public void setStartTime(String startTime) {
+        this.startTime = startTime;
+    }
 
-  /**
-   * @return the startTime
-   */
-  public String getStartTime() {
-    return startTime;
-  }
+    /**
+     * @return the endTime
+     */
+    public String getEndTime() {
+        return endTime;
+    }
 
-  /**
-   * @param startTime the startTime to set
-   */
-  public void setStartTime(String startTime) {
-    this.startTime = startTime;
-  }
-
-  /**
-   * @return the endTime
-   */
-  public String getEndTime() {
-    return endTime;
-  }
-
-  /**
-   * @param endTime the endTime to set
-   */
-  public void setEndTime(String endTime) {
-    this.endTime = endTime;
-  }
-
-  /**
-   * @return the itemResultSet
-   */
-  public ResultSet getItemResultSet() {
-    return itemResultSet;
-  }
-
-  /**
-   * @param itemResultSet the itemResultSet to set
-   */
-  public void setItemResultSet(ResultSet itemResultSet) {
-    this.itemResultSet = itemResultSet;
-  }
-
-  /**
-   * @return the stopSignalReceived
-   */
-  public boolean isStopSignalReceived() {
-    return stopSignalReceived;
-  }
-
-  /**
-   * @param stopSignalReceived the stopSignalReceived to set
-   */
-  public void setStopSignalReceived(boolean stopSignalReceived) {
-    this.stopSignalReceived = stopSignalReceived;
-  }
+    /**
+     * @param endTime the endTime to set
+     */
+    public void setEndTime(String endTime) {
+        this.endTime = endTime;
+    }
 
     public String getCrosswalkName() {
         return crosswalkName;

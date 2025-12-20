@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.1] – 2025-12-20
+
+### Added
+
+* **Status endpoint for Crosswalk processing**  
+  `GET oai-backend/crosswalk/${crosswalkName}/status`
+
+  Example response during processing:
+```
+  Crosswalk process STARTED on 2025-12-20T11:47:55.377029274Z
+  Crosswalk: Radar2OAI_DC_v091001
+  Progress: 85.21% (0:00:02 elapsed)
+  ETA: 2025-12-20T11:47:57.377029274Z
+```
+
+### Fixed
+
+* Enforced single Crosswalk process at a time.  
+  If a process is already running, subsequent requests now return a `409 Conflict` response.
 
 ## [1.6.0] – 2025-12-12
 
