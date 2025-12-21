@@ -35,9 +35,6 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
     @Test
     public void testReindexAll() throws IOException, InterruptedException {
-        teardownAndReset();
-        setup();
-
         String template = new String(Files.readAllBytes(Paths.get("src/test/resources/radar-md-template.xml")));
 
         createFormatIfNotExisting("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/");
@@ -101,9 +98,6 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
     @Test
     public void testReindexItem() throws IOException, InterruptedException {
-        teardownAndReset();
-        setup();
-
         String template = new String(Files.readAllBytes(Paths.get("src/test/resources/radar-md-template.xml")));
 
         createFormatIfNotExisting("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/");

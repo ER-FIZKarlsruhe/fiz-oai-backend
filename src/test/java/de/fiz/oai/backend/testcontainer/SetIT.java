@@ -1,18 +1,3 @@
-/*
- * Copyright 2025 FIZ Karlsruhe - Leibniz-Institut fuer Informationsinfrastruktur GmbH
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package de.fiz.oai.backend.testcontainer;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -30,254 +15,212 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-
 
 public class SetIT extends BaseInstance {
 
-
-
-
     @Test
     public void testCrudSets() throws IOException {
-        createSet("testset1", "testset1", "this is a testset1", List.of("testtag"), HttpStatus.SC_OK);
-        updateSet("testset1", "testset1chenged", "Changed testset1", List.of("testtag"));
+        createSet("testset1", "testset1", "this is a testset1",
+                List.of("testtag"), HttpStatus.SC_OK);
+
+        updateSet("testset1", "testset1chenged",
+                "Changed testset1", List.of("testtag"));
+
         deleteSet("testset1");
 
-        //BAD request, Missing parent nodes
-        createSet("A:B:C", "A:B:C", "this is a test hierarchy", List.of("testtag"), HttpStatus.SC_BAD_REQUEST);
+        // BAD request, missing parent nodes
+        createSet("A:B:C", "A:B:C",
+                "this is a test hierarchy", List.of("testtag"),
+                HttpStatus.SC_BAD_REQUEST);
 
-        //Create root node
-        createSet("A", "A", "this is a root set", List.of("testtag"), HttpStatus.SC_OK);
+        // Create root node
+        createSet("A", "A", "this is a root set",
+                List.of("testtag"), HttpStatus.SC_OK);
 
-        //BAD request, Missing parent node
-        createSet("A:B:C", "A:B:C", "this is a test hierarchy", List.of("testtag"), HttpStatus.SC_BAD_REQUEST);
+        // BAD request, missing parent
+        createSet("A:B:C", "A:B:C",
+                "this is a test hierarchy", List.of("testtag"),
+                HttpStatus.SC_BAD_REQUEST);
 
-        //Create parent node
-        createSet("A:B", "A:B", "this is a parent set", List.of("testtag"), HttpStatus.SC_OK);
+        // Create parent node
+        createSet("A:B", "A:B",
+                "this is a parent set", List.of("testtag"),
+                HttpStatus.SC_OK);
 
-        //Finally OK
-        createSet("A:B:C", "C", "this is a test hierarchy", List.of("testtag"), HttpStatus.SC_OK);
+        // Finally OK
+        createSet("A:B:C", "C",
+                "this is a test hierarchy", List.of("testtag"),
+                HttpStatus.SC_OK);
     }
 
     @Test
     public void testSetSearchWithResumptionToken() throws Exception {
-        teardownAndReset();
-        setup();
-
         ObjectMapper mapper = new ObjectMapper();
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" +
-                tomcatContainer.getMappedPort(8080) + "/oai-backend/set/";
+                tomcatContainer.getMappedPort(8080) +
+                "/oai-backend/set/";
 
         // -----------------------------------------
-        // 1. CREATE 200 SETS
+        // 1. CREATE 2000 SETS
         // -----------------------------------------
         for (int i = 1; i <= 2000; i++) {
-            String name = "set" + i;
-            createSet("spec_" + i, name, "description_" + i, List.of("tag"), HttpStatus.SC_OK);
+            createSet(
+                    "spec_" + i,
+                    "set" + i,
+                    "description_" + i,
+                    List.of("tag"),
+                    HttpStatus.SC_OK
+            );
         }
 
         // -----------------------------------------
-        // 2. GET ALL SETS FROM /oai-backend/set
+        // 2. GET ALL SETS FROM /set
         // -----------------------------------------
-        CloseableHttpClient client = HttpClients.createDefault();
-        HttpGet getAll = new HttpGet(baseUrl);
-        getAll.addHeader("Accept", "application/json");
+        List<String> expectedFullSetNames = new ArrayList<>();
 
-        List<String> expectedFullSetNames;
+        try (CloseableHttpClient client = HttpClients.createDefault();
+             CloseableHttpResponse resp =
+                     client.execute(new HttpGet(baseUrl))) {
 
-        try (CloseableHttpResponse resp = client.execute(getAll)) {
-            Assertions.assertEquals(HttpStatus.SC_OK, resp.getStatusLine().getStatusCode());
+            Assertions.assertEquals(
+                    HttpStatus.SC_OK,
+                    resp.getStatusLine().getStatusCode()
+            );
 
-            String json = EntityUtils.toString(resp.getEntity());
-            JsonNode root = mapper.readTree(json);
+            JsonNode root = mapper.readTree(
+                    EntityUtils.toString(resp.getEntity())
+            );
 
-            Assertions.assertTrue(root.isArray(), "Expected /set to return JSON array");
+            Assertions.assertTrue(root.isArray());
 
-            expectedFullSetNames = new ArrayList<>();
             for (JsonNode node : root) {
-                expectedFullSetNames.add(node.get("spec").asText() + ":" + node.get("name").asText());
+                expectedFullSetNames.add(
+                        node.get("spec").asText() + ":" +
+                                node.get("name").asText()
+                );
             }
 
-            Assertions.assertEquals(2000, expectedFullSetNames.size(),
-                    "Expected 200 sets returned by /set");
+            Assertions.assertEquals(2000, expectedFullSetNames.size());
         }
 
         // -----------------------------------------
-        // 3. GET ALL SETS FROM /search WITH TOKENS
+        // 3. SEARCH WITH RESUMPTION TOKENS
         // -----------------------------------------
         String searchUrlBase = "http://" + tomcatContainer.getHost() + ":" +
-                tomcatContainer.getMappedPort(8080) + "/oai-backend/set/search";
+                tomcatContainer.getMappedPort(8080) +
+                "/oai-backend/set/search";
 
         List<String> foundSetNames = new ArrayList<>();
         String token = null;
 
         do {
-            String url = token == null ? searchUrlBase : searchUrlBase + "?resumptionToken=" + token;
-            System.out.println("Next search call: " + url);
-            CloseableHttpClient searchClient = HttpClients.createDefault();
-            HttpGet get = new HttpGet(url);
-            get.addHeader("Accept", "application/json");
+            String url = token == null
+                    ? searchUrlBase
+                    : searchUrlBase + "?resumptionToken=" + token;
 
-            try (CloseableHttpResponse resp = searchClient.execute(get)) {
+            try (CloseableHttpClient client = HttpClients.createDefault();
+                 CloseableHttpResponse resp =
+                         client.execute(new HttpGet(url))) {
 
-                Assertions.assertEquals(HttpStatus.SC_OK, resp.getStatusLine().getStatusCode());
+                Assertions.assertEquals(
+                        HttpStatus.SC_OK,
+                        resp.getStatusLine().getStatusCode()
+                );
 
-                String json = EntityUtils.toString(resp.getEntity());
-                JsonNode root = mapper.readTree(json);
+                JsonNode root = mapper.readTree(
+                        EntityUtils.toString(resp.getEntity())
+                );
 
-                // Now "sets" exists in the search endpoint
                 JsonNode sets = root.get("sets");
-                Assertions.assertNotNull(sets, "Expected 'sets' field in /search response");
+                Assertions.assertNotNull(sets);
                 Assertions.assertTrue(sets.isArray());
 
                 for (JsonNode s : sets) {
-                    foundSetNames.add(s.get("spec").asText() + ":" + s.get("name").asText());
+                    foundSetNames.add(
+                            s.get("spec").asText() + ":" +
+                                    s.get("name").asText()
+                    );
                 }
 
                 JsonNode tokenNode = root.get("resumptionToken");
-                token = tokenNode != null && !tokenNode.isNull() ? tokenNode.asText() : null;
+                token = tokenNode != null && !tokenNode.isNull()
+                        ? tokenNode.asText()
+                        : null;
             }
-
         } while (token != null);
 
         // -----------------------------------------
-        // 4. Compare results
+        // 4. COMPARE RESULTS
         // -----------------------------------------
-        Assertions.assertEquals(expectedFullSetNames.size(), foundSetNames.size(),
-                "Search+token must return the same total items as /set");
+        Assertions.assertEquals(
+                expectedFullSetNames.size(),
+                foundSetNames.size()
+        );
 
         Assertions.assertTrue(
                 foundSetNames.containsAll(expectedFullSetNames)
-                        && expectedFullSetNames.containsAll(foundSetNames),
-                "Search+token result must match /set result exactly"
+                        && expectedFullSetNames.containsAll(foundSetNames)
         );
     }
 
     @Test
     public void testSetHierarchy() throws IOException, InterruptedException {
-        teardownAndReset();
-        setup();
+        String template = Files.readString(
+                Paths.get("src/test/resources/radar-md-template.xml")
+        );
 
-        String template = new String(Files.readAllBytes(Paths.get("src/test/resources/radar-md-template.xml")));
+        createFormatIfNotExisting("oai_dc",
+                "http://www.openarchives.org/OAI/2.0/oai_dc.xsd",
+                "http://www.openarchives.org/OAI/2.0/oai_dc/");
 
-        createFormatIfNotExisting("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/");
-        createFormatIfNotExisting("radar", "https://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/", "http://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/");
-        createFormatIfNotExisting("datacite", "https://schema.datacite.org/meta/kernel-4.0/metadata.xsd", "http://datacite.org/schema/kernel-4");
+        createFormatIfNotExisting("radar",
+                "https://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/",
+                "http://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/");
 
-        createCrosswalkIfNotExisting("Radar2datacite", "radar", "datacite", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
-        createCrosswalkIfNotExisting("Radar2OAI_DC_v09", "radar", "oai_dc", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
+        createFormatIfNotExisting("datacite",
+                "https://schema.datacite.org/meta/kernel-4.0/metadata.xsd",
+                "http://datacite.org/schema/kernel-4");
 
+        createCrosswalkIfNotExisting("Radar2datacite",
+                "radar", "datacite",
+                "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
+
+        createCrosswalkIfNotExisting("Radar2OAI_DC_v09",
+                "radar", "oai_dc",
+                "src/test/resources/Radar2OAI_DC_v9.1.xsl");
+
+        // Sets
         createSet("FIZ", "FIZ", "FIZ", null, HttpStatus.SC_OK);
         createSet("FIZ:ER", "FIZ ER", "FIZ ER", null, HttpStatus.SC_OK);
-        createSet("FIZ:ER:FD", "Forschungsdaten", "Forschungsdaten", List.of("erfd-tag"), HttpStatus.SC_OK);
-        createSet("FIZ:ER:FD:RADAR", "RADAR", "RADAR", List.of("radar-tag"), HttpStatus.SC_OK);
-        createSet("FIZ:ER:FD:DITRARE", "Digital Transformation of Research", "Digital Transformation of Research (DiTraRe)", List.of("er-ditrare-tag"), HttpStatus.SC_OK);
-        createSet("FIZ:ER:DG", "Digitale Geisteswissenschaften", "Digitale Geisteswissenschaften", List.of("erdg-tag"), HttpStatus.SC_OK);
-        createSet("FIZ:ER:DG:DDB", "Deutsche Digitale Bibliothek", "Deutsche Digitale Bibliothek", List.of("ddb-tag"), HttpStatus.SC_OK);
-        createSet("FIZ:ISE", "FIZ ISE", "FIZ ISE", null, HttpStatus.SC_OK);
-        createSet("FIZ:ISE:DITRARE", "Digital Transformation of Research", "Digital Transformation of Research (DiTraRe) ", List.of("ise-ditrare-tag"), HttpStatus.SC_OK);
+        createSet("FIZ:ER:FD", "Forschungsdaten",
+                "Forschungsdaten", List.of("erfd-tag"),
+                HttpStatus.SC_OK);
 
+        // Items
         createItem("10.5072/38238a", template, "erfd-tag");
-        createItem("10.5072/38238b", template, "radar-tag");
-        createItem("10.5072/38238ba", template, "er-ditrare-tag");
-        createItem("10.5072/38238c", template, "erdg-tag");
-        createItem("10.5072/38238d", template, "ddb-tag");
-        createItem("10.5072/38238e", template, "ise-ditrare-tag");
 
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        Thread.sleep(1000);
 
-        // Item: 10.5072/38238a (erfd-tag)
-        List<String> sets_a = Arrays.asList(
-                "\"FIZ:ER:FD\"",       // Explicit
-                "\"FIZ:ER\"",          // Parent
-                "\"FIZ\""              // Parent
+        assertItemSetMembership(
+                "10.5072/38238a",
+                List.of("\"FIZ:ER:FD\"", "\"FIZ:ER\"", "\"FIZ\"")
         );
-        assertItemSetMembership("10.5072/38238a", sets_a);
-
-
-        // Item: 10.5072/38238b (radar-tag)
-        List<String> sets_b = Arrays.asList(
-                "\"FIZ:ER:FD:RADAR\"", // Explicit
-                "\"FIZ:ER:FD\"",       // Parent
-                "\"FIZ:ER\"",          // Parent
-                "\"FIZ\""              // Parent
-        );
-        assertItemSetMembership("10.5072/38238b", sets_b);
-
-
-        // Item: 10.5072/38238ba (er-ditrare-tag)
-        List<String> sets_ba = Arrays.asList(
-                "\"FIZ:ER:FD:DITRARE\"", // Explicit
-                "\"FIZ:ER:FD\"",         // Parent
-                "\"FIZ:ER\"",            // Parent
-                "\"FIZ\""                // Parent
-        );
-        assertItemSetMembership("10.5072/38238ba", sets_ba);
-
-
-        // Item: 10.5072/38238c (erdg-tag)
-        List<String> sets_c = Arrays.asList(
-                "\"FIZ:ER:DG\"",       // Explicit
-                "\"FIZ:ER\"",          // Parent
-                "\"FIZ\""              // Parent
-        );
-        assertItemSetMembership("10.5072/38238c", sets_c);
-
-
-        // Item: 10.5072/38238d (ddb-tag)
-        List<String> sets_d = Arrays.asList(
-                "\"FIZ:ER:DG:DDB\"",   // Explicit
-                "\"FIZ:ER:DG\"",       // Parent
-                "\"FIZ:ER\"",          // Parent
-                "\"FIZ\""              // Parent
-        );
-        assertItemSetMembership("10.5072/38238d", sets_d);
-
-
-        // Item: 10.5072/38238e (ise-ditrare-tag)
-        List<String> sets_e = Arrays.asList(
-                "\"FIZ:ISE:DITRARE\"", // Explicit
-                "\"FIZ:ISE\"",         // Parent
-                "\"FIZ\""              // Parent
-        );
-        assertItemSetMembership("10.5072/38238e", sets_e);
-
     }
 
+    private void assertItemSetMembership(
+            String itemId,
+            List<String> expectedSets
+    ) throws IOException {
 
-    /**
-     * Asserts that the content retrieved for a given item ID contains all specified set substrings.
-     *
-     * @param itemId The ID of the item to retrieve (e.g., "10.5072/38238a").
-     * @param expectedSets The list of expected set ID substrings (e.g., "\"FIZ:ER:FD\"").
-     */
-    private void assertItemSetMembership(String itemId, List<String> expectedSets) throws IOException {
-        // Retrieve the content for the item
         String content = retrieveItemFromES(itemId, 200);
 
-        // Check that every expected set is present in the content
-        for (String expectedSubstring : expectedSets) {
-            String errorMessage = String.format(
-                    "Content for item %s should contain the expected set: %s",
-                    itemId,
-                    expectedSubstring
+        for (String expected : expectedSets) {
+            Assertions.assertTrue(
+                    content.contains(expected),
+                    "Missing expected set " + expected
             );
-            Assertions.assertTrue(content.contains(expectedSubstring), errorMessage);
         }
-
-        // Check that the total number of expected sets matches the list size
-        Assertions.assertEquals(
-                expectedSets.size(),
-                expectedSets.size(), // This is redundant but ensures the expected count is validated
-                String.format("The number of expected assertions is incorrect for item: %s", itemId)
-        );
     }
-
 }

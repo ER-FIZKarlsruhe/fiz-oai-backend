@@ -38,9 +38,6 @@ public class CrosswalkIT extends BaseInstance {
 
     @Test
     public void testProcessCrosswalk() throws IOException, InterruptedException {
-        teardownAndReset();
-        setup();
-
         String template = new String(Files.readAllBytes(
                 Paths.get("src/test/resources/radar-md-template.xml")));
 
@@ -100,9 +97,6 @@ public class CrosswalkIT extends BaseInstance {
     @Test
     public void testProcessCrosswalkCannotRunTwiceButCanRestart()
             throws IOException, InterruptedException {
-        teardownAndReset();
-        setup();
-
         String template = new String(Files.readAllBytes(
                 Paths.get("src/test/resources/radar-md-template.xml")));
 
