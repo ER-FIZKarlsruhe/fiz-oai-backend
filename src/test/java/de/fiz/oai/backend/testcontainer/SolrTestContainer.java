@@ -1,11 +1,8 @@
 package de.fiz.oai.backend.testcontainer;
 
-import org.apache.solr.client.solrj.SolrClient;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.testcontainers.containers.SolrContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import java.io.IOException;
 import java.time.Duration;
 
 

@@ -64,7 +64,8 @@ public abstract class TestContainerManager {
             startNetwork();
             startCassandra();
             startElasticsearch();
-            startSolr();
+            //FIXME Uncomment when SOLR tests are available
+            //startSolr();
             startTomcat();
 
             registerShutdownHook();

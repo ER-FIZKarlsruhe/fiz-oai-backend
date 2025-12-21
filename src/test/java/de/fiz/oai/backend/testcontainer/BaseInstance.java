@@ -25,7 +25,6 @@ import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.output.OutputFrame;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -96,7 +95,7 @@ public abstract class BaseInstance extends TestContainerManager {
         builder.addBinaryBody("content", xml.getBytes(StandardCharsets.UTF_8));
         HttpClientContext context = HttpClientContext.create();
 
-        String identifierUrlEncoded = URLEncoder.encode(identifier, "UTF-8");
+        String identifierUrlEncoded = URLEncoder.encode(identifier, StandardCharsets.UTF_8);
         LOGGER.info("identifierUrlEncoded: {}", identifierUrlEncoded);
         CloseableHttpResponse response;
         HttpPost post = new HttpPost(baseUrl);
@@ -153,7 +152,7 @@ public abstract class BaseInstance extends TestContainerManager {
             // Now you have the complete content
             result = strBuilder.toString();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage(), e);
         }
         LOGGER.info("searchItems {}", result);
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
@@ -168,9 +167,7 @@ public abstract class BaseInstance extends TestContainerManager {
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/reindex/";
 
         LOGGER.info("reindex " );
-        CloseableHttpResponse response;
         EntityBuilder builder = EntityBuilder.create();
-        //httpEntity = new StringEntity("", StandardCharsets.UTF_8);
         builder.setText("");
         HttpClientContext context = HttpClientContext.create();
         String url = baseUrl + "start";
@@ -219,10 +216,9 @@ public abstract class BaseInstance extends TestContainerManager {
 
 
     protected void reindexItem(String itemIdentifier, int expectedResponseCode) throws IOException {
-        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/reindex/item/" + URLEncoder.encode(itemIdentifier, "UTF-8");;
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/reindex/item/" + URLEncoder.encode(itemIdentifier, StandardCharsets.UTF_8);
 
         LOGGER.info("reindexItem " );
-        CloseableHttpResponse response;
         EntityBuilder builder = EntityBuilder.create();
         builder.setText("");
         HttpClientContext context = HttpClientContext.create();
@@ -264,7 +260,7 @@ public abstract class BaseInstance extends TestContainerManager {
         String esUrl = "http://localhost:" + ElasticsearchTestContainer.container.getMappedPort(9200) +"/";
 
         // 2. *** FIX: URL Encode the identifier ***
-        String encodedIdentifier = URLEncoder.encode(itemIdentifier, StandardCharsets.UTF_8.toString());
+        String encodedIdentifier = URLEncoder.encode(itemIdentifier, StandardCharsets.UTF_8);
 
         // 3. Build the specific GET request URL for the document using the encoded identifier
         String documentUrl = esUrl + "items/_doc/" + encodedIdentifier; // Use encodedIdentifier here
@@ -322,9 +318,8 @@ public abstract class BaseInstance extends TestContainerManager {
         builder.setContentType(ContentType.APPLICATION_JSON);
 
         HttpGet getCheck = new HttpGet(baseUrl + prefix);
-        CloseableHttpResponse getCheckResponse = getHttpResponse(getCheck, builder, context, false);
 
-        try {
+        try (CloseableHttpResponse getCheckResponse = getHttpResponse(getCheck, builder, context, false)) {
             int checkStatusCode = getCheckResponse.getStatusLine().getStatusCode();
 
             if (checkStatusCode == HttpStatus.SC_OK) {
@@ -339,8 +334,6 @@ public abstract class BaseInstance extends TestContainerManager {
                 // Unexpected status code on check, we might want to fail or log a warning
                 LOGGER.warn("Unexpected status code ({}) when checking for format {}. Proceeding to create.", checkStatusCode, prefix);
             }
-        } finally {
-            getCheckResponse.close();
         }
 
 
@@ -380,16 +373,13 @@ public abstract class BaseInstance extends TestContainerManager {
         // I am keeping this verification step for consistency.
 
         HttpGet getVerify = new HttpGet(baseUrl + prefix);
-        CloseableHttpResponse getVerifyResponse = getHttpResponse(getVerify, builder, context, false);
 
-        try {
+        try (CloseableHttpResponse getVerifyResponse = getHttpResponse(getVerify, builder, context, false)) {
             // Read the content to fully consume the entity, then assert status.
             // Reading all bytes can prevent issues with connection reuse.
             getVerifyResponse.getEntity().getContent().readAllBytes();
             Assertions.assertEquals(HttpStatus.SC_OK, getVerifyResponse.getStatusLine().getStatusCode(), "Verification GET failed for format " + prefix);
             LOGGER.info("Format {} successfully verified.", prefix);
-        } finally {
-            getVerifyResponse.close();
         }
     }
 
