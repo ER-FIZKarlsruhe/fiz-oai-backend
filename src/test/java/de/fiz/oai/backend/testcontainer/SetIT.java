@@ -10,14 +10,20 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SetIT extends BaseInstance {
+
+    private Logger LOGGER = LoggerFactory.getLogger(SetIT.class);
 
     @Test
     public void testCrudSets() throws IOException {
@@ -63,46 +69,66 @@ public class SetIT extends BaseInstance {
                 "/oai-backend/set/";
 
         // -----------------------------------------
-        // 1. CREATE 2000 SETS
+        // 1. CREATE 2000 SETS (PARALLEL OPTIMIZATION)
         // -----------------------------------------
-        for (int i = 1; i <= 2000; i++) {
-            createSet(
-                    "spec_" + i,
-                    "set" + i,
-                    "description_" + i,
-                    List.of("tag"),
-                    HttpStatus.SC_OK
-            );
+        int totalSets = 2000;
+        // Use a thread pool to send requests in parallel
+        int threads = Runtime.getRuntime().availableProcessors() * 4;
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(threads);
+        java.util.concurrent.atomic.AtomicInteger failedRequests = new java.util.concurrent.atomic.AtomicInteger(0);
+
+        long startTime = System.currentTimeMillis();
+        LOGGER.info("Starting parallel creation of {} sets using {} threads", totalSets, threads);
+
+        for (int i = 1; i <= totalSets; i++) {
+            final int index = i;
+            executor.submit(() -> {
+                try {
+                    // This calls the refactored getHttpResponse using the pooled client
+                    createSet(
+                            "spec_" + index,
+                            "set" + index,
+                            "description_" + index,
+                            List.of("tag"),
+                            HttpStatus.SC_OK
+                    );
+                } catch (Exception e) {
+                    failedRequests.incrementAndGet();
+                    LOGGER.error("Failed to create set {}: {}", index, e.getMessage());
+                }
+            });
         }
+
+        executor.shutdown();
+        // Wait up to 2 minutes for all threads to finish
+        if (!executor.awaitTermination(2, java.util.concurrent.TimeUnit.MINUTES)) {
+            executor.shutdownNow();
+        }
+
+        long endTime = System.currentTimeMillis();
+        LOGGER.info("Created {} sets in {}ms. Failures: {}", totalSets, (endTime - startTime), failedRequests.get());
+        Assertions.assertEquals(0, failedRequests.get(), "Some set creations failed");
 
         // -----------------------------------------
         // 2. GET ALL SETS FROM /set
         // -----------------------------------------
         List<String> expectedFullSetNames = new ArrayList<>();
 
+        // Using a simple GET to fetch the full list
         try (CloseableHttpClient client = HttpClients.createDefault();
-             CloseableHttpResponse resp =
-                     client.execute(new HttpGet(baseUrl))) {
+             CloseableHttpResponse resp = client.execute(new HttpGet(baseUrl))) {
 
-            Assertions.assertEquals(
-                    HttpStatus.SC_OK,
-                    resp.getStatusLine().getStatusCode()
-            );
+            Assertions.assertEquals(HttpStatus.SC_OK, resp.getStatusLine().getStatusCode());
 
-            JsonNode root = mapper.readTree(
-                    EntityUtils.toString(resp.getEntity())
-            );
-
+            JsonNode root = mapper.readTree(EntityUtils.toString(resp.getEntity()));
             Assertions.assertTrue(root.isArray());
 
             for (JsonNode node : root) {
                 expectedFullSetNames.add(
-                        node.get("spec").asText() + ":" +
-                                node.get("name").asText()
+                        node.get("spec").asText() + ":" + node.get("name").asText()
                 );
             }
-
-            Assertions.assertEquals(2000, expectedFullSetNames.size());
+            Assertions.assertEquals(totalSets, expectedFullSetNames.size());
         }
 
         // -----------------------------------------
@@ -116,53 +142,42 @@ public class SetIT extends BaseInstance {
         String token = null;
 
         do {
-            String url = token == null
+            String url = (token == null)
                     ? searchUrlBase
-                    : searchUrlBase + "?resumptionToken=" + token;
+                    : searchUrlBase + "?resumptionToken=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
 
             try (CloseableHttpClient client = HttpClients.createDefault();
-                 CloseableHttpResponse resp =
-                         client.execute(new HttpGet(url))) {
+                 CloseableHttpResponse resp = client.execute(new HttpGet(url))) {
 
-                Assertions.assertEquals(
-                        HttpStatus.SC_OK,
-                        resp.getStatusLine().getStatusCode()
-                );
+                Assertions.assertEquals(HttpStatus.SC_OK, resp.getStatusLine().getStatusCode());
 
-                JsonNode root = mapper.readTree(
-                        EntityUtils.toString(resp.getEntity())
-                );
-
+                JsonNode root = mapper.readTree(EntityUtils.toString(resp.getEntity()));
                 JsonNode sets = root.get("sets");
+
                 Assertions.assertNotNull(sets);
                 Assertions.assertTrue(sets.isArray());
 
                 for (JsonNode s : sets) {
                     foundSetNames.add(
-                            s.get("spec").asText() + ":" +
-                                    s.get("name").asText()
+                            s.get("spec").asText() + ":" + s.get("name").asText()
                     );
                 }
 
                 JsonNode tokenNode = root.get("resumptionToken");
-                token = tokenNode != null && !tokenNode.isNull()
-                        ? tokenNode.asText()
-                        : null;
+                token = (tokenNode != null && !tokenNode.isNull()) ? tokenNode.asText() : null;
             }
         } while (token != null);
 
         // -----------------------------------------
         // 4. COMPARE RESULTS
         // -----------------------------------------
-        Assertions.assertEquals(
-                expectedFullSetNames.size(),
-                foundSetNames.size()
-        );
+        Assertions.assertEquals(expectedFullSetNames.size(), foundSetNames.size());
 
-        Assertions.assertTrue(
-                foundSetNames.containsAll(expectedFullSetNames)
-                        && expectedFullSetNames.containsAll(foundSetNames)
-        );
+        // Efficiently compare sets using a HashSet for O(1) lookups
+        java.util.Set<String> expectedSet = new java.util.HashSet<>(expectedFullSetNames);
+        java.util.Set<String> foundSet = new java.util.HashSet<>(foundSetNames);
+
+        Assertions.assertEquals(expectedSet, foundSet, "The sets retrieved via search do not match created sets");
     }
 
     @Test

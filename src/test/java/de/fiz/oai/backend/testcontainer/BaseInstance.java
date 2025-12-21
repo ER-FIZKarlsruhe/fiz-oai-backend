@@ -31,7 +31,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.SocketException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -41,6 +40,21 @@ import java.util.List;
 public abstract class BaseInstance extends TestContainerManager {
 
     private Logger LOGGER = LoggerFactory.getLogger(BaseInstance.class);
+
+    private static final PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+    private static final CloseableHttpClient httpClient;
+
+    static {
+        connectionManager.setMaxTotal(100);
+        connectionManager.setDefaultMaxPerRoute(100);
+
+        httpClient = HttpClients.custom()
+                .setConnectionManager(connectionManager)
+                // Prevents the client from being closed after one request
+                .setConnectionManagerShared(true)
+                .build();
+    }
+
 
     @Test
     public void testTomcatIsRunningAndWarDeployed() {
@@ -731,62 +745,40 @@ public abstract class BaseInstance extends TestContainerManager {
     protected CloseableHttpResponse getHttpResponse(
             HttpRequestBase requestBase, Object builder, HttpClientContext context, boolean useProxy) throws IOException {
 
-        // Default timeout values
         int timeout = 20000;
-
-        // Configuring the request with the timeouts
         RequestConfig defaultRequestConfig = RequestConfig.custom()
                 .setSocketTimeout(timeout)
                 .setConnectTimeout(timeout)
                 .setConnectionRequestTimeout(timeout)
                 .build();
 
-        // Proxy configuration (if needed)
-        RequestConfig requestConfig = RequestConfig.copy(defaultRequestConfig)
-                .setProxy(new HttpHost("proxy", 8888))
-                .build();
-
-        // Apply the request config
-        requestBase.setConfig(useProxy ? requestConfig : defaultRequestConfig);
-
-        // Build entity if needed
-        HttpEntity httpEntity = null;
-        if (builder instanceof EntityBuilder) {
-            httpEntity = ((EntityBuilder) builder).build();
-        } else if (builder instanceof MultipartEntityBuilder) {
-            httpEntity = ((MultipartEntityBuilder) builder).build();
+        // Apply Proxy if requested
+        if (useProxy) {
+            requestBase.setConfig(RequestConfig.copy(defaultRequestConfig)
+                    .setProxy(new HttpHost("proxy", 8888))
+                    .build());
+        } else {
+            requestBase.setConfig(defaultRequestConfig);
         }
 
-        // If the request is an HTTP entity enclosing request, set the entity
-        if (httpEntity != null && requestBase instanceof HttpEntityEnclosingRequestBase) {
-            ((HttpEntityEnclosingRequestBase) requestBase).setEntity(httpEntity);
+        // 2. Optimized Entity Building
+        if (builder != null && requestBase instanceof HttpEntityEnclosingRequestBase) {
+            HttpEntity entity = null;
+            if (builder instanceof EntityBuilder) {
+                entity = ((EntityBuilder) builder).build();
+            } else if (builder instanceof MultipartEntityBuilder) {
+                entity = ((MultipartEntityBuilder) builder).build();
+            }
+            ((HttpEntityEnclosingRequestBase) requestBase).setEntity(entity);
         }
 
-        // Using HttpClient with connection management
+        // 3. Execute using the Shared Client
         try {
-            CloseableHttpClient client = createHttpClient(defaultRequestConfig);
-            // Execute the request and return the response
-            return client.execute(requestBase, context);
-        } catch (SocketException e) {
-            // Handle socket exceptions like "Socket closed"
-            System.err.println("Socket closed unexpectedly: " + e.getMessage());
-            throw new IOException("Error during HTTP request", e);
+            return httpClient.execute(requestBase, context);
         } catch (IOException e) {
-            // Handle general IO exceptions
-            System.err.println("IO Error during HTTP request: " + e.getMessage());
+            LOGGER.error("HTTP Request failed: {}", e.getMessage());
             throw e;
         }
     }
 
-    private CloseableHttpClient createHttpClient(RequestConfig defaultRequestConfig) {
-        // Connection manager to manage multiple connections efficiently
-        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
-        cm.setMaxTotal(200);  // Set the maximum total connections
-        cm.setDefaultMaxPerRoute(20);  // Set the maximum connections per route (per target host)
-
-        return HttpClients.custom()
-                .setDefaultRequestConfig(defaultRequestConfig)
-                .setConnectionManager(cm)  // Set the connection manager
-                .build();
-    }
 }
