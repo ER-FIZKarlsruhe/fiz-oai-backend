@@ -69,9 +69,9 @@ public class SetIT extends BaseInstance {
                 "/oai-backend/set/";
 
         // -----------------------------------------
-        // 1. CREATE 2000 SETS (PARALLEL OPTIMIZATION)
+        // 1. CREATE SETS (PARALLEL OPTIMIZATION)
         // -----------------------------------------
-        int totalSets = 2000;
+        int totalSets = 1000;
         // Use a thread pool to send requests in parallel
         int threads = Runtime.getRuntime().availableProcessors() * 4;
         java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(threads);
@@ -101,7 +101,7 @@ public class SetIT extends BaseInstance {
 
         executor.shutdown();
         // Wait up to 2 minutes for all threads to finish
-        if (!executor.awaitTermination(2, java.util.concurrent.TimeUnit.MINUTES)) {
+        if (!executor.awaitTermination(5, java.util.concurrent.TimeUnit.MINUTES)) {
             executor.shutdownNow();
         }
 

@@ -48,16 +48,36 @@ public class CrosswalkIT extends BaseInstance {
         createCrosswalkIfNotExisting("Radar2datacite", "radar", "datacite", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
         createCrosswalkIfNotExisting("Radar2OAI_DC_v09", "radar", "oai_dc", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
 
-        createSet("testset", "testset", "this is a testset",
-                List.of("testtag"), HttpStatus.SC_OK);
+        createSet("testset", "testset", "this is a testset", List.of("testtag"), HttpStatus.SC_OK);
 
-        createItem("10.5072/38238", template, "testtag");
+        int totalItems = 1000;
+        int threads = Runtime.getRuntime().availableProcessors() * 2;
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(threads);
+        java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(totalItems + 1);
+        java.util.concurrent.atomic.AtomicInteger errors = new java.util.concurrent.atomic.AtomicInteger(0);
 
-        Thread.sleep(1000);
+        long start = System.currentTimeMillis();
+        LOGGER.info("Starting parallel ingestion of {} items...", totalItems + 1);
 
-        for (int i = 0; i <= 1000; i++) {
-            createItem("10.5072/38238_" + i, template, "testtag");
+        for (int i = 0; i <= totalItems; i++) {
+            final String id = (i == 0) ? "10.5072/38238" : "10.5072/38238_" + i;
+            executor.submit(() -> {
+                try {
+                    createItem(id, template, "testtag");
+                } catch (Exception e) {
+                    errors.incrementAndGet();
+                    LOGGER.error("Failed to create item {}: {}", id, e.getMessage());
+                } finally {
+                    latch.countDown();
+                }
+            });
         }
+
+        latch.await(5, java.util.concurrent.TimeUnit.MINUTES);
+        executor.shutdown();
+
+        LOGGER.info("Ingested {} items in {}ms", totalItems + 1, (System.currentTimeMillis() - start));
+        Assertions.assertEquals(0, errors.get(), "Some item creations failed");
 
         // --- start async processing ---
         processCrosswalk("Radar2OAI_DC_v09", 200);

@@ -39,7 +39,7 @@ import java.util.List;
 
 public abstract class BaseInstance extends TestContainerManager {
 
-    private Logger LOGGER = LoggerFactory.getLogger(BaseInstance.class);
+    protected Logger LOGGER = LoggerFactory.getLogger(BaseInstance.class);
 
     private static final PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
     private static final CloseableHttpClient httpClient;
@@ -365,8 +365,8 @@ public abstract class BaseInstance extends TestContainerManager {
 
         try {
             // Logging for debugging (optional, based on your original method)
-            final String logs = tomcatContainer.getLogs(OutputFrame.OutputType.STDOUT);
-            final String errlogs = tomcatContainer.getLogs(OutputFrame.OutputType.STDERR);
+            //final String logs = tomcatContainer.getLogs(OutputFrame.OutputType.STDOUT);
+            //final String errlogs = tomcatContainer.getLogs(OutputFrame.OutputType.STDERR);
 
             // Assert that the creation was successful (HTTP 200 OK)
             Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode(), "Failed to create format " + prefix);
@@ -536,8 +536,8 @@ public abstract class BaseInstance extends TestContainerManager {
         post.addHeader("Accept", "application/json");
         postResponse = getHttpResponse(post, builder, context, false);
 
-        final String logs = tomcatContainer.getLogs(OutputFrame.OutputType.STDOUT);
-        final String errlogs = tomcatContainer.getLogs(OutputFrame.OutputType.STDERR);
+        //final String logs = tomcatContainer.getLogs(OutputFrame.OutputType.STDOUT);
+        //final String errlogs = tomcatContainer.getLogs(OutputFrame.OutputType.STDERR);
 
         Assertions.assertEquals(expectedResponse, postResponse.getStatusLine().getStatusCode());
         postResponse.close();
