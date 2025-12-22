@@ -71,43 +71,7 @@ public class SetIT extends BaseInstance {
         // -----------------------------------------
         // 1. CREATE SETS (PARALLEL OPTIMIZATION)
         // -----------------------------------------
-        int totalSets = 1000;
-        // Use a thread pool to send requests in parallel
-        int threads = Runtime.getRuntime().availableProcessors() * 4;
-        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(threads);
-        java.util.concurrent.atomic.AtomicInteger failedRequests = new java.util.concurrent.atomic.AtomicInteger(0);
-
-        long startTime = System.currentTimeMillis();
-        LOGGER.info("Starting parallel creation of {} sets using {} threads", totalSets, threads);
-
-        for (int i = 1; i <= totalSets; i++) {
-            final int index = i;
-            executor.submit(() -> {
-                try {
-                    // This calls the refactored getHttpResponse using the pooled client
-                    createSet(
-                            "spec_" + index,
-                            "set" + index,
-                            "description_" + index,
-                            List.of("tag"),
-                            HttpStatus.SC_OK
-                    );
-                } catch (Exception e) {
-                    failedRequests.incrementAndGet();
-                    LOGGER.error("Failed to create set {}: {}", index, e.getMessage());
-                }
-            });
-        }
-
-        executor.shutdown();
-        // Wait up to 2 minutes for all threads to finish
-        if (!executor.awaitTermination(5, java.util.concurrent.TimeUnit.MINUTES)) {
-            executor.shutdownNow();
-        }
-
-        long endTime = System.currentTimeMillis();
-        LOGGER.info("Created {} sets in {}ms. Failures: {}", totalSets, (endTime - startTime), failedRequests.get());
-        Assertions.assertEquals(0, failedRequests.get(), "Some set creations failed");
+        int totalSets = createSets(1000);
 
         // -----------------------------------------
         // 2. GET ALL SETS FROM /set
@@ -178,6 +142,46 @@ public class SetIT extends BaseInstance {
         java.util.Set<String> foundSet = new java.util.HashSet<>(foundSetNames);
 
         Assertions.assertEquals(expectedSet, foundSet, "The sets retrieved via search do not match created sets");
+    }
+
+    private int createSets(int totalSets) throws InterruptedException {
+        // Use a thread pool to send requests in parallel
+        int threads = Runtime.getRuntime().availableProcessors() * 4;
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(threads);
+        java.util.concurrent.atomic.AtomicInteger failedRequests = new java.util.concurrent.atomic.AtomicInteger(0);
+
+        long startTime = System.currentTimeMillis();
+        LOGGER.info("Starting parallel creation of {} sets using {} threads", totalSets, threads);
+
+        for (int i = 1; i <= totalSets; i++) {
+            final int index = i;
+            executor.submit(() -> {
+                try {
+                    // This calls the refactored getHttpResponse using the pooled client
+                    createSet(
+                            "spec_" + index,
+                            "set" + index,
+                            "description_" + index,
+                            List.of("tag"),
+                            HttpStatus.SC_OK
+                    );
+                } catch (Exception e) {
+                    failedRequests.incrementAndGet();
+                    LOGGER.error("Failed to create set {}: {}", index, e.getMessage());
+                }
+            });
+        }
+
+        executor.shutdown();
+        // Wait up to 2 minutes for all threads to finish
+        if (!executor.awaitTermination(5, java.util.concurrent.TimeUnit.MINUTES)) {
+            executor.shutdownNow();
+        }
+
+        long endTime = System.currentTimeMillis();
+        LOGGER.info("Created {} sets in {}ms. Failures: {}", totalSets, (endTime - startTime), failedRequests.get());
+        Assertions.assertEquals(0, failedRequests.get(), "Some set creations failed");
+        return totalSets;
     }
 
     @Test

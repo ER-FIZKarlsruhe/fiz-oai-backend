@@ -119,6 +119,8 @@ public class EsSearchServiceImpl implements SearchService {
 
     private CompletableFuture<Boolean> reindexAllFuture;
 
+    private final AtomicBoolean reindexRunning = new AtomicBoolean(false);
+
     /**
      * @param items @throws IOException @throws
      */
@@ -471,9 +473,11 @@ public class EsSearchServiceImpl implements SearchService {
 
     @Override
     public boolean reindexAll(String indexName) {
-        if (reindexStatus != null && StringUtils.isBlank(reindexStatus.getEndTime())) {
-            LOGGER.warn("REINDEX status: Reindex process already started since " + reindexStatus.getStartTime()
-                    + ". Cannot continue until it finishes!");
+        // ------------------------------------------------------
+        // Atomic guard – only one process allowed at a time
+        // ------------------------------------------------------
+        if (!reindexRunning.compareAndSet(false, true)) {
+            LOGGER.warn("[STATUS] Reindex '{}' already running – aborting new start");
             return false;
         }
 
@@ -615,6 +619,8 @@ public class EsSearchServiceImpl implements SearchService {
                 closeElasticsearchClient(client);
                 reindexStatus.setEndTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
                 LOGGER.info("REINDEX status: End Time: {}", reindexStatus.getEndTime());
+
+                reindexRunning.set(false);
             }
             return true;
 
@@ -840,37 +846,6 @@ public class EsSearchServiceImpl implements SearchService {
      * @throws IOException
      */
     private synchronized RestHighLevelClient getElasticsearchClient() {
-//        if (elasticsearchClient == null) {
-//            elasticsearchClient = new RestHighLevelClient(
-//                    RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http"))
-//                            .setHttpClientConfigCallback(httpClientBuilder
-//                                    -> httpClientBuilder.setDefaultIOReactorConfig(IOReactorConfig.custom().setSoKeepAlive(true).build())));
-//
-//            final ConnectionKeepAliveStrategy myStrategy = new ConnectionKeepAliveStrategy() {
-//                @Override
-//                public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
-//                    Args.notNull(response, "HTTP response");
-//                    Header[] keepAliveHeaders = response.getHeaders("Keep-Alive");
-//                    if (keepAliveHeaders != null) {
-//                        for (Header header : keepAliveHeaders) {
-//                            if (header.getName().equalsIgnoreCase("timeout") && header.getValue() != null) {
-//                                try {
-//                                    return Long.parseLong(header.getValue());
-//                                } catch (final NumberFormatException ignore) {
-//                                }
-//                            }
-//                        }
-//                    }
-//                    return 5000;
-//                }
-//            };
-//            elasticsearchClient = new RestHighLevelClient(
-//                    RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http"))
-//                            .setHttpClientConfigCallback(httpClientBuilder
-//                                    -> httpClientBuilder.setKeepAliveStrategy(myStrategy)));
-//
-//        }
-
         return new RestHighLevelClient(RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
     }
 

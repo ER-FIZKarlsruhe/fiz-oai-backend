@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
 import de.fiz.oai.backend.service.SearchService;
@@ -46,21 +47,16 @@ public class ReindexController extends AbstractController {
     throw new WebApplicationException("Not able to stop reindex process.", Status.INTERNAL_SERVER_ERROR);
 
   }
-  
+
   @POST
   @Path("/start")
-  @Operation(summary = "Start reindexing process")
-  @ApiResponses({
-          @ApiResponse(responseCode = "200", description = "Reindexing process started successfully"),
-          @ApiResponse(responseCode = "500", description = "Not able to start reindex process, maybe it is already started. Please check with /status command.")
-  })
-  public void startReindexAll(
-          @Parameter(description = "Name of the Index (used to continue an interrupted reindex-process)")
-          @QueryParam("indexName") String indexName) {
+  public Response startReindexAll(@QueryParam("indexName") String indexName) {
     if (searchService.reindexAll(indexName)) {
-        throw new WebApplicationException("Reindex process correctly started.", Status.OK);
-      }
-      throw new WebApplicationException("Not able to start reindex process, maybe is already started. Please check with /status command.", Status.INTERNAL_SERVER_ERROR);
+      return Response.ok("Reindex process correctly started.").build();
+    }
+    return Response.status(Status.CONFLICT)
+            .entity("Not able to start reindex process, maybe it is already started. Please check with /status command.")
+            .build();
   }
 
   @POST

@@ -73,7 +73,34 @@ public abstract class BaseInstance extends TestContainerManager {
     }
 
 
+    protected void createItemNoVerify(String identifier, String template, String setTag) throws IOException {
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/item/";
 
+        LOGGER.info("createItem {}", identifier);
+
+        String xml = template.replace("@@doi@@", identifier);
+
+        final ObjectMapper mapper = new ObjectMapper();
+        ObjectNode node = mapper.createObjectNode();
+        node.put("identifier", identifier);
+        node.put("ingestFormat", "radar");
+        node.putPOJO("tags", List.of( setTag));
+        String json = node.toString();
+
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.addPart("item", new StringBody(json, ContentType.APPLICATION_JSON));
+        builder.addBinaryBody("content", xml.getBytes(StandardCharsets.UTF_8));
+        HttpClientContext context = HttpClientContext.create();
+
+        String identifierUrlEncoded = URLEncoder.encode(identifier, StandardCharsets.UTF_8);
+        LOGGER.info("identifierUrlEncoded: {}", identifierUrlEncoded);
+        CloseableHttpResponse response;
+        HttpPost post = new HttpPost(baseUrl);
+        response = getHttpResponse(post, builder, context, false);
+        response.getEntity().getContent().readAllBytes();
+        response.close();
+
+    }
 
 
     protected void createItem(String identifier, String template, String setTag) throws IOException {
@@ -163,7 +190,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
 
 
-    protected void reindexElasticsearch(String expectIndexName, String continueIndexName) throws IOException {
+    protected boolean reindexElasticsearch(String expectIndexName, String continueIndexName, int expectedResponseCode) throws IOException {
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/reindex/";
 
         LOGGER.info("reindex " );
@@ -177,8 +204,14 @@ public abstract class BaseInstance extends TestContainerManager {
         HttpPost post = new HttpPost(url);
         CloseableHttpResponse postResponse = getHttpResponse(post, builder, context, false);
         postResponse.getEntity().getContent().readAllBytes();
-        Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode());
+
+        int statusCode= postResponse.getStatusLine().getStatusCode();
+        Assertions.assertEquals(expectedResponseCode, statusCode);
         postResponse.close();
+
+        if(statusCode != HttpStatus.SC_OK) {
+            return false;
+        }
 
         try {
             Thread.sleep(5000);
@@ -198,7 +231,7 @@ public abstract class BaseInstance extends TestContainerManager {
         InputStream is = getResponse.getEntity().getContent();
         String indices = new String(is.readAllBytes(), StandardCharsets.UTF_8);
         LOGGER.info("indices: {}", indices);
-        Assertions.assertTrue(indices.contains(indexNameToCheck));
+        Assertions.assertTrue(indices.contains(indexNameToCheck), "Index name "+ indices + " does not fit " + indexNameToCheck);
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
 
@@ -212,7 +245,104 @@ public abstract class BaseInstance extends TestContainerManager {
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
 
+        return true;
     }
+
+
+    protected boolean startReindex(int expectedResponseCode, String continueIndexName)
+            throws IOException {
+
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":"
+                + tomcatContainer.getMappedPort(8080)
+                + "/oai-backend/reindex/start";
+
+        if (StringUtils.isNotBlank(continueIndexName)) {
+            baseUrl += "?indexName=" + continueIndexName;
+        }
+
+        HttpPost post = new HttpPost(baseUrl);
+        EntityBuilder builder = EntityBuilder.create().setText("");
+
+        CloseableHttpResponse response =
+                getHttpResponse(post, builder, HttpClientContext.create(), false);
+
+        response.getEntity().getContent().readAllBytes();
+        int statusCode = response.getStatusLine().getStatusCode();
+        response.close();
+
+        Assertions.assertEquals(expectedResponseCode, statusCode);
+
+        return statusCode == HttpStatus.SC_OK;
+    }
+
+    protected void waitForReindexAndVerifyES(String expectedIndexName)
+            throws Exception {
+
+        boolean finished = false;
+
+        for (int i = 0; i < 120; i++) {
+            Thread.sleep(500);
+            String status = getReindexStatus();
+            LOGGER.info(status);
+            if (status.contains("FINISHED")) {
+                finished = true;
+                break;
+            }
+        }
+
+        Assertions.assertTrue(finished, "Reindex did not finish");
+
+        String esUrl = "http://localhost:"
+                + ElasticsearchTestContainer.container.getMappedPort(9200) + "/";
+
+        HttpClientContext context = HttpClientContext.create();
+        EntityBuilder builder = EntityBuilder.create();
+
+        // ---- indices ----
+        HttpGet get = new HttpGet(esUrl + "_cat/indices");
+        CloseableHttpResponse response = getHttpResponse(get, builder, context, false);
+
+        String indices = new String(
+                response.getEntity().getContent().readAllBytes(),
+                StandardCharsets.UTF_8
+        );
+        response.close();
+
+        Assertions.assertTrue(indices.contains(expectedIndexName),
+                "Expected index not found: " + expectedIndexName);
+
+        // ---- aliases ----
+        get = new HttpGet(esUrl + "_cat/aliases");
+        response = getHttpResponse(get, builder, context, false);
+
+        String aliases = new String(
+                response.getEntity().getContent().readAllBytes(),
+                StandardCharsets.UTF_8
+        );
+        response.close();
+
+        Assertions.assertTrue(aliases.contains("items " + expectedIndexName));
+    }
+
+    protected void awaitReindexHasStarted() throws Exception {
+        int maxWaitMs = 10_000;
+        int pollIntervalMs = 100;
+
+        for (int waited = 0; waited < maxWaitMs; waited += pollIntervalMs) {
+            Thread.sleep(pollIntervalMs);
+
+            String status = getReindexStatus();
+            LOGGER.info("Reindex status: {}", status);
+
+            // Reindex has started once indexed count > 0
+            if (status.contains("STARTED")) {
+                return;
+            }
+        }
+
+        Assertions.fail("Reindex never started indexing within timeout");
+    }
+
 
 
     protected void reindexItem(String itemIdentifier, int expectedResponseCode) throws IOException {
@@ -731,6 +861,21 @@ public abstract class BaseInstance extends TestContainerManager {
         }
     }
 
+    protected String getReindexStatus() throws IOException {
+        String url = "http://" + tomcatContainer.getHost() + ":" +
+                tomcatContainer.getMappedPort(8080) +
+                "/oai-backend/reindex/status";
+        LOGGER.info("process reindex");
+        EntityBuilder builder = EntityBuilder.create();
+        builder.setText("");
+        HttpClientContext context = HttpClientContext.create();
+        HttpGet get = new HttpGet(url);
+        try (CloseableHttpResponse response = getHttpResponse(get, builder, context, false)) {
+            Assertions.assertEquals(200, response.getStatusLine().getStatusCode());
+            return EntityUtils.toString(response.getEntity());
+        }
+    }
+
 
     protected CloseableHttpResponse getHttpResponse(
             HttpRequestBase requestBase, Object builder, HttpClientContext context, boolean useProxy) throws IOException {
@@ -768,6 +913,38 @@ public abstract class BaseInstance extends TestContainerManager {
         } catch (IOException e) {
             LOGGER.error("HTTP Request failed: {}", e.getMessage());
             throw e;
+        }
+    }
+
+
+    protected void createItems(int totalItems) throws InterruptedException, IOException {
+        String template = new String(Files.readAllBytes(Paths.get("src/test/resources/radar-md-template.xml")));
+
+        // Use a thread pool to send requests in parallel
+        int threads = Runtime.getRuntime().availableProcessors() * 4;
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(threads);
+        java.util.concurrent.atomic.AtomicInteger failedRequests = new java.util.concurrent.atomic.AtomicInteger(0);
+
+        LOGGER.info("Starting parallel creation of {} items using {} threads", totalItems, threads);
+
+        //Prepare test items. Create a lot, that reindex will not finish too quickly
+        for (int i = 1; i <= totalItems; i++) {
+            final int index = i;
+            executor.submit(() -> {
+                try {
+                    // This calls the refactored getHttpResponse using the pooled client
+                    createItemNoVerify("10.5072/38238_" + System.nanoTime(), template, "testtag");
+                } catch (Exception e) {
+                    failedRequests.incrementAndGet();
+                    LOGGER.error("Failed to create item {}: {}", index, e.getMessage());
+                }
+            });
+        }
+
+        executor.shutdown();
+        // Wait up to 2 minutes for all threads to finish
+        if (!executor.awaitTermination(5, java.util.concurrent.TimeUnit.MINUTES)) {
+            executor.shutdownNow();
         }
     }
 

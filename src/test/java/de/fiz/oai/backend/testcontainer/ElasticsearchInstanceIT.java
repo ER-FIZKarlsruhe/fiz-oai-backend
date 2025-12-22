@@ -63,9 +63,9 @@ public class ElasticsearchInstanceIT extends BaseInstance {
             createItem("10.5072/38238_" + i, template, "testtag");
         }
 
-        reindexElasticsearch("items2", null);
-        reindexElasticsearch("", "items2");
-        reindexElasticsearch("items3", null);
+        reindexElasticsearch("items2", null,HttpStatus.SC_OK);
+        reindexElasticsearch("", "items2",HttpStatus.SC_OK);
+        reindexElasticsearch("items3", null,HttpStatus.SC_OK);
 
         //Wait a bit, that ES has all documents in the index
         try {
@@ -93,6 +93,44 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
         Assertions.assertEquals(2,countSearchWithMarks);
 
+    }
+
+
+    @Test
+    public void testReindexCannotRunTwiceButCanRestart() throws Exception {
+
+
+        createFormatIfNotExisting("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/");
+        createFormatIfNotExisting("radar", "https://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/", "http://radar-service.eu/schemas/descriptive/radar/v09/radar-dataset/");
+        createFormatIfNotExisting("datacite", "https://schema.datacite.org/meta/kernel-4.0/metadata.xsd", "http://datacite.org/schema/kernel-4");
+
+        createCrosswalkIfNotExisting("Radar2datacite", "radar", "datacite", "src/test/resources/RadarMD-v9.1-to-DataciteMD-v4_4.xslt");
+        createCrosswalkIfNotExisting("Radar2OAI_DC_v09", "radar", "oai_dc", "src/test/resources/Radar2OAI_DC_v9.1.xsl");
+
+        createSet("testset", "testset", "this is a testset", List.of("testtag"), HttpStatus.SC_OK);
+
+        createItems(6000);
+
+        // start reindex
+        Assertions.assertTrue(startReindex(HttpStatus.SC_OK, null));
+
+        // wait until running
+        awaitReindexHasStarted();
+
+        // second start must fail
+        Assertions.assertFalse(startReindex(HttpStatus.SC_CONFLICT, null));
+
+        // wait until finished + verify
+        waitForReindexAndVerifyES("items2");
+
+        // restart after finish
+        Assertions.assertTrue(startReindex(HttpStatus.SC_OK, null));
+
+        // wait until running
+        awaitReindexHasStarted();
+
+        //  wait until finished + verify
+        waitForReindexAndVerifyES("items3");
     }
 
 
@@ -141,5 +179,7 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
         return itemResult;
     }
+
+
 
 }
