@@ -65,10 +65,7 @@ import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.fiz.oai.backend.dao.DAOContent;
-import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.dao.DAOItem;
-import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.models.reindex.ReindexStatus;
@@ -106,14 +103,6 @@ public class EsSearchServiceImpl implements SearchService {
     @Inject
     DAOItem daoItem;
 
-    @Inject
-    DAOContent daoContent;
-
-    @Inject
-    DAOFormat daoFormat;
-
-    @Inject
-    DAOSet daoSet;
 
     private ReindexStatus reindexStatus = null;
 

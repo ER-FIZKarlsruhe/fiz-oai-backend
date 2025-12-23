@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import de.fiz.oai.backend.models.crosswalk.CrosswalkProcessingStatus;
 import org.apache.commons.lang3.StringUtils;
@@ -206,12 +207,10 @@ public class CrosswalkServiceImpl implements CrosswalkService {
         LOGGER.info("[STATUS] Processing initialized: crosswalk={}, startTime={}",
                 name, crosswalkProcessingStatus.getStartTime());
 
-        // ------------------------------------------------------
-        // Run async job
-        // ------------------------------------------------------
         processCrosswalkFuture = CompletableFuture.supplyAsync(() -> {
             try {
                 String searchMark = "";
+                AtomicInteger atomicCounter = new AtomicInteger(0);
 
                 do {
                     SearchResult<String> result = searchService.search(
@@ -225,14 +224,15 @@ public class CrosswalkServiceImpl implements CrosswalkService {
 
                     crosswalkProcessingStatus.setTotalCount(result.getTotal());
 
-                    for (String itemId : result.getData()) {
-                        processCrosswalkForItem(
-                                crosswalk, itemId, updateItemTimestamp
-                        );
-                        crosswalkProcessingStatus.setProcessedCount(
-                                crosswalkProcessingStatus.getProcessedCount() + 1
-                        );
-                    }
+                    result.getData().parallelStream().forEach(itemId -> {
+                        try {
+                            processCrosswalkForItem(crosswalk, itemId, updateItemTimestamp);
+                            atomicCounter.incrementAndGet();
+                            crosswalkProcessingStatus.setProcessedCount(atomicCounter.get());
+                        } catch (Exception e) {
+                            LOGGER.error("[ITEM ERROR] Failed to process item: {}", itemId, e);
+                        }
+                    });
 
                     searchMark = result.getSearchMark();
 
@@ -244,13 +244,8 @@ public class CrosswalkServiceImpl implements CrosswalkService {
             } catch (Exception e) {
                 LOGGER.error("[PROCESS] Error while processing crosswalk '{}'", name, e);
                 return false;
-
             } finally {
-                // --------------------------------------------------
-                // Always clear running flag
-                // --------------------------------------------------
-                crosswalkProcessingStatus.setEndTime(
-                        ZonedDateTime.now(ZoneOffset.UTC).toString()
+                crosswalkProcessingStatus.setEndTime(ZonedDateTime.now(ZoneOffset.UTC).toString()
                 );
                 processingRunning.set(false);
 

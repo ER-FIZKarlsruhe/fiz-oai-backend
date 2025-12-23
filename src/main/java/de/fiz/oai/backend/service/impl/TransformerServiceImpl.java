@@ -1,5 +1,17 @@
-/**
- * Copyright (c) 27.02.20 Fachinformationszentrum Karlsruhe
+/*
+ * Copyright 2025 FIZ Karlsruhe - Leibniz-Institut fuer Informationsinfrastruktur GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package de.fiz.oai.backend.service.impl;
 
@@ -7,6 +19,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -69,24 +82,27 @@ public class TransformerServiceImpl implements TransformerService, KeyedObjectPo
     private SAXTransformerFactory saxTransformerFactory;
 
     public TransformerServiceImpl() {
-        LOGGER.info("Initialize TransformerPool ...");
+        LOGGER.info("Initialize TransformerPool for XSLT 3.0 (Saxon 12) ...");
 
-        // Create transformerFactory as singleton.
-        TransformerFactory tf = TransformerFactory.newInstance("net.sf.saxon.TransformerFactoryImpl", null);
-        if (tf.getFeature(SAXTransformerFactory.FEATURE)) {
-            try {
-                tf.setAttribute(
+        // Create transformerFactory as singleton using explicit Saxon implementation.
+        TransformerFactory tf = new net.sf.saxon.TransformerFactoryImpl();
+
+        try {
+            tf.setAttribute(
                     FeatureKeys.XML_PARSER_FEATURE + "http://xml.org/sax/features/external-general-entities", false);
-                tf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            } catch (TransformerConfigurationException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-            saxTransformerFactory = (SAXTransformerFactory) tf;
+            tf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
 
-        } else {
-            LOGGER.error("Couldn't instantiate a SAXTransformerFactory.");
-            throw new RuntimeException("Couldn't instantiate a SAXTransformerFactory.");
+            if (tf.getFeature(SAXTransformerFactory.FEATURE)) {
+                saxTransformerFactory = (SAXTransformerFactory) tf;
+            } else {
+                LOGGER.error("Couldn't instantiate a SAXTransformerFactory.");
+                throw new RuntimeException("Couldn't instantiate a SAXTransformerFactory.");
+            }
+        } catch (TransformerConfigurationException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
+
         assert saxTransformerFactory != null;
 
         // Create the pool
@@ -113,15 +129,19 @@ public class TransformerServiceImpl implements TransformerService, KeyedObjectPo
                     throw new RuntimeException("Couldn't find crosswalk for name " + key);
                 }
 
-                StreamSource xslSource = new StreamSource(new StringReader(crosswalk.getXsltStylesheet()));
-                Transformer transformer = saxTransformerFactory.newTransformer(xslSource);
-                transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-                transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-                transformer.setOutputProperty(OutputKeys.ENCODING, String.valueOf(StandardCharsets.UTF_8));
-                transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-                LOGGER.info("Created new transformer for crosswalk " + key);
-                return new DefaultPooledObject<>(transformer);
+                try (StringReader reader = new StringReader(crosswalk.getXsltStylesheet())) {
+                    StreamSource xslSource = new StreamSource(reader);
+                    Transformer transformer = saxTransformerFactory.newTransformer(xslSource);
+                    transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+                    transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+                    transformer.setOutputProperty(OutputKeys.ENCODING, StandardCharsets.UTF_8.name());
+
+                    // Standard JAXP indent property (works in Saxon-HE)
+                    transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+                    LOGGER.info("Created new transformer for crosswalk " + key);
+                    return new DefaultPooledObject<>(transformer);
+                }
             }
 
             /** ${@inheritDoc} */
@@ -143,29 +163,31 @@ public class TransformerServiceImpl implements TransformerService, KeyedObjectPo
         });
         assert this.pool != null;
         this.pool.setMaxTotal(MAX_ACTIVE);
-        this.pool.setMaxWaitMillis(MAX_WAIT);
+        // Using Duration for compatibility with Commons Pool 2.12+
+        this.pool.setMaxWait(Duration.ofMillis(MAX_WAIT));
         this.pool.setTestWhileIdle(TEST_WHILE_IDLE);
-        this.pool.setTimeBetweenEvictionRunsMillis(TIME_BETWEEN_EVICTION_RUNS);
+        this.pool.setTimeBetweenEvictionRuns(Duration.ofMillis(TIME_BETWEEN_EVICTION_RUNS));
     }
 
     @Override
     public String transform(String xml, String name) throws IOException {
         Transformer transformer = null;
-        try (StringReader xmlReader = new StringReader(xml)) {
+        try (StringReader xmlReader = new StringReader(xml);
+             StringWriter writer = new StringWriter()) {
 
             transformer = borrowObject(name);
 
-            final StreamResult result = new StreamResult(new StringWriter());
+            final StreamResult result = new StreamResult(writer);
             final StreamSource source = new StreamSource(xmlReader);
             // do the transformation
             transformer.transform(source, result);
 
-            String resultString = result.getWriter().toString();
-            return resultString;
+            return writer.toString();
         } catch (Exception e) {
             if (transformer != null) {
                 try {
                     invalidateObject(name, transformer);
+                    transformer = null; // Mark as null so finally doesn't return it
                 } catch (Exception ex) {
                     LOGGER.error(ex.getMessage(), e);
                 }
@@ -182,19 +204,20 @@ public class TransformerServiceImpl implements TransformerService, KeyedObjectPo
         }
     }
 
-    /** ${@inheritDoc} 
+    /** ${@inheritDoc}
      * @throws Exception */
     @Override
     public void updateTransformer(String key) throws Exception {
         try {
-            this.pool.addObject(key);
+            // Clear old instances to ensure fresh XSLT 3.0 logic is loaded
+            this.pool.clear(key);
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage(), ex);
             throw ex;
         }
     }
-    
-    
+
+
     /** ${@inheritDoc} */
     @Override
     public void addObject(String key) throws Exception, IllegalStateException, UnsupportedOperationException {
