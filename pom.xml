@@ -9,7 +9,7 @@
 
     <jersey.version>3.1.10</jersey.version>
 
-    <elasticsearch.version>7.17.27</elasticsearch.version>
+    <elasticsearch.version>7.17.29</elasticsearch.version>
     <solr.version>8.11.4</solr.version>
     <cassandra.version>4.19.0</cassandra.version>
     <saxon.version>12.9</saxon.version>
