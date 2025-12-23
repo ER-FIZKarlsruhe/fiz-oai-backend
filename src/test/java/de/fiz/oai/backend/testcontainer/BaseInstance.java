@@ -1,5 +1,6 @@
 package de.fiz.oai.backend.testcontainer;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.ws.rs.client.Client;
@@ -25,11 +26,11 @@ import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.InputSource;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -137,17 +138,53 @@ public abstract class BaseInstance extends TestContainerManager {
     }
 
     private void testFormatContent(String id, String format, String contains) throws IOException {
-        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/item/";
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" +
+                tomcatContainer.getMappedPort(8080) + "/oai-backend/item/";
+
         MultipartEntityBuilder builder = MultipartEntityBuilder.create();
         HttpClientContext context = HttpClientContext.create();
 
         HttpGet get = new HttpGet(baseUrl + id + "?format=" + format + "&content=true");
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
-        InputStream is = getResponse.getEntity().getContent();
-        String radarXml = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-        Assertions.assertTrue(radarXml.contains(contains));
-        Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
-        getResponse.close();
+
+        try (InputStream is = getResponse.getEntity().getContent()) {
+            String responseBody = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+
+            Assertions.assertEquals(HttpStatus.SC_OK,
+                    getResponse.getStatusLine().getStatusCode());
+
+            // Parse JSON
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(responseBody);
+
+            String xmlContent = root
+                    .path("content")
+                    .path("content")
+                    .asText();
+
+            Assertions.assertFalse(xmlContent.isEmpty(), "XML content must not be empty");
+            Assertions.assertTrue(xmlContent.contains(contains));
+
+            // Validate XML well-formed
+            assertWellFormedXml(xmlContent);
+        } finally {
+            getResponse.close();
+        }
+    }
+
+
+    private void assertWellFormedXml(String xml) {
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            factory.setValidating(false);
+
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            builder.parse(new InputSource(new StringReader(xml)));
+
+        } catch (Exception e) {
+            Assertions.fail("XML is not well-formed", e);
+        }
     }
 
 
