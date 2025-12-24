@@ -21,9 +21,9 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
-import org.junit.Assert;
-import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assertions.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
@@ -58,7 +58,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
     @Test
     public void testTomcatIsRunningAndWarDeployed() {
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/info/version";
         LOGGER.info("Tomcat is running with deployed WAR at: " + baseUrl);
@@ -473,7 +473,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
 
     protected void createFormatIfNotExisting(String prefix, String schemaLocation, String namespace) throws IOException {
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/format/";
         LOGGER.info("Attempting to create format {} if it does not exist.", prefix);
@@ -552,7 +552,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
     protected void updateFormat(String prefix, String schemaLocation, String namespace) throws IOException{
         LOGGER.info("updateFormat {}", prefix);
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/format/";
 
@@ -589,7 +589,7 @@ public abstract class BaseInstance extends TestContainerManager {
     protected void deleteFormat(String prefix) throws IOException{
         LOGGER.info("deleteFormat {}", prefix);
 
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/format/";
 
@@ -615,7 +615,7 @@ public abstract class BaseInstance extends TestContainerManager {
     protected void deleteCrosswalk(String prefix) throws IOException{
         LOGGER.info("deleteCrosswalk {}", prefix);
 
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/crosswalk/";
 
@@ -640,7 +640,7 @@ public abstract class BaseInstance extends TestContainerManager {
     protected void deleteSet(String spec) throws IOException{
         LOGGER.info("deleteSet {}", spec);
 
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/set/";
 
@@ -664,7 +664,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
 
     protected void createSet(String spec, String name, String description, List<String> tags, int expectedResponse) throws IOException{
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/set/";
         LOGGER.info("Set {}", spec);
@@ -709,7 +709,7 @@ public abstract class BaseInstance extends TestContainerManager {
     }
 
     protected void updateSet(String spec, String name, String description, List<String> tags) throws IOException{
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/set/";
         LOGGER.info("Set {}", spec);
@@ -745,7 +745,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
 
     protected void createCrosswalkIfNotExisting(String name, String formatFrom, String formatTo, String xsltStylesheet) throws IOException {
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         LOGGER.info("createCrosswalkIfNotExisting {}", name);
 
@@ -815,7 +815,7 @@ public abstract class BaseInstance extends TestContainerManager {
     }
 
     protected void updateCrosswalk(String name, String formatFrom, String formatTo, String xsltStylesheet) throws IOException {
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         LOGGER.info("updateCrosswalk {}", name);
 

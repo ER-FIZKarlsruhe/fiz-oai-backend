@@ -15,7 +15,7 @@
  */
 package de.fiz.oai.backend.integration;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -31,7 +31,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory;
 import org.glassfish.jersey.test.spi.TestContainerFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
@@ -112,16 +112,11 @@ public class ContentControllerIT extends JerseyTest {
 
     Response response = target("/content/123456/oai_dc").request().get();
 
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
-    assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON,
-        response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE), "Wrong Http Content-Type");
     
     String json = response.readEntity(String.class);
     LOGGER.info("testGetContent json: " + json);
-    
-//    content = response.readEntity(Content.class);
-//    assertEquals("Content format should be: ", "oai_dc", content.getFormat());
-//    assertEquals("Content identifier should be: ", "123456", content.getIdentifier());
   }
 
   @Test
@@ -129,7 +124,7 @@ public class ContentControllerIT extends JerseyTest {
 
     Response response = target("/content/%20/asd").request().get();
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -137,7 +132,7 @@ public class ContentControllerIT extends JerseyTest {
 
     Response response = target("/content/wer/%20").request().get();
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -146,7 +141,7 @@ public class ContentControllerIT extends JerseyTest {
 
     Response response = target("/content/wer/oai_dc").request().get();
 
-    assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
   
   
@@ -168,13 +163,12 @@ public class ContentControllerIT extends JerseyTest {
 
     Response response = target("/content/123456").request().get();
 
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
-    assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON,
-        response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE), "Wrong Http Content-Type ");
 
     List<Content> result = response.readEntity(new GenericType<List<Content>>() {
     });
-    assertEquals("result size should be: ", 2, result.size());
+    assertEquals( 2, result.size());
   }
   
 
@@ -183,7 +177,7 @@ public class ContentControllerIT extends JerseyTest {
 
     Response response = target("/content/%20").request().get();
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -192,7 +186,7 @@ public class ContentControllerIT extends JerseyTest {
 
     Response response = target("/content/weroderwas").request().get();
 
-    assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
   
 
@@ -202,7 +196,7 @@ public class ContentControllerIT extends JerseyTest {
 
     Response response = target("/content/123456/oai_dc").request().delete();
 
-    assertEquals("Http Response should be 204: ", Status.NO_CONTENT.getStatusCode(), response.getStatus());
+    assertEquals(Status.NO_CONTENT.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -210,7 +204,7 @@ public class ContentControllerIT extends JerseyTest {
 
     Response response = target("/content/%20/asd").request().delete();
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -218,7 +212,7 @@ public class ContentControllerIT extends JerseyTest {
 
     Response response = target("/content/wer/%20").request().delete();
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -227,7 +221,7 @@ public class ContentControllerIT extends JerseyTest {
 
     Response response = target("/content/wer/oai_dc").request().delete();
 
-    assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
   
 
@@ -244,7 +238,7 @@ public class ContentControllerIT extends JerseyTest {
     Response response = target("content").request().post(Entity.json(
         "{\"identifier\":\"123456\",\"format\":\"oai_dc\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
 
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -254,7 +248,7 @@ public class ContentControllerIT extends JerseyTest {
     Response response = target("content").request().post(Entity.json(
             "{\"identifier\":\"123456\",\"format\":\"oai_dc\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
     
-    assertEquals("Http Response should be 409: ", Status.CONFLICT.getStatusCode(), response.getStatus());
+    assertEquals(Status.CONFLICT.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -263,7 +257,7 @@ public class ContentControllerIT extends JerseyTest {
     Response response = target("content").request().post(Entity.json(
         "{\"identifier\":\"\",\"format\":\"oai_dc\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -272,7 +266,7 @@ public class ContentControllerIT extends JerseyTest {
     Response response = target("content").request().post(Entity.json(
         "{\"identifier\":\"123456\",\"format\":\"\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -281,7 +275,7 @@ public class ContentControllerIT extends JerseyTest {
     Response response = target("content").request().post(Entity.json(
         "{\"identifier\":\"123456\",\"format\":\"oai dc\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -290,7 +284,7 @@ public class ContentControllerIT extends JerseyTest {
     Response response = target("content").request().post(Entity.json(
         "{\"identifier\":\"123456\",\"format\":\"oai_dc\",\"content\":\"\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   
@@ -307,7 +301,7 @@ public class ContentControllerIT extends JerseyTest {
     Response response = target("content").request().put(Entity.json(
         "{\"identifier\":\"123456\",\"format\":\"oai_dc\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
 
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -316,7 +310,7 @@ public class ContentControllerIT extends JerseyTest {
     Response response = target("content").request().put(Entity.json(
         "{\"identifier\":\"\",\"format\":\"oai_dc\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -325,7 +319,7 @@ public class ContentControllerIT extends JerseyTest {
     Response response = target("content").request().put(Entity.json(
         "{\"identifier\":\"123456\",\"format\":\"\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -334,7 +328,7 @@ public class ContentControllerIT extends JerseyTest {
     Response response = target("content").request().put(Entity.json(
         "{\"identifier\":\"123456\",\"format\":\"oai dc\",\"content\":\"V2FubiB3aXJkcyBlbmRsaWNoIHdpZWRlciBTb21tZXI=\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -343,7 +337,7 @@ public class ContentControllerIT extends JerseyTest {
     Response response = target("content").request().put(Entity.json(
         "{\"identifier\":\"123456\",\"format\":\"oai_dc\",\"content\":\"\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
 }

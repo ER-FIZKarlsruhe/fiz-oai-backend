@@ -18,13 +18,13 @@ package de.fiz.oai.backend.integration;
 import de.fiz.oai.backend.dao.DAOCrosswalk;
 import de.fiz.oai.backend.models.Crosswalk;
 import de.fiz.oai.backend.service.impl.TransformerServiceImpl;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 public class TransformerServiceIT {
@@ -35,7 +35,7 @@ public class TransformerServiceIT {
     @InjectMocks
     private TransformerServiceImpl transformerService;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
     }
@@ -77,7 +77,6 @@ public class TransformerServiceIT {
 
         // Verify result
         System.out.println("Transformation Result: " + result);
-        assertTrue("Result should contain the value from the XSLT 3.0 map",
-                result.contains("Hello XSLT 3.0"));
+        assertTrue(result.contains("Hello XSLT 3.0"), "Result should contain the value from the XSLT 3.0 map");
     }
 }

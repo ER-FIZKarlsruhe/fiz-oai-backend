@@ -14,30 +14,26 @@ import de.fiz.oai.backend.service.ItemService;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.service.impl.ItemServiceImpl;
 import de.fiz.oai.backend.utils.Configuration;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
 public class ItemServiceIT {
 
     private ItemService itemService;
-
-    @Rule
-    public MockitoRule initRule = MockitoJUnit.rule();
 
     @Mock
     private SearchService searchService;
@@ -57,7 +53,7 @@ public class ItemServiceIT {
 
 
 
-    @Before
+    @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         itemService = new ItemServiceImpl();
@@ -97,7 +93,7 @@ public class ItemServiceIT {
 
         configurationStatic.when(Configuration::getInstance).thenReturn(configuration);
         configurationStatic.when(Configuration::getDateformat).thenReturn(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"));
-        when(configuration.getProperty(any(), any())).thenAnswer(invocation -> invocation.getRawArguments()[1]);
+        //when(configuration.getProperty(any(), any())).thenAnswer(invocation -> invocation.getRawArguments()[1]);
     }
 
     /**
@@ -130,7 +126,7 @@ public class ItemServiceIT {
     @Test
     public void testDeleteCompletely() throws Exception {
         when(daoItem.read(any())).thenReturn(new Item());
-        when(configuration.getProperty(eq("deletedRecord"), any())).thenReturn("no");
+        //when(configuration.getProperty(eq("deletedRecord"), any())).thenReturn("no");
         itemService.delete("test");
     }
 

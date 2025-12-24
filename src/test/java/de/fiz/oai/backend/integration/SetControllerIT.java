@@ -15,7 +15,7 @@
  */
 package de.fiz.oai.backend.integration;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -32,7 +32,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory;
 import org.glassfish.jersey.test.spi.TestContainerFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
@@ -107,14 +107,13 @@ public class SetControllerIT extends JerseyTest {
 
     Response response = target("/set/fiz:iee").request().get();
 
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
-    assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON,
-        response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
 
     Set result = response.readEntity(Set.class);
-    assertEquals("Set spec should be: ", "fiz:iee", result.getSpec());
-    assertEquals("Set name should be: ", "iee", result.getName());
-    assertEquals("Set description should be: ", "This set contains the organization unit IEE", result.getDescription());
+    assertEquals( "fiz:iee", result.getSpec());
+    assertEquals("iee", result.getName());
+    assertEquals("This set contains the organization unit IEE", result.getDescription());
   }
 
   @Test
@@ -122,7 +121,7 @@ public class SetControllerIT extends JerseyTest {
 
     Response response = target("/set/%20").request().get();
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -131,7 +130,7 @@ public class SetControllerIT extends JerseyTest {
 
     Response response = target("/set/notfound").request().get();
 
-    assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -140,13 +139,12 @@ public class SetControllerIT extends JerseyTest {
 
     Response response = target("/set").request().get();
 
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
-    assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON,
-        response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    assertEquals( MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
 
     List<Set> result = response.readEntity(new GenericType<List<Set>>() {
     });
-    assertEquals("result size should be: ", 100, result.size());
+    assertEquals(100, result.size());
   }
 
   @Test
@@ -155,7 +153,7 @@ public class SetControllerIT extends JerseyTest {
 
     Response response = target("/set/65465456").request().delete();
 
-    assertEquals("Http Response should be 204: ", Status.NO_CONTENT.getStatusCode(), response.getStatus());
+    assertEquals(Status.NO_CONTENT.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -164,7 +162,7 @@ public class SetControllerIT extends JerseyTest {
 
     Response response = target("/set/%20").request().delete();
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -173,7 +171,7 @@ public class SetControllerIT extends JerseyTest {
 
     Response response = target("/set/123Fragerei").request().delete();
 
-    assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -188,7 +186,7 @@ public class SetControllerIT extends JerseyTest {
     Response response = target("set").request().post(Entity.json(
         "{\"spec\":\"fiz:iee\",\"name\":\"iee\",\"description\":\"This set contains the organization unit IEE\"}"));
 
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -198,7 +196,7 @@ public class SetControllerIT extends JerseyTest {
     Response response = target("set").request().post(Entity.json(
             "{\"spec\":\"fiz:iee\",\"name\":\"iee\",\"description\":\"This set contains the organization unit IEE\"}"));
 
-    assertEquals("Http Response should be 409: ", Status.CONFLICT.getStatusCode(), response.getStatus());
+    assertEquals(Status.CONFLICT.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -206,7 +204,7 @@ public class SetControllerIT extends JerseyTest {
     Response response = target("set").request()
         .post(Entity.json("{\"spec\":\"fiz:iee\",\"description\":\"This set contains the organization unit IEE\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -214,7 +212,7 @@ public class SetControllerIT extends JerseyTest {
     Response response = target("set").request().post(Entity.json(
         "{\"name\":\"iee\",\"description\":\"This set contains the organization unit IEE\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -222,7 +220,7 @@ public class SetControllerIT extends JerseyTest {
     Response response = target("set").request().post(Entity.json(
         "{\"spec\":\"fiz iee\",\"name\":\"iee\",\"description\":\"This set contains the organization unit IEE\"}")); //spec must not have whitespace!
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   
@@ -240,7 +238,7 @@ public class SetControllerIT extends JerseyTest {
 
     String content = response.readEntity(String.class);
     LOGGER.info("testUpdateSet content: " + content);
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -248,7 +246,7 @@ public class SetControllerIT extends JerseyTest {
     Response response = target("set/fiz:iee").request()
         .put(Entity.json("{\"spec\":\"fiz:iee\",\"description\":\"This set contains the organization unit IEE\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -256,7 +254,7 @@ public class SetControllerIT extends JerseyTest {
     Response response = target("set/fiz:iee").request().put(Entity.json(
         "{\"name\":\"iee\",\"description\":\"This set contains the organization unit IEE\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -264,7 +262,7 @@ public class SetControllerIT extends JerseyTest {
     Response response = target("set/fiz:iee").request().put(Entity.json(
         "{\"spec\":\"fiz iee\",\"name\":\"iee\",\"description\":\"This set contains the organization unit IEE\"}")); //spec must not have whitespace!
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -273,7 +271,7 @@ public class SetControllerIT extends JerseyTest {
         "{\"spec\":\"fiz:iee\",\"name\":\"iee\",\"description\":\"This set contains the organization unit IEE\"}")); //spec must not have whitespace!
     String content = response.readEntity(String.class);
     LOGGER.info("testCreateUpdateNameDoesNotMatch content: " + content);
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -283,7 +281,7 @@ public class SetControllerIT extends JerseyTest {
     Response response = target("set/fiz:iee").request().put(Entity.json(
         "{\"spec\":\"fiz:iee\",\"name\":\"iee\",\"description\":\"This set contains the organization unit IEE\"}"));
 
-    assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   

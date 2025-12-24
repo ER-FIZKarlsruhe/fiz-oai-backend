@@ -15,8 +15,8 @@
  */
 package de.fiz.oai.backend.testcontainer;
 
-import org.junit.After;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -46,7 +46,7 @@ public abstract class TestContainerManager {
     /* -------------------------------------------------
      *  STARTUP — ONCE PER JVM
      * ------------------------------------------------- */
-    @BeforeClass
+    @BeforeAll
     public static void startContainersOnce() throws Exception {
         if (STARTED) {
             return;
@@ -78,7 +78,7 @@ public abstract class TestContainerManager {
     /* -------------------------------------------------
      *  RESET — AFTER EACH TEST
      * ------------------------------------------------- */
-    @After
+    @AfterEach
     public void resetAfterEachTest() throws Exception {
         logger.info("Resetting Cassandra and Elasticsearch state");
 
