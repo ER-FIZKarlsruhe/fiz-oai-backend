@@ -38,8 +38,6 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import de.fiz.oai.backend.service.impl.ItemServiceImpl;
-
 public class XPathHelper {
 
   private static Logger LOGGER = LoggerFactory.getLogger(XPathHelper.class);
@@ -99,7 +97,7 @@ public class XPathHelper {
         }
 
       } catch (ParserConfigurationException | IOException e) {
-          LOGGER.error("Error during isTextValueMatching for xpath" + xPathStr , e);
+          LOGGER.error("Error during isTextValueMatching for xpath{}", xPathStr, e);
       }
     }
     return false;

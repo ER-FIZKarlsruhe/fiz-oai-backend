@@ -55,7 +55,7 @@ public class ClusterManager {
     
     private DriverConfigLoader configLoader;
 
-    private Logger LOGGER = LoggerFactory.getLogger(ClusterManager.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(ClusterManager.class);
 
     private ClusterManager() {
         LOGGER.info("Init cluster manager");
@@ -64,7 +64,7 @@ public class ClusterManager {
         datacenter = config.getProperty("cassandra.datacenter");
         replicationFactor = config.getProperty("cassandra.replication.factor");
         String cassandraNodes = config.getProperty("cassandra.nodes");
-        Collection<InetSocketAddress> addresses = parseCassandraHostConfig(cassandraNodes, config);
+        Collection<InetSocketAddress> addresses = parseCassandraHostConfig(cassandraNodes);
         LOGGER.info("Found keyspace {}", keyspace);
         LOGGER.info("Found datacenter {}", datacenter);
         LOGGER.info("Found replicationFactor {}", replicationFactor);
@@ -162,7 +162,7 @@ public class ClusterManager {
         return session;
     }
 
-    private Collection<InetSocketAddress> parseCassandraHostConfig(String cassandraConfigStr, Configuration config) {
+    private Collection<InetSocketAddress> parseCassandraHostConfig(String cassandraConfigStr) {
         // TODO: need to support IPv6 addresses here at some point
         Collection<InetSocketAddress> result = new HashSet<InetSocketAddress>();
         String[] splits = cassandraConfigStr.split(",");

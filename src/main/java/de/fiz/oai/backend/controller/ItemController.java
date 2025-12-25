@@ -65,7 +65,7 @@ public class ItemController extends AbstractController {
   @Inject
   ItemService itemService;
 
-  private static Logger LOGGER = LoggerFactory.getLogger(ItemController.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ItemController.class);
 
 
   @GET

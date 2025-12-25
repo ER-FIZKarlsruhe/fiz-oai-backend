@@ -56,7 +56,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class CrosswalkServiceImpl implements CrosswalkService {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(CrosswalkServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CrosswalkServiceImpl.class);
     
     @Inject
     DAOItem daoItem;
@@ -142,7 +142,7 @@ public class CrosswalkServiceImpl implements CrosswalkService {
 
         //Update pool entry in TransformerService
         try {
-            LOGGER.error("Update Crosswalk in transformerService pool " + crosswalk.getName());
+            LOGGER.error("Update Crosswalk in transformerService pool {}", crosswalk.getName());
             transformerService.updateTransformer(crosswalk.getName());
         } catch (Exception e) {
             LOGGER.error("Cannot update Crosswalk in transformerService pool", e);
@@ -295,7 +295,7 @@ public class CrosswalkServiceImpl implements CrosswalkService {
                 startZDT = ZonedDateTime.parse(crosswalkProcessingStatus.getStartTime());
             }
 
-            Duration timeLapsed = null;
+            Duration timeLapsed;
             if (startZDT != null) {
                 timeLapsed = Duration.between(startZDT,
                         StringUtils.isBlank(crosswalkProcessingStatus.getEndTime()) ? ZonedDateTime.now(ZoneOffset.UTC)
@@ -317,14 +317,11 @@ public class CrosswalkServiceImpl implements CrosswalkService {
             statusString.append(".\n");
 
             String eta = "";
-            if (StringUtils.isBlank(crosswalkProcessingStatus.getEndTime()) && percProgress > 0 && totalSecondsSoFar > 0
-                    && startZDT != null) {
+            if (StringUtils.isBlank(crosswalkProcessingStatus.getEndTime()) && percProgress > 0 && totalSecondsSoFar > 0) {
                 final double estimatedTotalSeconds = ((double) totalSecondsSoFar / percProgress) * 100;
                 final ZonedDateTime etaZDT = startZDT.plusSeconds((long) estimatedTotalSeconds)
                         .withZoneSameInstant(ZoneOffset.UTC);
-                if (etaZDT != null) {
-                    eta = etaZDT.toString();
-                }
+                eta = etaZDT.toString();
             }
 
             statusString.append("ETA: ");
@@ -337,12 +334,12 @@ public class CrosswalkServiceImpl implements CrosswalkService {
 
     private void processCrosswalkForItem(Crosswalk crosswalk, String itemId, boolean updateItemTimestamp)
             throws IOException {
-        LOGGER.info("processCrosswalkForItem " + itemId);
+        LOGGER.info("processCrosswalkForItem {}", itemId);
         try {
             // Update content
             Content content = contentService.read(itemId, crosswalk.getFormatFrom());
             String newXml = transformerService.transform(content.getContent(), crosswalk.getName());
-            LOGGER.debug("newXml " + newXml);
+            LOGGER.debug("newXml {}", newXml);
             if (StringUtils.isNotBlank(newXml)) {
                 Content crosswalkConten = new Content();
                 crosswalkConten.setContent(newXml);
@@ -357,7 +354,7 @@ public class CrosswalkServiceImpl implements CrosswalkService {
             if (updateItemTimestamp) {
                 Item item = itemService.read(itemId, null, false);
                 String datestamp = Configuration.getDateformat().format(new Date());
-                LOGGER.debug("Updateing item datestamp " + datestamp);
+                LOGGER.debug("Updateing item datestamp {}", datestamp);
                 item.setDatestamp(datestamp);
                 daoItem.create(item); //In Cassandra create and update are the same!
             }

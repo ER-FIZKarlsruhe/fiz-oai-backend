@@ -56,7 +56,7 @@ public class FormatController extends AbstractController {
   @Inject
   FormatService formatService;
 
-  private static Logger LOGGER = LoggerFactory.getLogger(FormatController.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(FormatController.class);
 
   @GET
   @Path("/{metadataPrefix}")

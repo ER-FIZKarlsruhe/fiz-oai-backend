@@ -68,7 +68,7 @@ import de.fiz.oai.backend.utils.XPathHelper;
 @Singleton
 public class ItemServiceImpl implements ItemService {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(ItemServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ItemServiceImpl.class);
 
     @Inject
     DAOItem daoItem;
@@ -95,9 +95,9 @@ public class ItemServiceImpl implements ItemService {
     public Item read(String identifier, String format, Boolean readContent) throws IOException {
         List<Item> items = read(List.of(identifier), format, readContent);
         if (CollectionUtils.isNotEmpty(items)) {
-            return items.get(0);
+            return items.getFirst();
         } else {
-            LOGGER.warn("Item with identifier " + identifier + " not found");
+            LOGGER.warn("Item with identifier {} not found", identifier);
             return null;
         }
     }
@@ -123,7 +123,7 @@ public class ItemServiceImpl implements ItemService {
                     }
                     dbItems.put(identifier, dbItem);
                 } else {
-                    LOGGER.warn("Couldn't find item with id " + identifier + " in backend.");
+                    LOGGER.warn("Couldn't find item with id {} in backend.", identifier);
                 }
             }
             if (MapUtils.isNotEmpty(dbItems)) {
@@ -146,7 +146,7 @@ public class ItemServiceImpl implements ItemService {
                 }
                 //Log not found items
                 for (String identifier :  dbItems.keySet()) {
-                    LOGGER.warn("Couldn't find item with id " + identifier + " in search-index.");
+                    LOGGER.warn("Couldn't find item with id {} in search-index.", identifier);
                 }
             }
         }
@@ -417,7 +417,7 @@ public class ItemServiceImpl implements ItemService {
                     daoContent.create(crosswalkConten);
                     itemFormats.add(currentWalk.getFormatTo());
                 } else {
-                    LOGGER.warn("XML IS EMPTY: " + currentWalk.getFormatTo() + ", " + item.getIdentifier());
+                    LOGGER.warn("XML IS EMPTY: {}, {}", currentWalk.getFormatTo(), item.getIdentifier());
                 }
             }
         }

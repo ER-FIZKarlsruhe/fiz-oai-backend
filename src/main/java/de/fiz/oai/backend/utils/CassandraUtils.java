@@ -34,8 +34,8 @@ public class CassandraUtils {
             SimpleStatement.newInstance("SELECT * FROM system.peers;");
         ResultSet rs = session.execute(statement);
         for (Row row : rs.all()) {
-            resultBuilder.append(row.getInetAddress("peer") + " | ");
-            resultBuilder.append(row.getString("data_center") + "\n");
+            resultBuilder.append(row.getInetAddress("peer")).append(" | ");
+            resultBuilder.append(row.getString("data_center")).append("\n");
         }
         return resultBuilder.toString();
     }

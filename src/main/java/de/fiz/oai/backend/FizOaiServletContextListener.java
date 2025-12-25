@@ -31,7 +31,6 @@ import de.fiz.oai.backend.utils.ClusterManager;
  */
 @WebListener
 public class FizOaiServletContextListener implements ServletContextListener {
-    private static final Logger LOG = LoggerFactory.getLogger(FizOaiServletContextListener.class);
 
     @Override
     public void contextInitialized(ServletContextEvent arg0) {

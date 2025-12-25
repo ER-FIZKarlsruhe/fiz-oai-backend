@@ -26,7 +26,7 @@ public class ResourcesUtils {
         return reader.lines().collect(Collectors.joining(System.lineSeparator()));
       }
     } catch (final IOException e) {
-      LOGGER.error("Error retrieving source file: " + fileName, e);
+        LOGGER.error("Error retrieving source file: {}", fileName, e);
       return null;
     }
   }

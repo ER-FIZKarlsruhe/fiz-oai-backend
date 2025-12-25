@@ -55,7 +55,7 @@ import net.sf.saxon.lib.FeatureKeys;
 public class TransformerServiceImpl implements TransformerService, KeyedObjectPool<String, Transformer> {
 
     /** Logger. */
-    private static Log LOGGER = LogFactory.getLog(TransformerServiceImpl.class);
+    private static final Log LOGGER = LogFactory.getLog(TransformerServiceImpl.class);
 
     /** Maximum amount of transformer objects in the pool. */
     private final static int MAX_ACTIVE = 50;
