@@ -15,7 +15,7 @@
  */
 package de.fiz.oai.backend.integration;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -32,8 +32,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory;
 import org.glassfish.jersey.test.spi.TestContainerFactory;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
@@ -112,14 +111,11 @@ public class FormatControllerIT extends JerseyTest {
 
     Response response = target("/format/oai_dc").request().get();
 
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
-    assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON,
-        response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
     String result = response.readEntity(String.class);
     LOGGER.info("getFormat json:" + result);
-    
-//    Format result = response.readEntity(Format.class);
-//    assertEquals("Format metadataPrefix should be: ", "oai_dc", result.getMetadataPrefix());
+
   }
 
   @Test
@@ -127,7 +123,7 @@ public class FormatControllerIT extends JerseyTest {
 
     Response response = target("/format/%20").request().get();
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -136,7 +132,7 @@ public class FormatControllerIT extends JerseyTest {
 
     Response response = target("/format/notfound").request().get();
 
-    assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -145,13 +141,12 @@ public class FormatControllerIT extends JerseyTest {
 
     Response response = target("/format").request().get();
 
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
-    assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON,
-        response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(MediaType.APPLICATION_JSON,  response.getHeaderString(HttpHeaders.CONTENT_TYPE));
 
     List<Format> result = response.readEntity(new GenericType<List<Format>>() {
     });
-    assertEquals("result size should be: ", 100, result.size());
+    assertEquals(100, result.size());
   }
 
   @Test
@@ -160,7 +155,7 @@ public class FormatControllerIT extends JerseyTest {
 
     Response response = target("/format/oai_dc").request().delete();
 
-    assertEquals("Http Response should be 204: ", Status.NO_CONTENT.getStatusCode(), response.getStatus());
+    assertEquals(Status.NO_CONTENT.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -169,7 +164,7 @@ public class FormatControllerIT extends JerseyTest {
 
     Response response = target("/format/%20").request().delete();
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -178,7 +173,7 @@ public class FormatControllerIT extends JerseyTest {
 
     Response response = target("/format/123Fragerei").request().delete();
 
-    assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -194,7 +189,7 @@ public class FormatControllerIT extends JerseyTest {
     Response response = target("format").request().post(Entity.json(
         "{\"metadataPrefix\":\"oai_dc\",\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\",\"identifierXpath\":\"/identifier\"}"));
 
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
   
   
@@ -205,7 +200,7 @@ public class FormatControllerIT extends JerseyTest {
     Response response = target("format").request().post(Entity.json(
             "{\"metadataPrefix\":\"oai_dc\",\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\",\"identifierXpath\":\"/identifier\"}"));
 
-    assertEquals("Http Response should be 409: ", Status.CONFLICT.getStatusCode(), response.getStatus());
+    assertEquals(Status.CONFLICT.getStatusCode(), response.getStatus());
   }
   
 
@@ -214,7 +209,7 @@ public class FormatControllerIT extends JerseyTest {
     Response response = target("format").request().post(Entity.json(
         "{\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\",\"identifierXpath\":\"/identifier\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -222,7 +217,7 @@ public class FormatControllerIT extends JerseyTest {
     Response response = target("format").request().post(Entity.json(
         "{\"metadataPrefix\":\"oai_dc\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\",\"identifierXpath\":\"/identifier\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -230,23 +225,16 @@ public class FormatControllerIT extends JerseyTest {
     Response response = target("format").request().post(Entity.json(
         "{\"metadataPrefix\":\"oai_dc\",\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"identifierXpath\":\"/identifier\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
-//  @Test
-//  public void testCreateFormatNoXPath() throws Exception {
-//    Response response = target("format").request().post(Entity.json(
-//        "{\"metadataPrefix\":\"oai_dc\",\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\"}"));
-//
-//    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-//  }
-  
+
   @Test
   public void testCreateFormatInvamidMetadataPrefix() throws Exception {
     Response response = target("format").request().post(Entity.json(
         "{\"metadataPrefix\":\"oai dc\",\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\",\"identifierXpath\":\"/identifier\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -265,7 +253,7 @@ public class FormatControllerIT extends JerseyTest {
 
     String content = response.readEntity(String.class);
     LOGGER.info("testUpdateFormat content: " + content);
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
   
   
@@ -274,7 +262,7 @@ public class FormatControllerIT extends JerseyTest {
     Response response = target("format/oai_dc").request().put(Entity.json(
         "{\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\",\"identifierXpath\":\"/identifier\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -282,7 +270,7 @@ public class FormatControllerIT extends JerseyTest {
     Response response = target("format/oai_dc").request().put(Entity.json(
         "{\"metadataPrefix\":\"oai_dc\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\",\"identifierXpath\":\"/identifier\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -290,23 +278,16 @@ public class FormatControllerIT extends JerseyTest {
     Response response = target("format/oai_dc").request().put(Entity.json(
         "{\"metadataPrefix\":\"oai_dc\",\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"identifierXpath\":\"/identifier\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
-//  @Test
-//  public void testUpdateFormatNoXPath() throws Exception {
-//    Response response = target("format/oai_dc").request().put(Entity.json(
-//        "{\"metadataPrefix\":\"oai_dc\",\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\"}"));
-//
-//    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-//  }
-  
+
   @Test
   public void testUpdateFormatInvamidMetadataPrefix() throws Exception {
     Response response = target("format/oai_dc").request().put(Entity.json(
         "{\"metadataPrefix\":\"oai dc\",\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\",\"identifierXpath\":\"/identifier\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -316,7 +297,7 @@ public class FormatControllerIT extends JerseyTest {
 
     String content = response.readEntity(String.class);
     LOGGER.info("testCreateUpdateNameDoesNotMatch content: " + content);
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -326,7 +307,7 @@ public class FormatControllerIT extends JerseyTest {
     Response response = target("format/oai_dc").request().put(Entity.json(
         "{\"metadataPrefix\":\"oai_dc\",\"schemaLocation\":\"http://www.openarchives.org/OAI/2.0/oai_dc.xsd\",\"schemaNamespace\":\"http://www.openarchives.org/OAI/2.0/oai_dc/\",\"identifierXpath\":\"/identifier\"}"));
 
-    assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   

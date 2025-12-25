@@ -1,5 +1,6 @@
 package de.fiz.oai.backend.testcontainer;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.ws.rs.client.Client;
@@ -20,16 +21,16 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
-import org.junit.Assert;
-import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assertions.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.InputSource;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -57,7 +58,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
     @Test
     public void testTomcatIsRunningAndWarDeployed() {
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/info/version";
         LOGGER.info("Tomcat is running with deployed WAR at: " + baseUrl);
@@ -73,7 +74,34 @@ public abstract class BaseInstance extends TestContainerManager {
     }
 
 
+    protected void createItemNoVerify(String identifier, String template, String setTag) throws IOException {
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/item/";
 
+        LOGGER.info("createItem {}", identifier);
+
+        String xml = template.replace("@@doi@@", identifier);
+
+        final ObjectMapper mapper = new ObjectMapper();
+        ObjectNode node = mapper.createObjectNode();
+        node.put("identifier", identifier);
+        node.put("ingestFormat", "radar");
+        node.putPOJO("tags", List.of( setTag));
+        String json = node.toString();
+
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.addPart("item", new StringBody(json, ContentType.APPLICATION_JSON));
+        builder.addBinaryBody("content", xml.getBytes(StandardCharsets.UTF_8));
+        HttpClientContext context = HttpClientContext.create();
+
+        String identifierUrlEncoded = URLEncoder.encode(identifier, StandardCharsets.UTF_8);
+        LOGGER.info("identifierUrlEncoded: {}", identifierUrlEncoded);
+        CloseableHttpResponse response;
+        HttpPost post = new HttpPost(baseUrl);
+        response = getHttpResponse(post, builder, context, false);
+        response.getEntity().getContent().readAllBytes();
+        response.close();
+
+    }
 
 
     protected void createItem(String identifier, String template, String setTag) throws IOException {
@@ -110,17 +138,53 @@ public abstract class BaseInstance extends TestContainerManager {
     }
 
     private void testFormatContent(String id, String format, String contains) throws IOException {
-        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/item/";
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" +
+                tomcatContainer.getMappedPort(8080) + "/oai-backend/item/";
+
         MultipartEntityBuilder builder = MultipartEntityBuilder.create();
         HttpClientContext context = HttpClientContext.create();
 
         HttpGet get = new HttpGet(baseUrl + id + "?format=" + format + "&content=true");
         CloseableHttpResponse getResponse = getHttpResponse(get, builder, context, false);
-        InputStream is = getResponse.getEntity().getContent();
-        String radarXml = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-        Assertions.assertTrue(radarXml.contains(contains));
-        Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
-        getResponse.close();
+
+        try (InputStream is = getResponse.getEntity().getContent()) {
+            String responseBody = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+
+            Assertions.assertEquals(HttpStatus.SC_OK,
+                    getResponse.getStatusLine().getStatusCode());
+
+            // Parse JSON
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(responseBody);
+
+            String xmlContent = root
+                    .path("content")
+                    .path("content")
+                    .asText();
+
+            Assertions.assertFalse(xmlContent.isEmpty(), "XML content must not be empty");
+            Assertions.assertTrue(xmlContent.contains(contains));
+
+            // Validate XML well-formed
+            assertWellFormedXml(xmlContent);
+        } finally {
+            getResponse.close();
+        }
+    }
+
+
+    private void assertWellFormedXml(String xml) {
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            factory.setValidating(false);
+
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            builder.parse(new InputSource(new StringReader(xml)));
+
+        } catch (Exception e) {
+            Assertions.fail("XML is not well-formed", e);
+        }
     }
 
 
@@ -163,7 +227,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
 
 
-    protected void reindexElasticsearch(String expectIndexName, String continueIndexName) throws IOException {
+    protected boolean reindexElasticsearch(String expectIndexName, String continueIndexName, int expectedResponseCode) throws IOException {
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/reindex/";
 
         LOGGER.info("reindex " );
@@ -177,8 +241,14 @@ public abstract class BaseInstance extends TestContainerManager {
         HttpPost post = new HttpPost(url);
         CloseableHttpResponse postResponse = getHttpResponse(post, builder, context, false);
         postResponse.getEntity().getContent().readAllBytes();
-        Assertions.assertEquals(HttpStatus.SC_OK, postResponse.getStatusLine().getStatusCode());
+
+        int statusCode= postResponse.getStatusLine().getStatusCode();
+        Assertions.assertEquals(expectedResponseCode, statusCode);
         postResponse.close();
+
+        if(statusCode != HttpStatus.SC_OK) {
+            return false;
+        }
 
         try {
             Thread.sleep(5000);
@@ -198,7 +268,7 @@ public abstract class BaseInstance extends TestContainerManager {
         InputStream is = getResponse.getEntity().getContent();
         String indices = new String(is.readAllBytes(), StandardCharsets.UTF_8);
         LOGGER.info("indices: {}", indices);
-        Assertions.assertTrue(indices.contains(indexNameToCheck));
+        Assertions.assertTrue(indices.contains(indexNameToCheck), "Index name "+ indices + " does not fit " + indexNameToCheck);
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
 
@@ -212,7 +282,104 @@ public abstract class BaseInstance extends TestContainerManager {
         Assertions.assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
         getResponse.close();
 
+        return true;
     }
+
+
+    protected boolean startReindex(int expectedResponseCode, String continueIndexName)
+            throws IOException {
+
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":"
+                + tomcatContainer.getMappedPort(8080)
+                + "/oai-backend/reindex/start";
+
+        if (StringUtils.isNotBlank(continueIndexName)) {
+            baseUrl += "?indexName=" + continueIndexName;
+        }
+
+        HttpPost post = new HttpPost(baseUrl);
+        EntityBuilder builder = EntityBuilder.create().setText("");
+
+        CloseableHttpResponse response =
+                getHttpResponse(post, builder, HttpClientContext.create(), false);
+
+        response.getEntity().getContent().readAllBytes();
+        int statusCode = response.getStatusLine().getStatusCode();
+        response.close();
+
+        Assertions.assertEquals(expectedResponseCode, statusCode);
+
+        return statusCode == HttpStatus.SC_OK;
+    }
+
+    protected void waitForReindexAndVerifyES(String expectedIndexName)
+            throws Exception {
+
+        boolean finished = false;
+
+        for (int i = 0; i < 120; i++) {
+            Thread.sleep(500);
+            String status = getReindexStatus();
+            LOGGER.info(status);
+            if (status.contains("FINISHED")) {
+                finished = true;
+                break;
+            }
+        }
+
+        Assertions.assertTrue(finished, "Reindex did not finish");
+
+        String esUrl = "http://localhost:"
+                + ElasticsearchTestContainer.container.getMappedPort(9200) + "/";
+
+        HttpClientContext context = HttpClientContext.create();
+        EntityBuilder builder = EntityBuilder.create();
+
+        // ---- indices ----
+        HttpGet get = new HttpGet(esUrl + "_cat/indices");
+        CloseableHttpResponse response = getHttpResponse(get, builder, context, false);
+
+        String indices = new String(
+                response.getEntity().getContent().readAllBytes(),
+                StandardCharsets.UTF_8
+        );
+        response.close();
+
+        Assertions.assertTrue(indices.contains(expectedIndexName),
+                "Expected index not found: " + expectedIndexName);
+
+        // ---- aliases ----
+        get = new HttpGet(esUrl + "_cat/aliases");
+        response = getHttpResponse(get, builder, context, false);
+
+        String aliases = new String(
+                response.getEntity().getContent().readAllBytes(),
+                StandardCharsets.UTF_8
+        );
+        response.close();
+
+        Assertions.assertTrue(aliases.contains("items " + expectedIndexName));
+    }
+
+    protected void awaitReindexHasStarted() throws Exception {
+        int maxWaitMs = 10_000;
+        int pollIntervalMs = 100;
+
+        for (int waited = 0; waited < maxWaitMs; waited += pollIntervalMs) {
+            Thread.sleep(pollIntervalMs);
+
+            String status = getReindexStatus();
+            LOGGER.info("Reindex status: {}", status);
+
+            // Reindex has started once indexed count > 0
+            if (status.contains("STARTED")) {
+                return;
+            }
+        }
+
+        Assertions.fail("Reindex never started indexing within timeout");
+    }
+
 
 
     protected void reindexItem(String itemIdentifier, int expectedResponseCode) throws IOException {
@@ -306,7 +473,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
 
     protected void createFormatIfNotExisting(String prefix, String schemaLocation, String namespace) throws IOException {
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/format/";
         LOGGER.info("Attempting to create format {} if it does not exist.", prefix);
@@ -385,7 +552,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
     protected void updateFormat(String prefix, String schemaLocation, String namespace) throws IOException{
         LOGGER.info("updateFormat {}", prefix);
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/format/";
 
@@ -422,7 +589,7 @@ public abstract class BaseInstance extends TestContainerManager {
     protected void deleteFormat(String prefix) throws IOException{
         LOGGER.info("deleteFormat {}", prefix);
 
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/format/";
 
@@ -448,7 +615,7 @@ public abstract class BaseInstance extends TestContainerManager {
     protected void deleteCrosswalk(String prefix) throws IOException{
         LOGGER.info("deleteCrosswalk {}", prefix);
 
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/crosswalk/";
 
@@ -473,7 +640,7 @@ public abstract class BaseInstance extends TestContainerManager {
     protected void deleteSet(String spec) throws IOException{
         LOGGER.info("deleteSet {}", spec);
 
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/set/";
 
@@ -497,7 +664,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
 
     protected void createSet(String spec, String name, String description, List<String> tags, int expectedResponse) throws IOException{
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/set/";
         LOGGER.info("Set {}", spec);
@@ -542,7 +709,7 @@ public abstract class BaseInstance extends TestContainerManager {
     }
 
     protected void updateSet(String spec, String name, String description, List<String> tags) throws IOException{
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/set/";
         LOGGER.info("Set {}", spec);
@@ -578,7 +745,7 @@ public abstract class BaseInstance extends TestContainerManager {
 
 
     protected void createCrosswalkIfNotExisting(String name, String formatFrom, String formatTo, String xsltStylesheet) throws IOException {
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         LOGGER.info("createCrosswalkIfNotExisting {}", name);
 
@@ -648,7 +815,7 @@ public abstract class BaseInstance extends TestContainerManager {
     }
 
     protected void updateCrosswalk(String name, String formatFrom, String formatTo, String xsltStylesheet) throws IOException {
-        Assert.assertTrue("Tomcat should be running", tomcatContainer.isRunning());
+        Assertions.assertTrue(tomcatContainer.isRunning(), "Tomcat should be running");
 
         LOGGER.info("updateCrosswalk {}", name);
 
@@ -731,6 +898,21 @@ public abstract class BaseInstance extends TestContainerManager {
         }
     }
 
+    protected String getReindexStatus() throws IOException {
+        String url = "http://" + tomcatContainer.getHost() + ":" +
+                tomcatContainer.getMappedPort(8080) +
+                "/oai-backend/reindex/status";
+        LOGGER.info("process reindex");
+        EntityBuilder builder = EntityBuilder.create();
+        builder.setText("");
+        HttpClientContext context = HttpClientContext.create();
+        HttpGet get = new HttpGet(url);
+        try (CloseableHttpResponse response = getHttpResponse(get, builder, context, false)) {
+            Assertions.assertEquals(200, response.getStatusLine().getStatusCode());
+            return EntityUtils.toString(response.getEntity());
+        }
+    }
+
 
     protected CloseableHttpResponse getHttpResponse(
             HttpRequestBase requestBase, Object builder, HttpClientContext context, boolean useProxy) throws IOException {
@@ -768,6 +950,38 @@ public abstract class BaseInstance extends TestContainerManager {
         } catch (IOException e) {
             LOGGER.error("HTTP Request failed: {}", e.getMessage());
             throw e;
+        }
+    }
+
+
+    protected void createItems(int totalItems) throws InterruptedException, IOException {
+        String template = new String(Files.readAllBytes(Paths.get("src/test/resources/radar-md-template.xml")));
+
+        // Use a thread pool to send requests in parallel
+        int threads = Runtime.getRuntime().availableProcessors() * 4;
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(threads);
+        java.util.concurrent.atomic.AtomicInteger failedRequests = new java.util.concurrent.atomic.AtomicInteger(0);
+
+        LOGGER.info("Starting parallel creation of {} items using {} threads", totalItems, threads);
+
+        //Prepare test items. Create a lot, that reindex will not finish too quickly
+        for (int i = 1; i <= totalItems; i++) {
+            final int index = i;
+            executor.submit(() -> {
+                try {
+                    // This calls the refactored getHttpResponse using the pooled client
+                    createItemNoVerify("10.5072/38238_" + System.nanoTime(), template, "testtag");
+                } catch (Exception e) {
+                    failedRequests.incrementAndGet();
+                    LOGGER.error("Failed to create item {}: {}", index, e.getMessage());
+                }
+            });
+        }
+
+        executor.shutdown();
+        // Wait up to 2 minutes for all threads to finish
+        if (!executor.awaitTermination(5, java.util.concurrent.TimeUnit.MINUTES)) {
+            executor.shutdownNow();
         }
     }
 

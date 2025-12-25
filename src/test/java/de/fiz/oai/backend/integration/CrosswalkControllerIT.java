@@ -15,7 +15,7 @@
  */
 package de.fiz.oai.backend.integration;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -29,7 +29,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
@@ -51,6 +51,10 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
 public class CrosswalkControllerIT extends JerseyTest {
 
   private Logger LOGGER = LoggerFactory.getLogger(CrosswalkControllerIT.class);
@@ -88,15 +92,6 @@ public class CrosswalkControllerIT extends JerseyTest {
   protected void configureClient(ClientConfig clientConfig) {
     clientConfig.register(MultiPartFeature.class);
   }
-
-  
-//  @Before
-//  public void setup() throws Exception {
-//      // Force Jetty (important!)
-//      set(TestProperties.CONTAINER_PORT, String.valueOf(8999)); // if you need a specific port
-//      set(TestProperties.CONTAINER_FACTORY, "org.glassfish.jersey.jetty.JettyContainerFactory");
-//      super.setUp(); // Call super.setUp AFTER setting properties
-//  }
   
   @Test
   public void testGetCrosswalk() throws Exception {
@@ -110,16 +105,12 @@ public class CrosswalkControllerIT extends JerseyTest {
 
     Response response = target("/crosswalk/Oai2Marc").request().get();
 
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
-    assertEquals("Http Crosswalk-Type should be: ", MediaType.APPLICATION_JSON,
-        response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE), "Http Crosswalk-Type should be: ");
     
     String json = response.readEntity(String.class);
     LOGGER.info("testGetCrosswalk json: " + json);
-    
-//    crosswalk = response.readEntity(Crosswalk.class);
-//    assertEquals("Crosswalk format should be: ", "oai_dc", crosswalk.getFormat());
-//    assertEquals("Crosswalk identifier should be: ", "123456", crosswalk.getIdentifier());
+
   }
 
   @Test
@@ -127,7 +118,7 @@ public class CrosswalkControllerIT extends JerseyTest {
 
     Response response = target("/crosswalk/%20").request().get();
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
 
@@ -138,7 +129,7 @@ public class CrosswalkControllerIT extends JerseyTest {
 
     Response response = target("/crosswalk/wer").request().get();
 
-    assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
   
   
@@ -148,13 +139,12 @@ public class CrosswalkControllerIT extends JerseyTest {
 
     Response response = target("/crosswalk").request().get();
 
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
-    assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON,
-        response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE), "Wrong Http Content-Type");
 
     List<Crosswalk> result = response.readEntity(new GenericType<List<Crosswalk>>() {
     });
-    assertEquals("result size should be: ", 100, result.size());
+    assertEquals(100, result.size());
   }
 
 
@@ -166,7 +156,7 @@ public class CrosswalkControllerIT extends JerseyTest {
 
     Response response = target("/crosswalk/123456").request().delete();
 
-    assertEquals("Http Response should be 204: ", Status.NO_CONTENT.getStatusCode(), response.getStatus());
+    assertEquals(Status.NO_CONTENT.getStatusCode(), response.getStatus());
   }
 
 
@@ -175,7 +165,7 @@ public class CrosswalkControllerIT extends JerseyTest {
 
     Response response = target("/crosswalk/%20").request().delete();
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -184,7 +174,7 @@ public class CrosswalkControllerIT extends JerseyTest {
 
     Response response = target("/crosswalk/wer").request().delete();
 
-    assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
   
 
@@ -202,7 +192,7 @@ public class CrosswalkControllerIT extends JerseyTest {
     Response response = target("crosswalk").request().post(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
   
@@ -213,7 +203,7 @@ public class CrosswalkControllerIT extends JerseyTest {
     Response response = target("crosswalk").request().post(Entity.json(
             "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
-    assertEquals("Http Response should be 409: ", Status.CONFLICT.getStatusCode(), response.getStatus());
+    assertEquals(Status.CONFLICT.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -222,7 +212,7 @@ public class CrosswalkControllerIT extends JerseyTest {
     Response response = target("crosswalk").request().post(Entity.json(
         "{\"formatFrom\":\"oai_dc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -231,7 +221,7 @@ public class CrosswalkControllerIT extends JerseyTest {
     Response response = target("crosswalk").request().post(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -240,7 +230,7 @@ public class CrosswalkControllerIT extends JerseyTest {
     Response response = target("crosswalk").request().post(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -249,7 +239,7 @@ public class CrosswalkControllerIT extends JerseyTest {
     Response response = target("crosswalk").request().post(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"formatTo\":\"oai_dc\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   
@@ -259,7 +249,7 @@ public class CrosswalkControllerIT extends JerseyTest {
     Response response = target("crosswalk").request().post(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai dc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
  
   @Test
@@ -268,7 +258,7 @@ public class CrosswalkControllerIT extends JerseyTest {
     Response response = target("crosswalk").request().post(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"formatTo\":\"o a i\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   
@@ -286,7 +276,7 @@ public class CrosswalkControllerIT extends JerseyTest {
     Response response = target("crosswalk/Oai2Marc").request().put(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -295,7 +285,7 @@ public class CrosswalkControllerIT extends JerseyTest {
     Response response = target("crosswalk/Oai2Marc").request().put(Entity.json(
         "{\"formatFrom\":\"oai_dc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -304,7 +294,7 @@ public class CrosswalkControllerIT extends JerseyTest {
     Response response = target("crosswalk/Oai2Marc").request().put(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -313,7 +303,7 @@ public class CrosswalkControllerIT extends JerseyTest {
     Response response = target("crosswalk/Oai2Marc").request().put(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -322,7 +312,7 @@ public class CrosswalkControllerIT extends JerseyTest {
     Response response = target("crosswalk/Oai2Marc").request().put(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"formatTo\":\"oai_dc\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   
@@ -332,7 +322,7 @@ public class CrosswalkControllerIT extends JerseyTest {
     Response response = target("crosswalk/Oai2Marc").request().put(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai dc\",\"formatTo\":\"oai_dc\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
  
   @Test
@@ -341,7 +331,7 @@ public class CrosswalkControllerIT extends JerseyTest {
     Response response = target("crosswalk/Oai2Marc").request().put(Entity.json(
         "{\"name\":\"Oai2Marc\",\"formatFrom\":\"oai_dc\",\"formatTo\":\"o a i\",\"xsltStylesheet\":\"xslt syntax\"}"));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
   
   

@@ -15,8 +15,8 @@
  */
 package de.fiz.oai.backend.integration;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -37,8 +37,7 @@ import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.TestProperties;
 import org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory;
 import org.glassfish.jersey.test.spi.TestContainerFactory;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
@@ -122,14 +121,12 @@ public class ItemControllerIT extends JerseyTest {
 
     Response response = target("/item/65465456").queryParam("format", "oai_dc").request().get();
 
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
-    assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON,
-        response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
 
     String content = response.readEntity(String.class);
     LOGGER.debug("content " + content);
-    assertEquals("Content of response is: ",
-        "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"article\",\"chapter\"],\"formats\":[\"nlm\",\"oai_dc\"],\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\",\"content\":null}", content);
+    assertEquals("{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"article\",\"chapter\"],\"formats\":[\"nlm\",\"oai_dc\"],\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\",\"content\":null}", content);
   }
 
   @Test
@@ -154,14 +151,12 @@ public class ItemControllerIT extends JerseyTest {
     Response response = target("/item/65465456").queryParam("format", "oai_dc").queryParam("content", "true").request()
         .get();
 
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
-    assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON,
-        response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
 
     String responseEntity = response.readEntity(String.class);
     LOGGER.info("responseEntity " + responseEntity);
-    assertEquals("Content of response is: ",
-        "{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"article\",\"chapter\"],\"formats\":[\"nlm\",\"oai_dc\"],\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\",\"content\":{\"identifier\":\"65465456\",\"format\":\"oai_dc\",\"content\":\"Das ist ein wenig content\"}}",
+    assertEquals("{\"identifier\":\"65465456\",\"datestamp\":\"1972-05-20T20:33:18.772Z\",\"deleteFlag\":false,\"sets\":[\"article\",\"chapter\"],\"formats\":[\"nlm\",\"oai_dc\"],\"tags\":[\"foo\",\"bar\",\"baz\"],\"ingestFormat\":\"radar\",\"content\":{\"identifier\":\"65465456\",\"format\":\"oai_dc\",\"content\":\"Das ist ein wenig content\"}}",
         responseEntity);
   }
 
@@ -171,7 +166,7 @@ public class ItemControllerIT extends JerseyTest {
 
     Response response = target("/item/123Fragerei").queryParam("format", "oai_dc").request().get();
 
-    assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -183,12 +178,11 @@ public class ItemControllerIT extends JerseyTest {
         .queryParam("content", "").request().get();
 
     SearchResult searchResult = response.readEntity(SearchResult.class);
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
-    assertEquals("Http Content-Type should be: ", MediaType.APPLICATION_JSON,
-        response.getHeaderString(HttpHeaders.CONTENT_TYPE));
-    assertEquals("Total results must be 100", 100, searchResult.getTotal());
-    assertEquals("Result size must be 100", 100, searchResult.getSize());
-    assertNotNull("result list must not be null", searchResult.getData());
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+    assertEquals(100, searchResult.getTotal());
+    assertEquals(100, searchResult.getSize());
+    assertNotNull(searchResult.getData());
   }
 
   @Test
@@ -197,7 +191,7 @@ public class ItemControllerIT extends JerseyTest {
         .queryParam("format", "").queryParam("from", "1970-01-01T00:00:01Z").queryParam("until", "2970-01-01T00:00:01Z")
         .queryParam("content", "").request().get();
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -206,7 +200,7 @@ public class ItemControllerIT extends JerseyTest {
         .queryParam("format", "oai_dc").queryParam("from", "ABGS").queryParam("until", "2970-01-01T00:00:01Z")
         .queryParam("content", "").request().get();
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -215,7 +209,7 @@ public class ItemControllerIT extends JerseyTest {
         .queryParam("format", "oai_dc").queryParam("from", "1970-01-01T00:00:01Z")
         .queryParam("until", "1970-01T00:00:01Z").queryParam("content", "").request().get();
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -224,7 +218,7 @@ public class ItemControllerIT extends JerseyTest {
 
     Response response = target("/item/65465456").request().delete();
 
-    assertEquals("Http Response should be 204: ", Status.NO_CONTENT.getStatusCode(), response.getStatus());
+    assertEquals(Status.NO_CONTENT.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -233,7 +227,7 @@ public class ItemControllerIT extends JerseyTest {
 
     Response response = target("/item/%20").request().delete();
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -242,7 +236,7 @@ public class ItemControllerIT extends JerseyTest {
 
     Response response = target("/item/123Fragerei").request().delete();
 
-    assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -270,7 +264,7 @@ public class ItemControllerIT extends JerseyTest {
 
     Response response = target("/item").request().post(Entity.entity(form, form.getMediaType()));
 
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
   
   @Test
@@ -299,7 +293,7 @@ public class ItemControllerIT extends JerseyTest {
 
     Response response = target("/item").request().post(Entity.entity(form, form.getMediaType()));
 
-    assertEquals("Http Response should be 409: ", Status.CONFLICT.getStatusCode(), response.getStatus());
+    assertEquals(Status.CONFLICT.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -320,7 +314,7 @@ public class ItemControllerIT extends JerseyTest {
 
     Response response = target("/item").request().post(Entity.entity(form, form.getMediaType()));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -347,7 +341,7 @@ public class ItemControllerIT extends JerseyTest {
     when(itemService.update(any(Item.class))).thenReturn(item);
 
     Response response = target("/item/65465456").request().put(Entity.entity(form, form.getMediaType()));
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -369,7 +363,7 @@ public class ItemControllerIT extends JerseyTest {
     doThrow(NotFoundException.class).when(itemService).update(any());
 
     Response response = target("/item/65465456").request().put(Entity.entity(form, form.getMediaType()));
-    assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -390,7 +384,7 @@ public class ItemControllerIT extends JerseyTest {
 
     Response response = target("/item/65465456").request().put(Entity.entity(form, form.getMediaType()));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -411,7 +405,7 @@ public class ItemControllerIT extends JerseyTest {
 
     Response response = target("/item/65465456").request().put(Entity.entity(form, form.getMediaType()));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -432,7 +426,7 @@ public class ItemControllerIT extends JerseyTest {
 
     Response response = target("/item/badidentifier").request().put(Entity.entity(form, form.getMediaType()));
 
-    assertEquals("Http Response should be 400: ", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -446,7 +440,7 @@ public class ItemControllerIT extends JerseyTest {
     when(itemService.updateTags(any(String.class), any(List.class))).thenReturn(item);
     String json = "[\"mih\"]";
     Response response = target("/item/tags/65465456").request().put(Entity.json(json));
-    assertEquals("Http Response should be 200: ", Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -454,7 +448,7 @@ public class ItemControllerIT extends JerseyTest {
     when(itemService.updateTags(any(String.class), any(List.class))).thenThrow(new WebApplicationException(Status.NOT_FOUND));
     String json = "[\"mih\"]";
     Response response = target("/item/tags/notexisting").request().put(Entity.json(json));
-    assertEquals("Http Response should be 404: ", Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   private SearchResult<Item> getTestSearchResult() {

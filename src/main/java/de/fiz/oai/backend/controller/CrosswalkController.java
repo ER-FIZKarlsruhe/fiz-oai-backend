@@ -42,14 +42,9 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.models.Crosswalk;
-import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.service.CrosswalkService;
-import de.fiz.oai.backend.utils.Configuration;
-
 import de.fiz.oai.backend.utils.Configuration;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -65,8 +60,6 @@ public class CrosswalkController extends AbstractController {
   @Inject
   CrosswalkService crosswalkService;
 
-  private static Logger LOGGER = LoggerFactory.getLogger(CrosswalkController.class);
-  
   @GET
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)

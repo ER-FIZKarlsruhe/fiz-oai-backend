@@ -38,8 +38,6 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import de.fiz.oai.backend.service.impl.ItemServiceImpl;
-
 public class XPathHelper {
 
   private static Logger LOGGER = LoggerFactory.getLogger(XPathHelper.class);
@@ -79,15 +77,18 @@ public class XPathHelper {
         factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
         factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
 
-        if (xPathStr.contains(":")) {
-          factory.setNamespaceAware(true);
-        }
+        boolean useNamespaces = xPathStr.contains(":");
+        factory.setNamespaceAware(useNamespaces);
+
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document doc = builder.parse(new InputSource(new StringReader(contentStr)));
 
         XPathFactory xpathfactory = XPathFactory.newInstance();
         XPath xpath = xpathfactory.newXPath();
-        xpath.setNamespaceContext(new NamespaceResolver(doc));
+        if (useNamespaces) {
+          xpath.setNamespaceContext(new NamespaceResolver(doc));
+        }
+
         XPathExpression expr = xpath.compile(xPathStr);
         Object result = expr.evaluate(doc, XPathConstants.NODESET);
         NodeList nodes = (NodeList) result;
@@ -96,7 +97,7 @@ public class XPathHelper {
         }
 
       } catch (ParserConfigurationException | IOException e) {
-          LOGGER.error("Error during isTextValueMatching for xpath" + xPathStr , e);
+          LOGGER.error("Error during isTextValueMatching for xpath{}", xPathStr, e);
       }
     }
     return false;

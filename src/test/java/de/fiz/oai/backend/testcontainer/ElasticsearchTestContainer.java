@@ -39,7 +39,7 @@ public class ElasticsearchTestContainer {
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchTestContainer.class);
 
     public static final GenericContainer<ElasticsearchContainer> container =
-            new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.17.13"))
+            new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.17.29"))
                     .withExposedPorts(9200)
                     .withNetwork(BaseInstance.network)
                     .withNetworkAliases("elasticsearch-oai")

@@ -40,7 +40,7 @@ public class FizOAIBackendApplication extends ResourceConfig {
 
     private static final long serialVersionUID = -1156196714908290948L;
 
-    private static Logger LOGGER = LoggerFactory.getLogger(FizOAIBackendApplication.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FizOAIBackendApplication.class);
 
     private static FizOAIBackendApplication instance;
 
@@ -54,8 +54,6 @@ public class FizOAIBackendApplication extends ResourceConfig {
             try {
                 ClusterManager cm = ClusterManager.getInstance();
                 CqlSession session = cm.getCassandraSession();
-                //LOGGER.info("Using Cassandra Driver {}", Cluster.getDriverVersion());
-                //LOGGER.info("Connected to cluster: {}", cm.getCluster().getMetadata().getClusterName());
                 LOGGER.debug(CassandraUtils.getClusterTopologyInformation(session));
                 applicationReady = true;
                 LOGGER.info("FIZ OAI Backend has started and is now accepting requests");

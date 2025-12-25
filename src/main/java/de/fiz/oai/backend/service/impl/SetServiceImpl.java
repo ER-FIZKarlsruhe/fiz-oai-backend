@@ -32,22 +32,18 @@ import org.slf4j.LoggerFactory;
 import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.exceptions.AlreadyExistsException;
 import de.fiz.oai.backend.models.Set;
-import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.service.SetService;
 
 @Service
 @Singleton
 public class SetServiceImpl implements SetService {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(SetServiceImpl.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(SetServiceImpl.class);
 
   private static final String MISSING_PARENT_SETS_MESSAGE = "Missing parent sets. Please create these sets.";
 
   @Inject
   DAOSet daoSet;
-
-  @Inject
-  SearchService searchService;
 
   @Override
   public Set read(String setSpec) throws IOException {
@@ -115,7 +111,6 @@ public class SetServiceImpl implements SetService {
   /**
    * Validates that all parent setSpecs of the given set exist.
    * Example: for "FIZ:ER:DG" it checks that "FIZ" and "FIZ:ER" exist.
-   *
    * If a parent is missing, this is considered a client error (400).
    */
   private void validateParentSetsExist(Set set) throws IOException {

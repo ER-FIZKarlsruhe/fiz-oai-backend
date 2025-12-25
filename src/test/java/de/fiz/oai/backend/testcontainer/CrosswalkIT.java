@@ -16,7 +16,7 @@
 package de.fiz.oai.backend.testcontainer;
 
 import org.apache.http.HttpStatus;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assertions;
 
 import java.io.IOException;
@@ -50,34 +50,7 @@ public class CrosswalkIT extends BaseInstance {
 
         createSet("testset", "testset", "this is a testset", List.of("testtag"), HttpStatus.SC_OK);
 
-        int totalItems = 1000;
-        int threads = Runtime.getRuntime().availableProcessors() * 2;
-        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(threads);
-        java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(totalItems + 1);
-        java.util.concurrent.atomic.AtomicInteger errors = new java.util.concurrent.atomic.AtomicInteger(0);
-
-        long start = System.currentTimeMillis();
-        LOGGER.info("Starting parallel ingestion of {} items...", totalItems + 1);
-
-        for (int i = 0; i <= totalItems; i++) {
-            final String id = (i == 0) ? "10.5072/38238" : "10.5072/38238_" + i;
-            executor.submit(() -> {
-                try {
-                    createItem(id, template, "testtag");
-                } catch (Exception e) {
-                    errors.incrementAndGet();
-                    LOGGER.error("Failed to create item {}: {}", id, e.getMessage());
-                } finally {
-                    latch.countDown();
-                }
-            });
-        }
-
-        latch.await(5, java.util.concurrent.TimeUnit.MINUTES);
-        executor.shutdown();
-
-        LOGGER.info("Ingested {} items in {}ms", totalItems + 1, (System.currentTimeMillis() - start));
-        Assertions.assertEquals(0, errors.get(), "Some item creations failed");
+        createItems(1000);
 
         // --- start async processing ---
         processCrosswalk("Radar2OAI_DC_v09", 200);

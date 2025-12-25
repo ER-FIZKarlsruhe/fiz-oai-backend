@@ -18,7 +18,7 @@ import de.fiz.oai.backend.exceptions.NotFoundException;
 @Provider
 public class FizOaiExceptionMapper implements ExceptionMapper<Throwable>, ResponseErrorMapper {
 
-    private Logger LOGGER = LoggerFactory.getLogger(FizOaiExceptionMapper.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(FizOaiExceptionMapper.class);
 
     @Context
     HttpServletRequest request;

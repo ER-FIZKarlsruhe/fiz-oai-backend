@@ -65,10 +65,7 @@ import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.fiz.oai.backend.dao.DAOContent;
-import de.fiz.oai.backend.dao.DAOFormat;
 import de.fiz.oai.backend.dao.DAOItem;
-import de.fiz.oai.backend.dao.DAOSet;
 import de.fiz.oai.backend.models.Item;
 import de.fiz.oai.backend.models.SearchResult;
 import de.fiz.oai.backend.models.reindex.ReindexStatus;
@@ -86,7 +83,7 @@ import jakarta.ws.rs.core.Context;
 @Singleton
 public class EsSearchServiceImpl implements SearchService {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(EsSearchServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EsSearchServiceImpl.class);
 
     String elastisearchHost = Configuration.getInstance().getProperty("elasticsearch.host", "localhost");
 
@@ -94,7 +91,6 @@ public class EsSearchServiceImpl implements SearchService {
 
     public static String ITEMS_ALIAS_INDEX_NAME = "items";
 
-    public static String ITEMS_MAPPING_V7_FILENAME = "/WEB-INF/classes/elasticsearch/item_mapping_es_v7";
     public static String ITEMS_MAPPING_V7_FILENAME_UPDATE_MAPPING = "/WEB-INF/classes/elasticsearch/item_mapping_es_v7_update_mapping";
 
     @Context
@@ -106,22 +102,24 @@ public class EsSearchServiceImpl implements SearchService {
     @Inject
     DAOItem daoItem;
 
-    @Inject
-    DAOContent daoContent;
-
-    @Inject
-    DAOFormat daoFormat;
-
-    @Inject
-    DAOSet daoSet;
 
     private ReindexStatus reindexStatus = null;
 
     private CompletableFuture<Boolean> reindexAllFuture;
 
+    private final AtomicBoolean reindexRunning = new AtomicBoolean(false);
+
     /**
-     * @param items @throws IOException @throws
+     * Reads documents from the Elasticsearch index for the given collection of items.
+     * <p>
+     * The documents are returned in the same order as the input items. If a document
+     * for a given item identifier cannot be found, it is skipped and a warning is logged.
+     *
+     * @param items the collection of {@link Item} objects whose indexed documents should be read
+     * @return a list of document source maps retrieved from Elasticsearch
+     * @throws IOException if an error occurs while communicating with Elasticsearch
      */
+
     @Override
     public List<Map<String, Object>> readDocuments(Collection<Item> items) throws IOException {
         List<Map<String, Object>> documents = new ArrayList<>();
@@ -152,7 +150,7 @@ public class EsSearchServiceImpl implements SearchService {
                     if (docMap.get(identifier) != null) {
                         documents.add(docMap.get(identifier));
                     } else {
-                        LOGGER.warn("Couldn't find item with id " + identifier + " in search-index.");
+                        LOGGER.warn("Couldn't find item with id {} in search-index.", identifier);
                     }
                 }
             } finally {
@@ -171,7 +169,7 @@ public class EsSearchServiceImpl implements SearchService {
     @Override
     public void createDocument(Item item) throws IOException {
         indexDocument(item, ITEMS_ALIAS_INDEX_NAME);
-        LOGGER.info("Added item " + item.getIdentifier() + " to search index.");
+        LOGGER.info("Added item {} to search index.", item.getIdentifier());
     }
 
 
@@ -215,15 +213,19 @@ public class EsSearchServiceImpl implements SearchService {
             updateRequest.doc(itemMap);
 
             client.update(updateRequest, RequestOptions.DEFAULT);
-            LOGGER.info("Updated item " + item.getIdentifier() + " in search index.");
+            LOGGER.info("Updated item {} in search index.", item.getIdentifier());
         } finally {
             closeElasticsearchClient(client);
         }
     }
 
     /**
-     * @param item @throws IOException @throws
+     * Deletes the given item from the Elasticsearch index.
+     *
+     * @param item the {@link Item} to delete from the index
+     * @throws IOException if an error occurs while communicating with Elasticsearch
      */
+
     @Override
     public void deleteDocument(Item item) throws IOException {
         RestHighLevelClient client = getElasticsearchClient();
@@ -238,6 +240,23 @@ public class EsSearchServiceImpl implements SearchService {
             closeElasticsearchClient(client);
         }
     }
+
+
+    /**
+     * Executes a search query against the Elasticsearch index.
+     * <p>
+     * The search supports pagination via {@code searchMark}, filtering by set and format,
+     * and date range filtering using {@code fromDate} and {@code untilDate}.
+     *
+     * @param rows the maximum number of results to return
+     * @param set the optional OAI-PMH set filter
+     * @param format the metadata format to filter by
+     * @param fromDate the optional start date (inclusive) for datestamp filtering
+     * @param untilDate the optional end date (inclusive) for datestamp filtering
+     * @param searchMark the pagination marker indicating where to continue the search
+     * @return a {@link SearchResult} containing item identifiers and pagination information
+     * @throws IOException if an error occurs while executing the search
+     */
 
     @Override
     public SearchResult<String> search(Integer rows, String set, String format, Date fromDate, Date untilDate,
@@ -292,9 +311,9 @@ public class EsSearchServiceImpl implements SearchService {
                     //and than search_after will not work any more
                     List<Map<String, Object>> itemDocs = readDocuments(List.of(lastItem));
                     if (CollectionUtils.isNotEmpty(itemDocs)) {
-                        LOGGER.info("itemDoc: {}", itemDocs.get(0));
+                        LOGGER.info("itemDoc: {}", itemDocs.getFirst());
                         try {
-                            timestamp = Configuration.getDateformat().parse((String) itemDocs.get(0).get("datestamp")).getTime();
+                            timestamp = Configuration.getDateformat().parse((String) itemDocs.getFirst().get("datestamp")).getTime();
                         } catch (ParseException e) {
                             LOGGER.warn(e.getMessage());
                         }
@@ -311,7 +330,7 @@ public class EsSearchServiceImpl implements SearchService {
             SearchRequest searchRequest = new SearchRequest(ITEMS_ALIAS_INDEX_NAME);
             searchRequest.source(searchSourceBuilder);
 
-            LOGGER.debug("searchRequest: {}", searchRequest.toString());
+            LOGGER.debug("searchRequest: {}", searchRequest);
 
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
 
@@ -333,11 +352,11 @@ public class EsSearchServiceImpl implements SearchService {
 
             // Send the searchMark if there are elements after it
             String newSearchMark = null;
-            if (idsRetrieved.size() > 0) {
+            if (!idsRetrieved.isEmpty()) {
                 newSearchMark = idsRetrieved.get(idsRetrieved.size() - 1);
                 idResult.setSearchMark(newSearchMark);
             }
-            Item newLastItem = null;
+            Item newLastItem;
             if (StringUtils.isNotBlank(newSearchMark)) {
 
                 newLastItem = daoItem.read(newSearchMark);
@@ -349,14 +368,14 @@ public class EsSearchServiceImpl implements SearchService {
                 try {
                     timestamp = Configuration.getDateformat().parse(newLastItem.getDatestamp()).getTime();
                 } catch (ParseException e) {
-                    e.printStackTrace();
+                    LOGGER.error(e.getMessage(), e);
                 }
                 searchSourceBuilder.searchAfter(new Object[]{timestamp, newLastItem.getIdentifier()});
                 searchRequest.source(searchSourceBuilder);
 
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("newSearchMark: {}", newSearchMark);
-                    LOGGER.debug("searchRequest next elements?: {}", searchRequest.toString());
+                    LOGGER.debug("searchRequest next elements?: {}", searchRequest);
                 }
                 searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
                 if (searchResponse.getHits().getHits().length == 0) {
@@ -373,6 +392,16 @@ public class EsSearchServiceImpl implements SearchService {
         }
 
     }
+
+
+    /**
+     * Creates a new Elasticsearch index with the given name and mapping.
+     *
+     * @param indexName the name of the index to create
+     * @param mapping the JSON mapping definition for the index
+     * @return {@code true} if the index and mapping were created successfully, {@code false} otherwise
+     * @throws IOException if an error occurs while communicating with Elasticsearch
+     */
 
     @SuppressWarnings("deprecation")
     @Override
@@ -400,6 +429,14 @@ public class EsSearchServiceImpl implements SearchService {
         LOGGER.info("CREATE status: something went wrong, return false");
         return false;
     }
+
+
+    /**
+     * Drops (deletes) the Elasticsearch index with the given name.
+     *
+     * @param indexName the name of the index to delete
+     * @throws IOException if an error occurs while communicating with Elasticsearch
+     */
 
     @Override
     public void dropIndex(final String indexName) throws IOException {
@@ -439,7 +476,7 @@ public class EsSearchServiceImpl implements SearchService {
                     reindexAllFuture.cancel(true);
                     try {
                         Thread.sleep(millisecondsAttemptsDelay);
-                        LOGGER.warn("Attempt " + attempt + " of " + stopAttempts + " to stop the current Reindex process...");
+                        LOGGER.warn("Attempt {} of {} to stop the current Reindex process...", attempt, stopAttempts);
                     } catch (InterruptedException e) {
                         stopped = false;
                     }
@@ -450,7 +487,6 @@ public class EsSearchServiceImpl implements SearchService {
                 }
             } else {
                 reindexStatus = null;
-                stopped = true;
             }
         }
 
@@ -463,17 +499,34 @@ public class EsSearchServiceImpl implements SearchService {
         return stopped;
     }
 
+
+    /**
+     * Starts a full reindex process using an automatically generated index name.
+     *
+     * @return {@code true} if the reindex process was started successfully, {@code false} otherwise
+     */
+
     @Override
     public boolean reindexAll() {
         return reindexAll(null);
     }
 
-
+    /**
+     * Starts a full reindex process using the given index name.
+     * <p>
+     * If an index name is provided, it must already exist.
+     * Only one reindex process can run at a time.
+     *
+     * @param indexName the name of an existing index to reindex into, or {@code null} to create a new one
+     * @return {@code true} if the reindex process was started successfully, {@code false} otherwise
+     */
     @Override
     public boolean reindexAll(String indexName) {
-        if (reindexStatus != null && StringUtils.isBlank(reindexStatus.getEndTime())) {
-            LOGGER.warn("REINDEX status: Reindex process already started since " + reindexStatus.getStartTime()
-                    + ". Cannot continue until it finishes!");
+        // ------------------------------------------------------
+        // Atomic guard – only one process allowed at a time
+        // ------------------------------------------------------
+        if (!reindexRunning.compareAndSet(false, true)) {
+            LOGGER.warn("[STATUS] Reindex '{}' already running – aborting new start");
             return false;
         }
 
@@ -519,7 +572,7 @@ public class EsSearchServiceImpl implements SearchService {
                 reindexStatus.setStartTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
                 LOGGER.info("REINDEX status: Start Time: {}", reindexStatus.getStartTime());
 
-                List<Item> bufferListItems = null;
+                List<Item> bufferListItems;
 
                 do {
                     bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 500);
@@ -530,15 +583,15 @@ public class EsSearchServiceImpl implements SearchService {
                         if (stop.get()) return;
                         try {
                             if (StringUtils.isBlank(indexName) || !itemExistsInIndex(client, indexName, item.getIdentifier())) {
-                                LOGGER.debug("Reindex now " + item.getIdentifier());
+                                LOGGER.debug("Reindex now {}", item.getIdentifier());
                                 itemService.addFormatsAndSets(item);
                                 indexDocument(item, reindexStatus.getNewIndexName());
                             }
                             else {
-                                LOGGER.debug("Don't reindex " + item.getIdentifier() + " as it already exists in the index");
+                                LOGGER.debug("Don't reindex {} as it already exists in the index", item.getIdentifier());
                             }
                         } catch (Exception e) {
-                            LOGGER.error("Reindex fails for " + item.getIdentifier(), e);
+                            LOGGER.error("Reindex fails for {}", item.getIdentifier(), e);
                             if (reindexAllStopOnException) {
                                 stop.set(true);
                             }
@@ -547,8 +600,7 @@ public class EsSearchServiceImpl implements SearchService {
                         }
                     });
 
-                    LOGGER.info("REINDEX status: " + reindexStatus.getIndexedCount() + " indexed out of "
-                            + reindexStatus.getTotalCount() + ".");
+                    LOGGER.info("REINDEX status: {} indexed out of {}.", reindexStatus.getIndexedCount(), reindexStatus.getTotalCount());
                 } while (!reindexStatus.isStopSignalReceived() && !bufferListItems.isEmpty());
 
                 // If in the meanwhile some new object has been inserted, reindex the new Items
@@ -565,16 +617,13 @@ public class EsSearchServiceImpl implements SearchService {
                         LOGGER.info("REINDEX status: execute remove alias " + ITEMS_ALIAS_INDEX_NAME + " to " + pickedIndex);
                         try {
                             Response responseDeleteOldAlias = lowLevelClient.performRequest(requestDeleteOldAlias);
-                            LOGGER.info("REINDEX status: responseDeleteOldAlias.getStatusLine().getStatusCode()"
-                                    + responseDeleteOldAlias.getStatusLine().getStatusCode());
+                            LOGGER.info("REINDEX status: responseDeleteOldAlias.getStatusLine().getStatusCode(){}", responseDeleteOldAlias.getStatusLine().getStatusCode());
                         } catch (Exception e) {
                             if (e instanceof ResponseException
                                     && ((ResponseException) e).getResponse().getStatusLine().getStatusCode() == 404) {
-                                LOGGER.info(
-                                        "REINDEX status: alias " + ITEMS_ALIAS_INDEX_NAME + " to " + pickedIndex + " not found to delete.");
+                                LOGGER.info("REINDEX status: alias {} to {} not found to delete.", ITEMS_ALIAS_INDEX_NAME, pickedIndex);
                             } else {
-                                LOGGER.error("REINDEX status: something went wrong while deleting alias " + ITEMS_ALIAS_INDEX_NAME
-                                        + " to " + pickedIndex, e);
+                                LOGGER.error("REINDEX status: something went wrong while deleting alias {} to {}", ITEMS_ALIAS_INDEX_NAME, pickedIndex, e);
                             }
                         }
                     }
@@ -587,8 +636,7 @@ public class EsSearchServiceImpl implements SearchService {
                                     + "\", \"alias\" : \"" + ITEMS_ALIAS_INDEX_NAME + "\" } }\n" + "    ]\n" + "}");
                     LOGGER.info("REINDEX status: execute new alias");
                     Response responseNewAlias = lowLevelClient.performRequest(requestNewAlias);
-                    LOGGER.info("REINDEX status: responseNewAlias.getStatusLine().getStatusCode()"
-                            + responseNewAlias.getStatusLine().getStatusCode());
+                    LOGGER.info("REINDEX status: responseNewAlias.getStatusLine().getStatusCode(){}", responseNewAlias.getStatusLine().getStatusCode());
 
                     if (responseNewAlias.getStatusLine().getStatusCode() < 300) {
                         // Delete old index
@@ -607,14 +655,14 @@ public class EsSearchServiceImpl implements SearchService {
                 }
 
             } catch (IOException e) {
-                LOGGER.error(
-                        "REINDEX status: Something went wrong while processing the new index " + reindexStatus.getNewIndexName(),
-                        e);
+                LOGGER.error("REINDEX status: Something went wrong while processing the new index {}", reindexStatus.getNewIndexName(), e);
                 return false;
             } finally {
                 closeElasticsearchClient(client);
                 reindexStatus.setEndTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
                 LOGGER.info("REINDEX status: End Time: {}", reindexStatus.getEndTime());
+
+                reindexRunning.set(false);
             }
             return true;
 
@@ -623,6 +671,12 @@ public class EsSearchServiceImpl implements SearchService {
         return true;
     }
 
+    /**
+     * Returns a human-readable, verbose status description of the current
+     * or last reindex process.
+     *
+     * @return a detailed status string describing the reindex progress
+     */
     @Override
     public String getReindexStatusVerbose() {
         StringBuilder statusString = new StringBuilder();
@@ -665,7 +719,7 @@ public class EsSearchServiceImpl implements SearchService {
                 startZDT = ZonedDateTime.parse(reindexStatus.getStartTime());
             }
 
-            Duration timeLapsed = null;
+            Duration timeLapsed;
             if (startZDT != null) {
                 timeLapsed = Duration.between(startZDT,
                         StringUtils.isBlank(reindexStatus.getEndTime()) ? ZonedDateTime.now(ZoneOffset.UTC)
@@ -687,14 +741,11 @@ public class EsSearchServiceImpl implements SearchService {
             statusString.append(".\n");
 
             String eta = "";
-            if (StringUtils.isBlank(reindexStatus.getEndTime()) && percProgress > 0 && totalSecondsSoFar > 0
-                    && startZDT != null) {
+            if (StringUtils.isBlank(reindexStatus.getEndTime()) && percProgress > 0 && totalSecondsSoFar > 0) {
                 final double estimatedTotalSeconds = ((double) totalSecondsSoFar / percProgress) * 100;
                 final ZonedDateTime etaZDT = startZDT.plusSeconds((long) estimatedTotalSeconds)
                         .withZoneSameInstant(ZoneOffset.UTC);
-                if (etaZDT != null) {
-                    eta = etaZDT.toString();
-                }
+                eta = etaZDT.toString();
             }
 
             statusString.append("ETA: ");
@@ -709,11 +760,13 @@ public class EsSearchServiceImpl implements SearchService {
     }
 
     /**
-     * Check if a Document with given identifier exists in index.
+     * Checks whether a document with the given identifier exists in the specified index.
      *
-     * @param client
-     * @param itemIdentifier
-     * @return
+     * @param client the Elasticsearch client to use
+     * @param indexName the name of the index to query
+     * @param itemIdentifier the identifier of the item to check
+     * @return {@code true} if the document exists, {@code false} otherwise
+     * @throws IOException if an error occurs while communicating with Elasticsearch
      */
     private boolean itemExistsInIndex(RestHighLevelClient client, String indexName, String itemIdentifier) throws IOException {
         GetRequest getRequest = new GetRequest(indexName, itemIdentifier);
@@ -722,11 +775,11 @@ public class EsSearchServiceImpl implements SearchService {
     }
 
     /**
-     * Get all Index-Names.
+     * Retrieves the names of all indices currently present in Elasticsearch.
      *
-     * @param client
-     * @return
-     * @throws IOException
+     * @param client the Elasticsearch client to use
+     * @return a list of all index names
+     * @throws IOException if an error occurs while communicating with Elasticsearch
      */
     private List<String> getAllIndexNames(RestHighLevelClient client) throws IOException {
         GetIndexRequest requestIndex = new GetIndexRequest("*");
@@ -736,12 +789,12 @@ public class EsSearchServiceImpl implements SearchService {
     }
 
     /**
-     * Check if Index with given indexName exists.
+     * Checks whether an Elasticsearch index with the given name exists.
      *
-     * @param client
-     * @param indexName
-     * @return
-     * @throws IOException
+     * @param client the Elasticsearch client to use
+     * @param indexName the name of the index to check
+     * @return {@code true} if the index exists, {@code false} otherwise
+     * @throws IOException if an error occurs while communicating with Elasticsearch
      */
     private boolean checkIndexExists(RestHighLevelClient client, String indexName) throws IOException {
         GetIndexRequest requestIndex = new GetIndexRequest(indexName);
@@ -754,13 +807,19 @@ public class EsSearchServiceImpl implements SearchService {
     }
 
     /**
+     * Creates a new versioned index for reindexing.
+     * <p>
+     * The method determines the highest existing index version, increments it,
+     * creates a new index with the appropriate mapping, and prepares alias switching.
      *
-     * @return
+     * @param client the Elasticsearch client to use
+     * @return {@code true} if the index was created successfully, {@code false} otherwise
+     * @throws IOException if an error occurs while communicating with Elasticsearch
      */
     private boolean createNewIndex(RestHighLevelClient client) throws IOException {
         List<String> allIndices = getAllIndexNames(client);
 
-        LOGGER.info("REINDEX status: Found " + allIndices.size() + " indexes:");
+        LOGGER.info("REINDEX status: Found {} indexes:", allIndices.size());
         int maximumIndexFound = 0;
         for (final String pickedIndex : allIndices) {
             LOGGER.info("REINDEX status: {}", pickedIndex);
@@ -785,8 +844,7 @@ public class EsSearchServiceImpl implements SearchService {
         LOGGER.info("REINDEX status: New index name: {}", reindexStatus.getNewIndexName());
 
         if (StringUtils.isBlank(reindexStatus.getNewIndexName())) {
-            LOGGER.error("Not able to determine index names: original (" + reindexStatus.getOriginalIndexName()
-                                 + ") or new (" + reindexStatus.getNewIndexName() + ")");
+            LOGGER.error("Not able to determine index names: original ({}) or new ({})", reindexStatus.getOriginalIndexName(), reindexStatus.getNewIndexName());
             return false;
         }
         final String filenameItemsMapping = ITEMS_MAPPING_V7_FILENAME_UPDATE_MAPPING;
@@ -804,25 +862,26 @@ public class EsSearchServiceImpl implements SearchService {
         }
 
         if (!createIndex(reindexStatus.getNewIndexName(), mapping)) {
-            LOGGER.error(
-                    "REINDEX status: Something went wrong while creating the new index " + reindexStatus.getNewIndexName());
+            LOGGER.error("REINDEX status: Something went wrong while creating the new index {}", reindexStatus.getNewIndexName());
             return false;
         }
         return true;
     }
 
     /**
-     * Execute if first Alias for index is created. Create Alias.
+     * Creates the initial index and alias if no previous index exists.
      *
-     * @param lowLevelClient
-     * @param mapping
-     * @throws IOException
+     * @param lowLevelClient the Elasticsearch low-level client
+     * @param mapping the JSON mapping definition for the index
+     * @return {@code true} if the index and alias were created successfully, {@code false} otherwise
+     * @throws IOException if an error occurs while communicating with Elasticsearch
      */
+
     private boolean createFirstAliasForIndex(RestClient lowLevelClient, String mapping) throws IOException {
         LOGGER.warn("No previous indices found.");
         reindexStatus.setOriginalIndexName(ITEMS_ALIAS_INDEX_NAME + "0");
         if (!createIndex(reindexStatus.getOriginalIndexName(), mapping)) {
-            LOGGER.error("REINDEX status: Something went wrong while creating the first index " + reindexStatus.getOriginalIndexName());
+            LOGGER.error("REINDEX status: Something went wrong while creating the first index {}", reindexStatus.getOriginalIndexName());
             return false;
         }
         Request requestNewAlias = new Request("POST", "/_aliases");
@@ -834,51 +893,26 @@ public class EsSearchServiceImpl implements SearchService {
     }
 
     /**
-     * Check elasticsearchClient synchronized and return it.
+     * Returns a new synchronized Elasticsearch high-level client instance.
      *
-     * @return RestHighLevelClient
-     * @throws IOException
+     * @return a new {@link RestHighLevelClient}
      */
     private synchronized RestHighLevelClient getElasticsearchClient() {
-//        if (elasticsearchClient == null) {
-//            elasticsearchClient = new RestHighLevelClient(
-//                    RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http"))
-//                            .setHttpClientConfigCallback(httpClientBuilder
-//                                    -> httpClientBuilder.setDefaultIOReactorConfig(IOReactorConfig.custom().setSoKeepAlive(true).build())));
-//
-//            final ConnectionKeepAliveStrategy myStrategy = new ConnectionKeepAliveStrategy() {
-//                @Override
-//                public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
-//                    Args.notNull(response, "HTTP response");
-//                    Header[] keepAliveHeaders = response.getHeaders("Keep-Alive");
-//                    if (keepAliveHeaders != null) {
-//                        for (Header header : keepAliveHeaders) {
-//                            if (header.getName().equalsIgnoreCase("timeout") && header.getValue() != null) {
-//                                try {
-//                                    return Long.parseLong(header.getValue());
-//                                } catch (final NumberFormatException ignore) {
-//                                }
-//                            }
-//                        }
-//                    }
-//                    return 5000;
-//                }
-//            };
-//            elasticsearchClient = new RestHighLevelClient(
-//                    RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http"))
-//                            .setHttpClientConfigCallback(httpClientBuilder
-//                                    -> httpClientBuilder.setKeepAliveStrategy(myStrategy)));
-//
-//        }
-
         return new RestHighLevelClient(RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
     }
 
+
+    /**
+     * Closes the given Elasticsearch client and suppresses any thrown exceptions.
+     *
+     * @param client the Elasticsearch client to close
+     */
     private void closeElasticsearchClient(RestHighLevelClient client) {
         if (client != null) {
             try {
                 client.getLowLevelClient().close();
             } catch (Exception e) {
+                LOGGER.error("Exception on closing Elasticsearch client", e);
             }
         }
     }

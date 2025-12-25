@@ -4,11 +4,12 @@ This repository provides the backend service for the FIZ-OAI system, leveraging 
 
 ## Prerequisites
 
-- Java JDK 21 or higher
+- Java JDK 25
 - Tomcat 11
 - Apache Maven
 - Cassandra 4.1
 - Elasticsearch 7
+- Docker (for integration testing)
 
 ## Building the Project
 This project uses Maven for build management. Ensure Maven is installed and properly configured.
@@ -18,6 +19,13 @@ To build the project, run:
 ```bash
 mvn clean package -U -Djavax.xml.accessExternalDTD=all -Djavax.xml.accessExternalSchema=all
 ```
+
+To run all test :
+
+```bash
+mvn clean verify -U -Djavax.xml.accessExternalDTD=all -Djavax.xml.accessExternalSchema=all
+```
+
 
 ## Configuration
 The project configuration is managed through a `properties` file named `fiz-oai-backend.properties`, stored in the Tomcat conf folder. 
@@ -42,7 +50,11 @@ class.impl.search=de.fiz.oai.backend.service.impl.EsSearchServiceImpl
 # Possible values: persistent, transient, no
 # See https://www.openarchives.org/OAI/openarchivesprotocol.html#DeletedRecords
 deletedRecord=persistent
+
+set.pagination.size=200
 ```
+
+
 
 ### Key Configuration Parameters
 
@@ -62,6 +74,27 @@ deletedRecord=persistent
     - `persistent`: Deleted records persist.
     - `transient`: Deleted records persist temporarily.
     - `no`: Deleted records are not persisted.
+
+
+##  Elasticsearch Index Management
+
+Because Elasticsearch stores the mapping of Sets and Metadata Formats per record for high-performance OAI-PMH harvesting, changes to the repository structure require a manual reindexing of the Elasticsearch cluster.
+When to Rebuild the Index
+
+A full index rebuild is mandatory after performing CUD operations on core OAI-PMH structures via the REST API:
+
+    Set Changes: Adding, updating, or deleting OAI Sets.
+
+    Crosswalk/Format Changes: Modifying existing metadata formats or changing how records are mapped (crosswalks) to those formats.
+### How to Rebuild
+
+Maintainers must trigger the reindexing process manually via the following REST endpoint:
+HTTP
+
+POST http://localhost:8080/oai-backend/reindex/start
+
+⚠️ Performance Impact: For large repositories, reindexing can take several hours. The system builds a completely new index in the background. The existing index remains active and continues to serve OAI-PMH requests while the rebuild is in progress.
+
 
 ## Running the Application
 Once built, copy the war file into the webapps folder of a Tomcat 11 server:
