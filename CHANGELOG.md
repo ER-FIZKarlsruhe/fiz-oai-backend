@@ -17,6 +17,14 @@ All notable changes to this project will be documented in this file.
   ETA: 2025-12-20T11:47:57.377029274Z
 ```
 
+### Changed
+
+* Updated test framework to JUnit 5:\
+The project now uses JUnit Jupiter, enabling modern testing features and improved IDE and build tool support.
+
+* Improved Crosswalk processing performance:\
+Crosswalk processing now leverages parallelStream to speed up execution, significantly reducing processing time for large datasets.
+
 ### Fixed
 
 * Enforced single Crosswalk process at a time.  
