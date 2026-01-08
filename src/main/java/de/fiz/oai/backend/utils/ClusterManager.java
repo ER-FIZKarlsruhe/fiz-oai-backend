@@ -37,7 +37,7 @@ public class ClusterManager {
 
     private static int DEFAULT_CASSANDRA_SESSIONS = 20;
     
-    private static long DEFAULT_REQUEST_TIMEOUT = 2;
+    private static long DEFAULT_REQUEST_TIMEOUT = 30;
 
     private final int numberOfCassandraSessions;
 
