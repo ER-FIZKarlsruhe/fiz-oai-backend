@@ -179,9 +179,6 @@ public class CassandraDAOSet implements DAOSet {
     ClusterManager manager = ClusterManager.getInstance();
     CqlSession session = manager.getCassandraSession();
 
-    //Delete backup Table
-    session.execute("DROP TABLE IF EXISTS " + tablenameOrig);
-
     //Create backup table
     final StringBuilder createTableSetStmt = new StringBuilder();
     createTableSetStmt.append("CREATE TABLE IF NOT EXISTS ");
