@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.2] – 2026-01-13
+
+### Changed
+
+Bump SOLRJ to a higher version due to a critical CVE in zookeeper
+
 ## [1.6.1] – 2025-12-20
 
 ### Added
