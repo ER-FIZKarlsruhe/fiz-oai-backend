@@ -83,7 +83,6 @@ Lists of 151 third-party dependencies.
      (The Apache Software License, Version 2.0) Lucene Sandbox (org.apache.lucene:lucene-sandbox:8.11.1 - https://lucene.apache.org/lucene-parent/lucene-sandbox)
      (The Apache Software License, Version 2.0) Lucene Spatial 3D (org.apache.lucene:lucene-spatial3d:8.11.1 - https://lucene.apache.org/lucene-parent/lucene-spatial3d)
      (The Apache Software License, Version 2.0) Lucene Suggest (org.apache.lucene:lucene-suggest:8.11.1 - https://lucene.apache.org/lucene-parent/lucene-suggest)
-     (The Apache Software License, Version 2.0) Apache Solr Solrj (org.apache.solr:solr-solrj:8.11.1 - https://lucene.apache.org/solr-parent/solr-solrj)
      (Apache 2) Apache TinkerPop :: Gremlin Core (org.apache.tinkerpop:gremlin-core:3.4.9 - http://tinkerpop.apache.org/gremlin-core/)
      (Apache 2) Apache TinkerPop :: Gremlin Shaded (org.apache.tinkerpop:gremlin-shaded:3.4.9 - http://tinkerpop.apache.org/gremlin-shaded/)
      (Apache 2) Apache TinkerPop :: TinkerGraph Gremlin (org.apache.tinkerpop:tinkergraph-gremlin:3.4.8 - http://tinkerpop.apache.org/tinkergraph-gremlin/)
