@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.3] – 2026-02-09
+
+### Changed
+
+Remove SOLR support.
+From now on ElasticSearch is the primary search engine.
+
 ## [1.6.2] – 2026-01-13
 
 ### Changed

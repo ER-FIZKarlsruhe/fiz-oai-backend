@@ -64,8 +64,6 @@ public abstract class TestContainerManager {
             startNetwork();
             startCassandra();
             startElasticsearch();
-            //FIXME Uncomment when SOLR tests are available
-            //startSolr();
             startTomcat();
 
             registerShutdownHook();
@@ -120,11 +118,6 @@ public abstract class TestContainerManager {
         }
     }
 
-    private static void startSolr() {
-        if (!SolrTestContainer.container.isRunning()) {
-            SolrTestContainer.container.start();
-        }
-    }
 
     private static void startTomcat() {
         if (tomcatContainer != null && tomcatContainer.isRunning()) {
@@ -171,7 +164,6 @@ public abstract class TestContainerManager {
                 if (tomcatContainer != null) tomcatContainer.stop();
                 CassandraTestContainer.container.stop();
                 ElasticsearchTestContainer.container.stop();
-                SolrTestContainer.container.stop();
             } catch (Exception e) {
                 logger.warn("Error during container shutdown", e);
             }
