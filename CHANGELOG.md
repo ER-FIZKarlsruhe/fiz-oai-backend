@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.5] – 2026-06-08
+
+### Changed
+
+Upgrade netty due to a high CVE
 
 ## [1.6.4] – 2026-04-08
 
