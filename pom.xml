@@ -5,7 +5,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <project_version>1.6.4</project_version>
+    <project_version>1.6.5</project_version>
 
     <jersey.version>3.1.10</jersey.version>
 
@@ -62,7 +62,7 @@
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-bom</artifactId>
-                <version>4.2.12.Final</version>
+                <version>4.2.15.Final</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
