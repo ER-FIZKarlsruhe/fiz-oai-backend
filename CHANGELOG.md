@@ -6,7 +6,6 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-Use docker hardened image
 Upgrade jackson libs due to high CVEs
 
 ## [1.6.5] – 2026-06-08

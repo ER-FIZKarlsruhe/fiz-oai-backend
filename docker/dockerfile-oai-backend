@@ -1,4 +1,4 @@
-FROM dhi.io/tomcat:11-jdk25-debian13
+FROM tomcat:11-jre25-temurin
 MAINTAINER "FIZ-Karlsruhe"
 
 ARG UNAME=oai_backend
