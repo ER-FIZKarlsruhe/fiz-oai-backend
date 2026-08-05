@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.7] – 2026-08-05
+
+### Changed
+
+Upgrade netty libs due to high CVEs
+
 ## [1.6.6] – 2026-07-01
 
 ### Changed
