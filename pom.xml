@@ -24,7 +24,7 @@
     <junit.version>5.14.1</junit.version>
     <mockito.version>5.20.0</mockito.version>
     <swagger.version>2.2.49</swagger.version>
-    <jacoco.version>0.8.12</jacoco.version>
+    <jacoco.version>0.8.15</jacoco.version>
     <testcontainers.version>2.0.2</testcontainers.version>
 
     <maven.properties.version>1.2.1</maven.properties.version>
@@ -36,7 +36,7 @@
     <maven.dependency-analyzer.version>1.11.1</maven.dependency-analyzer.version>
     <maven.license.version>2.0.0</maven.license.version>
 
-    <java.version>21</java.version>
+    <java.version>25</java.version>
 
     <dependencyCheckSuppressionFile>src/test/resources/suppress.xml</dependencyCheckSuppressionFile>
 
@@ -484,6 +484,9 @@
             <goals>
               <goal>report-integration</goal>
             </goals>
+            <configuration>
+              <outputDirectory>${project.reporting.outputDirectory}/jacoco</outputDirectory>
+            </configuration>
           </execution>
         </executions>
       </plugin>
