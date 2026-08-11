@@ -24,7 +24,7 @@
     <junit.version>5.14.1</junit.version>
     <mockito.version>5.20.0</mockito.version>
     <swagger.version>2.2.49</swagger.version>
-
+    <jacoco.version>0.8.12</jacoco.version>
     <testcontainers.version>2.0.2</testcontainers.version>
 
     <maven.properties.version>1.2.1</maven.properties.version>
@@ -401,7 +401,7 @@
             <include>**/*IT.java</include>
           </includes>
           <argLine>
-            --illegal-access=permit
+            @{failsafe.argLine} --illegal-access=permit
           </argLine>
           <systemPropertyVariables>
             <javax.xml.accessExternalDTD>all</javax.xml.accessExternalDTD>
@@ -444,6 +444,50 @@
           <excludedScopes>test</excludedScopes>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <executions>
+          <!-- surefire is skipped in this project, but keep unit-test
+               instrumentation wired up in case it's ever re-enabled -->
+          <execution>
+            <id>prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <configuration>
+              <propertyName>argLine</propertyName>
+            </configuration>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+          <!-- integration tests run via failsafe -->
+          <execution>
+            <id>prepare-agent-integration</id>
+            <goals>
+              <goal>prepare-agent-integration</goal>
+            </goals>
+            <configuration>
+              <propertyName>failsafe.argLine</propertyName>
+            </configuration>
+          </execution>
+          <execution>
+            <id>report-integration</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>report-integration</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
   </build>
 
