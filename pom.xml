@@ -39,7 +39,7 @@
     <sonar.host.url>https://dev.fiz-karlsruhe.de/sonar</sonar.host.url>
     <sonar.projectKey>de.fiz_karlsruhe.oai-backend</sonar.projectKey>
 
-    <java.version>25</java.version>
+    <java.version>21</java.version>
 
     <dependencyCheckSuppressionFile>src/test/resources/suppress.xml</dependencyCheckSuppressionFile>
 
