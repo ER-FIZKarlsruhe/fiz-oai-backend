@@ -161,6 +161,14 @@ public class CrosswalkServiceImpl implements CrosswalkService {
     @Override
     public void delete(String name) throws IOException {
         daoCrosswalk.delete(name);
+
+        //Remove pool entry and cached Templates from TransformerService
+        try {
+            LOGGER.error("Remove Crosswalk from transformerService pool {}", name);
+            transformerService.updateTransformer(name);
+        } catch (Exception e) {
+            LOGGER.error("Cannot remove Crosswalk from transformerService pool", e);
+        }
     }
 
     /**
