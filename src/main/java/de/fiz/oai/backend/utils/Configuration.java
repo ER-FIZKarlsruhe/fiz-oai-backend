@@ -129,7 +129,7 @@ public class Configuration {
             }
         }
         catch (Exception e) {
-            LOGGER.error("Unable to read property file: {}", file.getAbsolutePath());
+            LOGGER.error("Unable to read property file: {}", file.getAbsolutePath(), e);
         }
         try {
             InputStream in = Configuration.class.getClassLoader().getResourceAsStream(filename);
@@ -139,7 +139,7 @@ public class Configuration {
             }
         }
         catch (IOException e) {
-            LOGGER.error("Unable to read properties from ClassLoader");
+            LOGGER.error("Unable to read properties from ClassLoader", e);
         }
         try {
             InputStream in = new FileInputStream(filename);
@@ -149,7 +149,7 @@ public class Configuration {
             }
         }
         catch (IOException e) {
-            LOGGER.warn("Could not open " + filename);
+            LOGGER.warn("Could not open " + filename, e);
         }
         return false;
     }

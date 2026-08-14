@@ -36,6 +36,9 @@
     <maven.dependency-analyzer.version>1.11.1</maven.dependency-analyzer.version>
     <maven.license.version>2.0.0</maven.license.version>
 
+    <sonar.host.url>https://dev.fiz-karlsruhe.de/sonar</sonar.host.url>
+    <sonar.projectKey>de.fiz_karlsruhe.oai-backend</sonar.projectKey>
+
     <java.version>25</java.version>
 
     <dependencyCheckSuppressionFile>src/test/resources/suppress.xml</dependencyCheckSuppressionFile>
@@ -490,6 +493,14 @@
           </execution>
         </executions>
       </plugin>
+
+
+      <plugin>
+        <groupId>org.sonarsource.scanner.maven</groupId>
+        <artifactId>sonar-maven-plugin</artifactId>
+        <version>4.0.0.4121</version>
+      </plugin>
+
 
     </plugins>
   </build>

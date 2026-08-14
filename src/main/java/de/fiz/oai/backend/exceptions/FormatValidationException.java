@@ -22,5 +22,9 @@ public class FormatValidationException extends IOException{
   public FormatValidationException(String msg) {
     super(msg);
   }
+
+  public FormatValidationException(String msg, Throwable cause) {
+    super(msg, cause);
+  }
   
 }

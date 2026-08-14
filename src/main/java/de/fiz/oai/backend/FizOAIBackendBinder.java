@@ -57,7 +57,7 @@ public class FizOAIBackendBinder extends AbstractBinder {
                         config.getProperty("class.impl.search", "de.fiz.oai.backend.service.impl.EsSearchServiceImpl"));
         }
         catch (ClassNotFoundException e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e.getMessage(), e);
         }
 
         bind(CassandraDAOContent.class).to(DAOContent.class).in(Singleton.class);

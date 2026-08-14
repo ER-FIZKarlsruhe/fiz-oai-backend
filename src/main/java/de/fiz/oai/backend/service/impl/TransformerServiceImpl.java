@@ -189,7 +189,7 @@ public class TransformerServiceImpl implements TransformerService, KeyedObjectPo
                     invalidateObject(name, transformer);
                     transformer = null; // Mark as null so finally doesn't return it
                 } catch (Exception ex) {
-                    LOGGER.error(ex.getMessage(), e);
+                    LOGGER.error("Failed to invalidate transformer for " + name, ex);
                 }
             }
             throw new IOException(e);
@@ -198,7 +198,7 @@ public class TransformerServiceImpl implements TransformerService, KeyedObjectPo
                 try {
                     returnObject(name, transformer);
                 } catch (Exception e) {
-                    throw new IOException(e);
+                    LOGGER.error("Failed to return transformer for " + name + " to pool", e);
                 }
             }
         }

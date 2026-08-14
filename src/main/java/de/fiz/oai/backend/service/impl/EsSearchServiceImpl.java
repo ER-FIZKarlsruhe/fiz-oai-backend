@@ -89,9 +89,9 @@ public class EsSearchServiceImpl implements SearchService {
 
     int elastisearchPort = Integer.parseInt(Configuration.getInstance().getProperty("elasticsearch.port", "8082"));
 
-    public static String ITEMS_ALIAS_INDEX_NAME = "items";
+    public static final String ITEMS_ALIAS_INDEX_NAME = "items";
 
-    public static String ITEMS_MAPPING_V7_FILENAME_UPDATE_MAPPING = "/WEB-INF/classes/elasticsearch/item_mapping_es_v7_update_mapping";
+    public static final String ITEMS_MAPPING_V7_FILENAME_UPDATE_MAPPING = "/WEB-INF/classes/elasticsearch/item_mapping_es_v7_update_mapping";
 
     @Context
     ServletContext servletContext;

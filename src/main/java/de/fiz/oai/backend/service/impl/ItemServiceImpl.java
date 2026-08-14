@@ -400,7 +400,7 @@ public class ItemServiceImpl implements ItemService {
             Source xmlSource = new StreamSource(new StringReader(xml));
             validator.validate(xmlSource);
         } catch (SAXException e) {
-            throw new FormatValidationException(e.getMessage());
+            throw new FormatValidationException(e.getMessage(), e);
         }
     }
 
