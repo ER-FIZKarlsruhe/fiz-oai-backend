@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.fiz.oai.backend.utils.ClusterManager;
+import de.fiz.oai.backend.utils.ElasticsearchClientManager;
 
 /**
  * @author Michael Hoppe
@@ -40,5 +41,6 @@ public class FizOaiServletContextListener implements ServletContextListener {
     @Override
     public void contextDestroyed(ServletContextEvent arg0) {
         ClusterManager.getInstance().shutdown();
+        ElasticsearchClientManager.getInstance().shutdown();
     }
 }

@@ -33,7 +33,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
@@ -72,6 +71,7 @@ import de.fiz.oai.backend.models.reindex.ReindexStatus;
 import de.fiz.oai.backend.service.ItemService;
 import de.fiz.oai.backend.service.SearchService;
 import de.fiz.oai.backend.utils.Configuration;
+import de.fiz.oai.backend.utils.ElasticsearchClientManager;
 import de.fiz.oai.backend.utils.ResourcesUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -84,10 +84,6 @@ import jakarta.ws.rs.core.Context;
 public class EsSearchServiceImpl implements SearchService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EsSearchServiceImpl.class);
-
-    String elastisearchHost = Configuration.getInstance().getProperty("elasticsearch.host", "localhost");
-
-    int elastisearchPort = Integer.parseInt(Configuration.getInstance().getProperty("elasticsearch.port", "8082"));
 
     public static final String ITEMS_ALIAS_INDEX_NAME = "items";
 
@@ -125,36 +121,32 @@ public class EsSearchServiceImpl implements SearchService {
         List<Map<String, Object>> documents = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(items)) {
             RestHighLevelClient client = getElasticsearchClient();
-            try {
-                MultiGetRequest mgetRequest = new MultiGetRequest();
-                List<String> identifiers = new ArrayList<>();
-                for (Item item : items) {
-                    identifiers.add(item.getIdentifier());
-                }
-                for (String identifier : identifiers) {
-                    mgetRequest.add(new MultiGetRequest.Item(ITEMS_ALIAS_INDEX_NAME, identifier));
-                }
-                MultiGetResponse response = client.mget(mgetRequest, RequestOptions.DEFAULT);
+            MultiGetRequest mgetRequest = new MultiGetRequest();
+            List<String> identifiers = new ArrayList<>();
+            for (Item item : items) {
+                identifiers.add(item.getIdentifier());
+            }
+            for (String identifier : identifiers) {
+                mgetRequest.add(new MultiGetRequest.Item(ITEMS_ALIAS_INDEX_NAME, identifier));
+            }
+            MultiGetResponse response = client.mget(mgetRequest, RequestOptions.DEFAULT);
 
-                // Map documents by their ID for quick lookup
-                Map<String, Map<String, Object>> docMap = new LinkedHashMap<>();
-                for (MultiGetItemResponse itemResponse : response.getResponses()) {
-                    Map<String, Object> sourceMap = itemResponse.getResponse().getSourceAsMap();
-                    if (sourceMap != null && StringUtils.isNotBlank((String) sourceMap.get("identifier"))) {
-                        docMap.put((String) sourceMap.get("identifier"), sourceMap);
-                    }
+            // Map documents by their ID for quick lookup
+            Map<String, Map<String, Object>> docMap = new LinkedHashMap<>();
+            for (MultiGetItemResponse itemResponse : response.getResponses()) {
+                Map<String, Object> sourceMap = itemResponse.getResponse().getSourceAsMap();
+                if (sourceMap != null && StringUtils.isNotBlank((String) sourceMap.get("identifier"))) {
+                    docMap.put((String) sourceMap.get("identifier"), sourceMap);
                 }
+            }
 
-                // Reorder documents to match the input ID order
-                for (String identifier : identifiers) {
-                    if (docMap.get(identifier) != null) {
-                        documents.add(docMap.get(identifier));
-                    } else {
-                        LOGGER.warn("Couldn't find item with id {} in search-index.", identifier);
-                    }
+            // Reorder documents to match the input ID order
+            for (String identifier : identifiers) {
+                if (docMap.get(identifier) != null) {
+                    documents.add(docMap.get(identifier));
+                } else {
+                    LOGGER.warn("Couldn't find item with id {} in search-index.", identifier);
                 }
-            } finally {
-                closeElasticsearchClient(client);
             }
         }
         return documents;
@@ -175,22 +167,18 @@ public class EsSearchServiceImpl implements SearchService {
 
     private void indexDocument(Item item, String indexName) throws IOException {
         RestHighLevelClient client = getElasticsearchClient();
-        try {
-            Map<String, Object> itemMap = item.toMap();
+        Map<String, Object> itemMap = item.toMap();
 
-            IndexRequest indexRequest = new IndexRequest();
-            indexRequest.index(indexName);
-            indexRequest.type("_doc");
-            indexRequest.source(itemMap);
-            indexRequest.id(item.getIdentifier());
+        IndexRequest indexRequest = new IndexRequest();
+        indexRequest.index(indexName);
+        indexRequest.type("_doc");
+        indexRequest.source(itemMap);
+        indexRequest.id(item.getIdentifier());
 
-            IndexResponse response = client.index(indexRequest, RequestOptions.DEFAULT);
+        IndexResponse response = client.index(indexRequest, RequestOptions.DEFAULT);
 
-            if (response == null || response.getResult() == null) {
-                throw new IOException("Elasticsearch response is null or malformed.");
-            }
-        } finally {
-            closeElasticsearchClient(client);
+        if (response == null || response.getResult() == null) {
+            throw new IOException("Elasticsearch response is null or malformed.");
         }
     }
 
@@ -203,20 +191,16 @@ public class EsSearchServiceImpl implements SearchService {
     @Override
     public void updateDocument(Item item) throws IOException {
         RestHighLevelClient client = getElasticsearchClient();
-        try {
-            Map<String, Object> itemMap = item.toMap();
+        Map<String, Object> itemMap = item.toMap();
 
-            UpdateRequest updateRequest = new UpdateRequest();
-            updateRequest.index(ITEMS_ALIAS_INDEX_NAME);
-            updateRequest.type("_doc");
-            updateRequest.id(item.getIdentifier());
-            updateRequest.doc(itemMap);
+        UpdateRequest updateRequest = new UpdateRequest();
+        updateRequest.index(ITEMS_ALIAS_INDEX_NAME);
+        updateRequest.type("_doc");
+        updateRequest.id(item.getIdentifier());
+        updateRequest.doc(itemMap);
 
-            client.update(updateRequest, RequestOptions.DEFAULT);
-            LOGGER.info("Updated item {} in search index.", item.getIdentifier());
-        } finally {
-            closeElasticsearchClient(client);
-        }
+        client.update(updateRequest, RequestOptions.DEFAULT);
+        LOGGER.info("Updated item {} in search index.", item.getIdentifier());
     }
 
     /**
@@ -229,16 +213,12 @@ public class EsSearchServiceImpl implements SearchService {
     @Override
     public void deleteDocument(Item item) throws IOException {
         RestHighLevelClient client = getElasticsearchClient();
-        try {
-            DeleteRequest request = new DeleteRequest();
-            request.index(ITEMS_ALIAS_INDEX_NAME);
-            request.type("_doc");
-            request.id(item.getIdentifier());
+        DeleteRequest request = new DeleteRequest();
+        request.index(ITEMS_ALIAS_INDEX_NAME);
+        request.type("_doc");
+        request.id(item.getIdentifier());
 
-            client.delete(request, RequestOptions.DEFAULT);
-        } finally {
-            closeElasticsearchClient(client);
-        }
+        client.delete(request, RequestOptions.DEFAULT);
     }
 
 
@@ -387,8 +367,6 @@ public class EsSearchServiceImpl implements SearchService {
 
         } catch (Exception e) {
             throw new IOException(e);
-        } finally {
-            closeElasticsearchClient(client);
         }
 
     }
@@ -408,22 +386,18 @@ public class EsSearchServiceImpl implements SearchService {
     public boolean createIndex(final String indexName, final String mapping) throws IOException {
         if (StringUtils.isNotBlank(indexName) && StringUtils.isNotBlank(mapping)) {
             RestHighLevelClient client = getElasticsearchClient();
-            try {
-                CreateIndexRequest request = new CreateIndexRequest(indexName);
-                CreateIndexResponse createIndexResponse = client.indices().create(request, RequestOptions.DEFAULT);
-                if (createIndexResponse.isAcknowledged()) {
-                    RestClient lowLevelClient = client.getLowLevelClient();
+            CreateIndexRequest request = new CreateIndexRequest(indexName);
+            CreateIndexResponse createIndexResponse = client.indices().create(request, RequestOptions.DEFAULT);
+            if (createIndexResponse.isAcknowledged()) {
+                RestClient lowLevelClient = client.getLowLevelClient();
 
-                    Request requestMapping = new Request("PUT", "/" + indexName + "/_mapping");
-                    requestMapping.setJsonEntity(mapping);
-                    Response responseMapping = lowLevelClient.performRequest(requestMapping);
-                    if (responseMapping.getStatusLine().getStatusCode() == HttpStatus.SC_OK
-                            || responseMapping.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
-                        return true;
-                    }
+                Request requestMapping = new Request("PUT", "/" + indexName + "/_mapping");
+                requestMapping.setJsonEntity(mapping);
+                Response responseMapping = lowLevelClient.performRequest(requestMapping);
+                if (responseMapping.getStatusLine().getStatusCode() == HttpStatus.SC_OK
+                        || responseMapping.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
+                    return true;
                 }
-            } finally {
-                closeElasticsearchClient(client);
             }
         }
         LOGGER.info("CREATE status: something went wrong, return false");
@@ -442,24 +416,16 @@ public class EsSearchServiceImpl implements SearchService {
     public void dropIndex(final String indexName) throws IOException {
         if (StringUtils.isNotBlank(indexName)) {
             RestHighLevelClient client = getElasticsearchClient();
-            try {
-                DeleteIndexRequest request = new DeleteIndexRequest(indexName);
-                client.indices().delete(request, RequestOptions.DEFAULT);
-            } finally {
-                closeElasticsearchClient(client);
-            }
+            DeleteIndexRequest request = new DeleteIndexRequest(indexName);
+            client.indices().delete(request, RequestOptions.DEFAULT);
         }
     }
 
     @Override
     public void commit() throws IOException {
         RestHighLevelClient client = getElasticsearchClient();
-        try {
-            RefreshRequest request = new RefreshRequest(ITEMS_ALIAS_INDEX_NAME);
-            client.indices().refresh(request, RequestOptions.DEFAULT);
-        } finally {
-            closeElasticsearchClient(client);
-        }
+        RefreshRequest request = new RefreshRequest(ITEMS_ALIAS_INDEX_NAME);
+        client.indices().refresh(request, RequestOptions.DEFAULT);
     }
 
     @Override
@@ -658,7 +624,6 @@ public class EsSearchServiceImpl implements SearchService {
                 LOGGER.error("REINDEX status: Something went wrong while processing the new index {}", reindexStatus.getNewIndexName(), e);
                 return false;
             } finally {
-                closeElasticsearchClient(client);
                 reindexStatus.setEndTime(ZonedDateTime.now(ZoneOffset.UTC).toString());
                 LOGGER.info("REINDEX status: End Time: {}", reindexStatus.getEndTime());
 
@@ -893,28 +858,13 @@ public class EsSearchServiceImpl implements SearchService {
     }
 
     /**
-     * Returns a new synchronized Elasticsearch high-level client instance.
+     * Returns the shared, long-lived Elasticsearch client. The underlying connection pool is
+     * created once and reused for the lifetime of the application (see {@link ElasticsearchClientManager}).
      *
-     * @return a new {@link RestHighLevelClient}
+     * @return the shared {@link RestHighLevelClient}
      */
-    private synchronized RestHighLevelClient getElasticsearchClient() {
-        return new RestHighLevelClient(RestClient.builder(new HttpHost(elastisearchHost, elastisearchPort, "http")));
-    }
-
-
-    /**
-     * Closes the given Elasticsearch client and suppresses any thrown exceptions.
-     *
-     * @param client the Elasticsearch client to close
-     */
-    private void closeElasticsearchClient(RestHighLevelClient client) {
-        if (client != null) {
-            try {
-                client.getLowLevelClient().close();
-            } catch (Exception e) {
-                LOGGER.error("Exception on closing Elasticsearch client", e);
-            }
-        }
+    private RestHighLevelClient getElasticsearchClient() {
+        return ElasticsearchClientManager.getInstance().getClient();
     }
 
 }
