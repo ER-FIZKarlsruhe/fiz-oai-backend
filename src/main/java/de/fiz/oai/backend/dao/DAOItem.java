@@ -16,7 +16,9 @@
 package de.fiz.oai.backend.dao;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.jvnet.hk2.annotations.Contract;
 
@@ -34,6 +36,14 @@ public interface DAOItem {
    * @return the item
    */
   Item read(String identifier) throws IOException;
+
+  /**
+   * Read multiple Items concurrently instead of one round trip per identifier.
+   *
+   * @param identifiers the identifiers
+   * @return a map of found items keyed by identifier; identifiers with no matching item are omitted
+   */
+  Map<String, Item> read(Collection<String> identifiers) throws IOException;
 
   /**
    * Create a new Item.

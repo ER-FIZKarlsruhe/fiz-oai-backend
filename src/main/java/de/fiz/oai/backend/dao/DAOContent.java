@@ -17,6 +17,7 @@ package de.fiz.oai.backend.dao;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import org.jvnet.hk2.annotations.Contract;
 
@@ -33,6 +34,14 @@ public interface DAOContent {
    * @return the Set
    */
   Content read(String identifier, String format) throws IOException;
+
+  /**
+   * Read multiple Contents concurrently instead of one round trip per identifier.
+   *
+   * @param identifierToFormat the format to read, keyed by identifier
+   * @return a map of found contents keyed by identifier; identifiers with no matching content are omitted
+   */
+  Map<String, Content> read(Map<String, String> identifierToFormat) throws IOException;
 
   /**
    * Create a new Content.

@@ -104,28 +104,29 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<Item> read(List<String> identifiers, String format, Boolean readContent) throws IOException {
-        Map<String, Item> dbItems = new LinkedHashMap<>();
         List<Item> items = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(identifiers)) {
+            Map<String, Item> dbItems = daoItem.read(identifiers);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("getItems: {}", dbItems);
+            }
             for (String identifier : identifiers) {
-                Item dbItem = daoItem.read(identifier);
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("getItem: {}", dbItem);
-                }
-                if (dbItem != null) {
-                    if (readContent) {
-                        if (format == null) {
-                            format = dbItem.getIngestFormat();
-                        }
-
-                        Content content = daoContent.read(identifier, format);
-                        dbItem.setContent(content);
-                    }
-                    dbItems.put(identifier, dbItem);
-                } else {
+                if (!dbItems.containsKey(identifier)) {
                     LOGGER.warn("Couldn't find item with id {} in backend.", identifier);
                 }
             }
+
+            if (readContent && MapUtils.isNotEmpty(dbItems)) {
+                Map<String, String> identifierToFormat = new LinkedHashMap<>();
+                for (Item dbItem : dbItems.values()) {
+                    identifierToFormat.put(dbItem.getIdentifier(), format != null ? format : dbItem.getIngestFormat());
+                }
+                Map<String, Content> contents = daoContent.read(identifierToFormat);
+                for (Item dbItem : dbItems.values()) {
+                    dbItem.setContent(contents.get(dbItem.getIdentifier()));
+                }
+            }
+
             if (MapUtils.isNotEmpty(dbItems)) {
                 // Retrieve sets and formats from search-server
                 List<Map<String, Object>> searchResponse = searchService.readDocuments(dbItems.values());
