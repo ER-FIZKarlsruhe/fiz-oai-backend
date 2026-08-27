@@ -23,13 +23,18 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +43,9 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
+import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.get.*;
 import org.elasticsearch.action.index.IndexRequest;
@@ -58,6 +66,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.jvnet.hk2.annotations.Service;
@@ -544,17 +553,28 @@ public class EsSearchServiceImpl implements SearchService {
                     bufferListItems = daoItem.getItemsFromResultSet(reindexStatus.getItemResultSet(), 500);
                     boolean reindexAllStopOnException = Boolean.parseBoolean(Configuration.getInstance().getProperty(
                             "elasticsearch.reindexAllStopOnException", "false"));
+
+                    // One multi-get for the whole batch instead of one existence-check GET per item.
+                    Set<String> existingIdentifiers = StringUtils.isBlank(indexName)
+                            ? Collections.emptySet()
+                            : findExistingIdentifiers(client, indexName, bufferListItems);
+
                     AtomicBoolean stop = new AtomicBoolean(false);
+                    // Counted locally and folded into reindexStatus once after the parallel section
+                    // below completes, instead of every thread racily doing indexedCount = indexedCount + 1
+                    // on the shared status object.
+                    AtomicLong batchAttemptedCount = new AtomicLong();
+                    Collection<Item> itemsToIndex = new ConcurrentLinkedQueue<>();
+
                     bufferListItems.parallelStream().forEach(item -> {
                         if (stop.get()) return;
                         try {
-                            if (StringUtils.isBlank(indexName) || !itemExistsInIndex(client, indexName, item.getIdentifier())) {
+                            if (existingIdentifiers.contains(item.getIdentifier())) {
+                                LOGGER.debug("Don't reindex {} as it already exists in the index", item.getIdentifier());
+                            } else {
                                 LOGGER.debug("Reindex now {}", item.getIdentifier());
                                 itemService.addFormatsAndSets(item);
-                                indexDocument(item, reindexStatus.getNewIndexName());
-                            }
-                            else {
-                                LOGGER.debug("Don't reindex {} as it already exists in the index", item.getIdentifier());
+                                itemsToIndex.add(item);
                             }
                         } catch (Exception e) {
                             LOGGER.error("Reindex fails for {}", item.getIdentifier(), e);
@@ -562,9 +582,16 @@ public class EsSearchServiceImpl implements SearchService {
                                 stop.set(true);
                             }
                         } finally {
-                            reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + 1);
+                            batchAttemptedCount.incrementAndGet();
                         }
                     });
+
+                    // One bulk request for the whole batch instead of one index() call per item.
+                    if (!itemsToIndex.isEmpty()) {
+                        bulkIndexDocuments(client, itemsToIndex, reindexStatus.getNewIndexName());
+                    }
+
+                    reindexStatus.setIndexedCount(reindexStatus.getIndexedCount() + batchAttemptedCount.get());
 
                     LOGGER.info("REINDEX status: {} indexed out of {}.", reindexStatus.getIndexedCount(), reindexStatus.getTotalCount());
                 } while (!reindexStatus.isStopSignalReceived() && !bufferListItems.isEmpty());
@@ -725,18 +752,66 @@ public class EsSearchServiceImpl implements SearchService {
     }
 
     /**
-     * Checks whether a document with the given identifier exists in the specified index.
+     * Checks, in a single Elasticsearch multi-get request, which of the given items' identifiers
+     * already exist in the given index - instead of one existence-check GET per identifier.
      *
      * @param client the Elasticsearch client to use
      * @param indexName the name of the index to query
-     * @param itemIdentifier the identifier of the item to check
-     * @return {@code true} if the document exists, {@code false} otherwise
+     * @param items the items whose identifiers should be checked
+     * @return the identifiers that already exist in the index
      * @throws IOException if an error occurs while communicating with Elasticsearch
      */
-    private boolean itemExistsInIndex(RestHighLevelClient client, String indexName, String itemIdentifier) throws IOException {
-        GetRequest getRequest = new GetRequest(indexName, itemIdentifier);
-        GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
-        return getResponse.isExists();
+    private Set<String> findExistingIdentifiers(RestHighLevelClient client, String indexName, Collection<Item> items) throws IOException {
+        Set<String> existingIdentifiers = new HashSet<>();
+        if (CollectionUtils.isEmpty(items)) {
+            return existingIdentifiers;
+        }
+
+        MultiGetRequest mgetRequest = new MultiGetRequest();
+        for (Item item : items) {
+            MultiGetRequest.Item mgetItem = new MultiGetRequest.Item(indexName, item.getIdentifier());
+            mgetItem.fetchSourceContext(FetchSourceContext.DO_NOT_FETCH_SOURCE);
+            mgetRequest.add(mgetItem);
+        }
+
+        MultiGetResponse response = client.mget(mgetRequest, RequestOptions.DEFAULT);
+        for (MultiGetItemResponse itemResponse : response.getResponses()) {
+            if (itemResponse.getResponse() != null && itemResponse.getResponse().isExists()) {
+                existingIdentifiers.add(itemResponse.getResponse().getId());
+            }
+        }
+        return existingIdentifiers;
+    }
+
+    /**
+     * Indexes multiple items in a single Elasticsearch bulk request instead of one index() call
+     * per item. Per-item failures reported by Elasticsearch are logged individually and do not
+     * fail the whole batch.
+     *
+     * @param client the Elasticsearch client to use
+     * @param items the items to index
+     * @param indexName the index to write into
+     * @throws IOException if an error occurs while communicating with Elasticsearch
+     */
+    private void bulkIndexDocuments(RestHighLevelClient client, Collection<Item> items, String indexName) throws IOException {
+        BulkRequest bulkRequest = new BulkRequest();
+        for (Item item : items) {
+            IndexRequest indexRequest = new IndexRequest();
+            indexRequest.index(indexName);
+            indexRequest.type("_doc");
+            indexRequest.source(item.toMap());
+            indexRequest.id(item.getIdentifier());
+            bulkRequest.add(indexRequest);
+        }
+
+        BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
+        if (bulkResponse.hasFailures()) {
+            for (BulkItemResponse itemResponse : bulkResponse) {
+                if (itemResponse.isFailed()) {
+                    LOGGER.error("Reindex fails for {}: {}", itemResponse.getId(), itemResponse.getFailureMessage());
+                }
+            }
+        }
     }
 
     /**
