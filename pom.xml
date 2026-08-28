@@ -222,6 +222,24 @@
       <groupId>co.elastic.clients</groupId>
       <artifactId>elasticsearch-java</artifactId>
       <version>${elasticsearch.version}</version>
+      <exclusions>
+        <!-- We use the classic RestClientTransport/JacksonJsonpMapper, both bundled directly in
+             elasticsearch-java itself. These two are onlygiuv needed for the alternate
+             Rest5ClientTransport/Jackson3JsonpMapper paths, which this project never uses,
+             and they drag in CVE-flagged versions of httpclient5 and Jackson 3.x. -->
+        <exclusion>
+          <groupId>co.elastic.clients</groupId>
+          <artifactId>elasticsearch-rest5-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>tools.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>tools.jackson.core</groupId>
+          <artifactId>jackson-core</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
