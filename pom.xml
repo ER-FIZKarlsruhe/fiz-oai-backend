@@ -5,11 +5,11 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <project_version>develop-SNAPSHOT</project_version>
+    <project_version>ES9</project_version>
 
     <jersey.version>3.1.12</jersey.version>
 
-    <elasticsearch.version>7.17.29</elasticsearch.version>
+    <elasticsearch.version>9.5.2</elasticsearch.version>
     <cassandra.version>4.19.0</cassandra.version>
     <saxon.version>12.9</saxon.version>
     <httpclient.version>4.5.14</httpclient.version>
@@ -219,8 +219,13 @@
     </dependency>
 
     <dependency>
+      <groupId>co.elastic.clients</groupId>
+      <artifactId>elasticsearch-java</artifactId>
+      <version>${elasticsearch.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.elasticsearch.client</groupId>
-      <artifactId>elasticsearch-rest-high-level-client</artifactId>
+      <artifactId>elasticsearch-rest-client</artifactId>
       <version>${elasticsearch.version}</version>
     </dependency>
 

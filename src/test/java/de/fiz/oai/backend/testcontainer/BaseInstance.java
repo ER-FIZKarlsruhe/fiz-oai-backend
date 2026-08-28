@@ -361,6 +361,39 @@ public abstract class BaseInstance extends TestContainerManager {
         Assertions.assertTrue(aliases.contains("items " + expectedIndexName));
     }
 
+    protected void stopReindex(int expectedResponseCode) throws IOException {
+        String baseUrl = "http://" + tomcatContainer.getHost() + ":" + tomcatContainer.getMappedPort(8080) + "/oai-backend/reindex/stop";
+
+        LOGGER.info("stopReindex");
+        EntityBuilder builder = EntityBuilder.create();
+        builder.setText("");
+        HttpClientContext context = HttpClientContext.create();
+
+        HttpPost post = new HttpPost(baseUrl);
+        CloseableHttpResponse postResponse = getHttpResponse(post, builder, context, false);
+        postResponse.getEntity().getContent().readAllBytes();
+        int statusCode = postResponse.getStatusLine().getStatusCode();
+        postResponse.close();
+
+        Assertions.assertEquals(expectedResponseCode, statusCode);
+    }
+
+    protected void awaitReindexFinished() throws Exception {
+        boolean finished = false;
+
+        for (int i = 0; i < 120; i++) {
+            Thread.sleep(500);
+            String status = getReindexStatus();
+            LOGGER.info(status);
+            if (status.contains("FINISHED")) {
+                finished = true;
+                break;
+            }
+        }
+
+        Assertions.assertTrue(finished, "Reindex did not finish after being stopped");
+    }
+
     protected void awaitReindexHasStarted() throws Exception {
         int maxWaitMs = 10_000;
         int pollIntervalMs = 100;

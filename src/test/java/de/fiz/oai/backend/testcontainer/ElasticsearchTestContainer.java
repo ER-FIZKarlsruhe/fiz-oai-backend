@@ -39,7 +39,7 @@ public class ElasticsearchTestContainer {
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchTestContainer.class);
 
     public static final GenericContainer<ElasticsearchContainer> container =
-            new ElasticsearchContainer(DockerImageName.parse("elasticsearch:7.17.28"))
+            new ElasticsearchContainer(DockerImageName.parse("elasticsearch:9.5.2"))
                     .withExposedPorts(9200)
                     .withNetwork(BaseInstance.network)
                     .withNetworkAliases("elasticsearch-oai")
@@ -58,6 +58,13 @@ public class ElasticsearchTestContainer {
         int mappedPort = container.getMappedPort(9200);
         String elasticsearchUrl = "http://localhost:" + mappedPort;
 
+        // ES 9 defaults action.destructive_requires_name to true, which would make the
+        // DELETE /_all call in resetElasticsearch() fail with "Wildcard expressions or
+        // all indices are not allowed". Relax it for this disposable test cluster so the
+        // existing wildcard-based reset keeps working unchanged.
+        sendRequest(elasticsearchUrl + "/_cluster/settings",
+                "{\"persistent\":{\"action.destructive_requires_name\":false}}", "PUT");
+
         String itemMappingFile = "src/test/resources/item_mapping_es_v7"; // Correct path
         String itemMapping = Files.readString(Paths.get(itemMappingFile));
 
@@ -66,9 +73,11 @@ public class ElasticsearchTestContainer {
         sendRequest(createIndexUrl, itemMapping, "PUT");
 
         // 2. Create the alias
+        // PUT /{index}/_alias/{alias} takes no body of its own - it's the POST /_aliases
+        // endpoint that takes an {"actions": [...]} list. ES 9 now strictly rejects the
+        // unrecognized "actions" field here (400 parsing_exception) instead of ignoring it.
         String createAliasUrl = elasticsearchUrl + "/items1/_alias/items";
-        String aliasJson = "{\"actions\": [{\"add\": {\"index\": \"items1\", \"alias\": \"items\"}}]}";
-        sendRequest(createAliasUrl, aliasJson, "PUT");
+        sendRequest(createAliasUrl, "", "PUT");
     }
 
 
