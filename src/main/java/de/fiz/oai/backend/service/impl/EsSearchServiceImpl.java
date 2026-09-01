@@ -83,7 +83,7 @@ public class EsSearchServiceImpl implements SearchService {
 
     public static final String ITEMS_ALIAS_INDEX_NAME = "items";
 
-    public static final String ITEMS_MAPPING_V7_FILENAME_UPDATE_MAPPING = "/WEB-INF/classes/elasticsearch/item_mapping_es_v7_update_mapping";
+    public static final String ITEMS_MAPPING_FILENAME_UPDATE_MAPPING = "/WEB-INF/classes/elasticsearch/item_mapping_es_update_mapping";
 
     @Context
     ServletContext servletContext;
@@ -837,7 +837,7 @@ public class EsSearchServiceImpl implements SearchService {
             LOGGER.error("Not able to determine index names: original ({}) or new ({})", reindexStatus.getOriginalIndexName(), reindexStatus.getNewIndexName());
             return false;
         }
-        final String filenameItemsMapping = ITEMS_MAPPING_V7_FILENAME_UPDATE_MAPPING;
+        final String filenameItemsMapping = ITEMS_MAPPING_FILENAME_UPDATE_MAPPING;
         final String mapping = ResourcesUtils.getResourceFileAsString(filenameItemsMapping, servletContext);
         if (StringUtils.isBlank(mapping)) {
             LOGGER.error("REINDEX status: Not able to retrieve mapping {}", filenameItemsMapping);

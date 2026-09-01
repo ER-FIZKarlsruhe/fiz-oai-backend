@@ -65,7 +65,7 @@ public class ElasticsearchTestContainer {
         sendRequest(elasticsearchUrl + "/_cluster/settings",
                 "{\"persistent\":{\"action.destructive_requires_name\":false}}", "PUT");
 
-        String itemMappingFile = "src/test/resources/item_mapping_es_v7"; // Correct path
+        String itemMappingFile = "src/test/resources/item_mapping_es";
         String itemMapping = Files.readString(Paths.get(itemMappingFile));
 
         // 1. Create the index (with mapping)

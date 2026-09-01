@@ -5,7 +5,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <project_version>ES9</project_version>
+    <project_version>1.7.0</project_version>
 
     <jersey.version>3.1.12</jersey.version>
 
