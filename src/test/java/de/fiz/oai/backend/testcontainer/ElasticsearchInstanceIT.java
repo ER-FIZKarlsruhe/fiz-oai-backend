@@ -109,7 +109,9 @@ public class ElasticsearchInstanceIT extends BaseInstance {
 
         createSet("testset", "testset", "this is a testset", List.of("testtag"), HttpStatus.SC_OK);
 
-        createItems(6000);
+        // Widened well past the old 6000 so the reindex is still reliably in flight when we
+        // check for the 409 conflict below, instead of racing to beat its own completion.
+        createItems(20000);
 
         // start reindex
         Assertions.assertTrue(startReindex(HttpStatus.SC_OK, null));
@@ -120,17 +122,19 @@ public class ElasticsearchInstanceIT extends BaseInstance {
         // second start must fail
         Assertions.assertFalse(startReindex(HttpStatus.SC_CONFLICT, null));
 
-        // wait until finished + verify
-        waitForReindexAndVerifyES("items2");
+        // conflict confirmed - stop the still-running reindex rather than waiting out the
+        // full run of a now much larger item set. A stopped reindex drops its new index
+        stopReindex(HttpStatus.SC_OK);
+        awaitReindexFinished();
 
-        // restart after finish
+        // restart after stop
         Assertions.assertTrue(startReindex(HttpStatus.SC_OK, null));
 
         // wait until running
         awaitReindexHasStarted();
 
         //  wait until finished + verify
-        waitForReindexAndVerifyES("items3");
+        waitForReindexAndVerifyES("items2");
     }
 
 

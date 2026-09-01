@@ -16,6 +16,7 @@
 package de.fiz.oai.backend.service.impl;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
@@ -26,7 +27,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,40 +38,27 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpStatus;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
-import org.elasticsearch.action.bulk.BulkItemResponse;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.get.*;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.update.UpdateRequest;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.client.ResponseException;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.indices.GetIndexRequest;
-import org.elasticsearch.client.indices.GetIndexResponse;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
-import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.SortBuilders;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.SortOptions;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.elasticsearch.core.MgetResponse;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import co.elastic.clients.elasticsearch.core.mget.MultiGetResponseItem;
+import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
+import co.elastic.clients.elasticsearch.indices.GetIndexResponse;
+import co.elastic.clients.elasticsearch.indices.PutMappingResponse;
+import co.elastic.clients.elasticsearch.indices.UpdateAliasesResponse;
 
 import de.fiz.oai.backend.dao.DAOItem;
 import de.fiz.oai.backend.models.Item;
@@ -129,23 +116,23 @@ public class EsSearchServiceImpl implements SearchService {
     public List<Map<String, Object>> readDocuments(Collection<Item> items) throws IOException {
         List<Map<String, Object>> documents = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(items)) {
-            RestHighLevelClient client = getElasticsearchClient();
-            MultiGetRequest mgetRequest = new MultiGetRequest();
+            ElasticsearchClient client = getElasticsearchClient();
             List<String> identifiers = new ArrayList<>();
             for (Item item : items) {
                 identifiers.add(item.getIdentifier());
             }
-            for (String identifier : identifiers) {
-                mgetRequest.add(new MultiGetRequest.Item(ITEMS_ALIAS_INDEX_NAME, identifier));
-            }
-            MultiGetResponse response = client.mget(mgetRequest, RequestOptions.DEFAULT);
+
+            MgetResponse<Map> response = client.mget(m -> m.index(ITEMS_ALIAS_INDEX_NAME).ids(identifiers), Map.class);
 
             // Map documents by their ID for quick lookup
             Map<String, Map<String, Object>> docMap = new LinkedHashMap<>();
-            for (MultiGetItemResponse itemResponse : response.getResponses()) {
-                Map<String, Object> sourceMap = itemResponse.getResponse().getSourceAsMap();
-                if (sourceMap != null && StringUtils.isNotBlank((String) sourceMap.get("identifier"))) {
-                    docMap.put((String) sourceMap.get("identifier"), sourceMap);
+            for (MultiGetResponseItem<Map> itemResponse : response.docs()) {
+                if (itemResponse.isResult() && itemResponse.result().found()) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> sourceMap = (Map<String, Object>) itemResponse.result().source();
+                    if (sourceMap != null && StringUtils.isNotBlank((String) sourceMap.get("identifier"))) {
+                        docMap.put((String) sourceMap.get("identifier"), sourceMap);
+                    }
                 }
             }
 
@@ -175,20 +162,10 @@ public class EsSearchServiceImpl implements SearchService {
 
 
     private void indexDocument(Item item, String indexName) throws IOException {
-        RestHighLevelClient client = getElasticsearchClient();
+        ElasticsearchClient client = getElasticsearchClient();
         Map<String, Object> itemMap = item.toMap();
 
-        IndexRequest indexRequest = new IndexRequest();
-        indexRequest.index(indexName);
-        indexRequest.type("_doc");
-        indexRequest.source(itemMap);
-        indexRequest.id(item.getIdentifier());
-
-        IndexResponse response = client.index(indexRequest, RequestOptions.DEFAULT);
-
-        if (response == null || response.getResult() == null) {
-            throw new IOException("Elasticsearch response is null or malformed.");
-        }
+        client.index(i -> i.index(indexName).id(item.getIdentifier()).document(itemMap));
     }
 
     /**
@@ -199,16 +176,10 @@ public class EsSearchServiceImpl implements SearchService {
      */
     @Override
     public void updateDocument(Item item) throws IOException {
-        RestHighLevelClient client = getElasticsearchClient();
+        ElasticsearchClient client = getElasticsearchClient();
         Map<String, Object> itemMap = item.toMap();
 
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.index(ITEMS_ALIAS_INDEX_NAME);
-        updateRequest.type("_doc");
-        updateRequest.id(item.getIdentifier());
-        updateRequest.doc(itemMap);
-
-        client.update(updateRequest, RequestOptions.DEFAULT);
+        client.update(u -> u.index(ITEMS_ALIAS_INDEX_NAME).id(item.getIdentifier()).doc(itemMap), Map.class);
         LOGGER.info("Updated item {} in search index.", item.getIdentifier());
     }
 
@@ -221,13 +192,8 @@ public class EsSearchServiceImpl implements SearchService {
 
     @Override
     public void deleteDocument(Item item) throws IOException {
-        RestHighLevelClient client = getElasticsearchClient();
-        DeleteRequest request = new DeleteRequest();
-        request.index(ITEMS_ALIAS_INDEX_NAME);
-        request.type("_doc");
-        request.id(item.getIdentifier());
-
-        client.delete(request, RequestOptions.DEFAULT);
+        ElasticsearchClient client = getElasticsearchClient();
+        client.delete(d -> d.index(ITEMS_ALIAS_INDEX_NAME).id(item.getIdentifier()));
     }
 
 
@@ -257,10 +223,8 @@ public class EsSearchServiceImpl implements SearchService {
             LOGGER.debug("searchMark: {}", searchMark);
         }
 
-        RestHighLevelClient client = getElasticsearchClient();
+        ElasticsearchClient client = getElasticsearchClient();
         try {
-            final BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
-
             Date finalFromDate = new SimpleDateFormat("yyyy-MM-dd").parse("0001-01-01");
             Date finalUntilDate = new SimpleDateFormat("yyyy-MM-dd").parse("9999-12-31");
 
@@ -271,26 +235,24 @@ public class EsSearchServiceImpl implements SearchService {
                 finalUntilDate = untilDate;
             }
 
-            queryBuilder
-                    .filter(QueryBuilders.rangeQuery("datestamp").from(Configuration.getDateformat().format(finalFromDate))
-                            .to(Configuration.getDateformat().format(finalUntilDate)));
-            queryBuilder.filter(QueryBuilders.termQuery("formats", format));
+            final String fromDateString = Configuration.getDateformat().format(finalFromDate);
+            final String untilDateString = Configuration.getDateformat().format(finalUntilDate);
+
+            BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
+            boolQueryBuilder.filter(f -> f.range(r -> r.date(d -> d.field("datestamp").gte(fromDateString).lte(untilDateString))));
+            boolQueryBuilder.filter(f -> f.term(t -> t.field("formats").value(format)));
 
             if (StringUtils.isNotBlank(set)) {
-                queryBuilder.filter(QueryBuilders.termQuery("sets", set));
+                boolQueryBuilder.filter(f -> f.term(t -> t.field("sets").value(set)));
             }
 
-            final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            Query query = new Query.Builder().bool(boolQueryBuilder.build()).build();
 
-            FieldSortBuilder datestampBuilder = SortBuilders.fieldSort("datestamp");
-            FieldSortBuilder identifierBuilder = SortBuilders.fieldSort("identifier");
-            searchSourceBuilder.query(queryBuilder);
-            searchSourceBuilder.sort(datestampBuilder);
-            searchSourceBuilder.sort(identifierBuilder);
-            searchSourceBuilder.size(rows);
-            searchSourceBuilder.fetchSource(false);
-            searchSourceBuilder.trackTotalHits(true);
+            List<SortOptions> sortOptions = List.of(
+                    SortOptions.of(s -> s.field(f -> f.field("datestamp"))),
+                    SortOptions.of(s -> s.field(f -> f.field("identifier"))));
 
+            List<FieldValue> searchAfterValues = null;
 
             if (StringUtils.isNotBlank(searchMark)) {
                 Long timestamp = null;
@@ -312,31 +274,27 @@ public class EsSearchServiceImpl implements SearchService {
                 } else {
                     LOGGER.warn("Item for searchMark {} not found", searchMark);
                 }
-                searchSourceBuilder.searchAfter(new Object[]{timestamp, lastItem.getIdentifier()});
-                searchSourceBuilder.from(0);
+                searchAfterValues = List.of(FieldValue.of(timestamp), FieldValue.of(lastItem.getIdentifier()));
             }
 
-            SearchRequest searchRequest = new SearchRequest(ITEMS_ALIAS_INDEX_NAME);
-            searchRequest.source(searchSourceBuilder);
+            SearchRequest searchRequest = buildSearchRequest(query, sortOptions, rows, searchAfterValues);
 
             LOGGER.debug("searchRequest: {}", searchRequest);
 
-            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+            SearchResponse<Void> searchResponse = client.search(searchRequest, Void.class);
 
             LOGGER.debug("searchResponse: {}", searchResponse.toString());
 
-            SearchHits searchHits = searchResponse.getHits();
-            Iterator<SearchHit> iterator = searchHits.iterator();
+            List<Hit<Void>> searchHits = searchResponse.hits().hits();
             List<String> idsRetrieved = new ArrayList<>();
 
-            while (iterator.hasNext()) {
-                SearchHit searchHit = iterator.next();
-                idsRetrieved.add(searchHit.getId());
+            for (Hit<Void> searchHit : searchHits) {
+                idsRetrieved.add(searchHit.id());
             }
 
             SearchResult<String> idResult = new SearchResult<>();
             idResult.setSize(idsRetrieved.size());
-            idResult.setTotal(searchResponse.getHits().getTotalHits().value);
+            idResult.setTotal(searchResponse.hits().total().value());
             idResult.setData(idsRetrieved);
 
             // Send the searchMark if there are elements after it
@@ -345,11 +303,10 @@ public class EsSearchServiceImpl implements SearchService {
                 newSearchMark = idsRetrieved.get(idsRetrieved.size() - 1);
                 idResult.setSearchMark(newSearchMark);
             }
-            Item newLastItem;
             if (StringUtils.isNotBlank(newSearchMark)) {
 
-                newLastItem = daoItem.read(newSearchMark);
-                LOGGER.info("searchSourceBuilder: {}", searchSourceBuilder);
+                Item newLastItem = daoItem.read(newSearchMark);
+                LOGGER.info("searchRequest: {}", searchRequest);
                 LOGGER.info("searchMark: {}", newSearchMark);
                 LOGGER.info("newLastItem: {}", newLastItem);
 
@@ -359,15 +316,16 @@ public class EsSearchServiceImpl implements SearchService {
                 } catch (ParseException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
-                searchSourceBuilder.searchAfter(new Object[]{timestamp, newLastItem.getIdentifier()});
-                searchRequest.source(searchSourceBuilder);
+
+                SearchRequest nextSearchRequest = buildSearchRequest(query, sortOptions, rows,
+                        List.of(FieldValue.of(timestamp), FieldValue.of(newLastItem.getIdentifier())));
 
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("newSearchMark: {}", newSearchMark);
-                    LOGGER.debug("searchRequest next elements?: {}", searchRequest);
+                    LOGGER.debug("searchRequest next elements?: {}", nextSearchRequest);
                 }
-                searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-                if (searchResponse.getHits().getHits().length == 0) {
+                SearchResponse<Void> nextSearchResponse = client.search(nextSearchRequest, Void.class);
+                if (nextSearchResponse.hits().hits().isEmpty()) {
                     idResult.setSearchMark(null);
                 }
             }
@@ -380,9 +338,34 @@ public class EsSearchServiceImpl implements SearchService {
 
     }
 
+    /**
+     * Builds a fresh, immutable search request for the {@code items} alias with the given
+     * query/sort, optionally continuing after the given {@code search_after} values.
+     */
+    private SearchRequest buildSearchRequest(Query query, List<SortOptions> sortOptions, Integer rows,
+                                              List<FieldValue> searchAfterValues) {
+        SearchRequest.Builder builder = new SearchRequest.Builder()
+                .index(ITEMS_ALIAS_INDEX_NAME)
+                .query(query)
+                .sort(sortOptions)
+                .size(rows)
+                .source(src -> src.fetch(false))
+                .trackTotalHits(t -> t.enabled(true));
+
+        if (searchAfterValues != null) {
+            builder.searchAfter(searchAfterValues).from(0);
+        }
+
+        return builder.build();
+    }
+
 
     /**
      * Creates a new Elasticsearch index with the given name and mapping.
+     * <p>
+     * The mapping resource is a bare {@code {"properties": {...}}} body (meant for the
+     * {@code PUT /{index}/_mapping} endpoint), so the index is first created empty and the
+     * mapping is applied to it in a second call, rather than folded into the create-index body.
      *
      * @param indexName the name of the index to create
      * @param mapping the JSON mapping definition for the index
@@ -390,22 +373,17 @@ public class EsSearchServiceImpl implements SearchService {
      * @throws IOException if an error occurs while communicating with Elasticsearch
      */
 
-    @SuppressWarnings("deprecation")
     @Override
     public boolean createIndex(final String indexName, final String mapping) throws IOException {
         if (StringUtils.isNotBlank(indexName) && StringUtils.isNotBlank(mapping)) {
-            RestHighLevelClient client = getElasticsearchClient();
-            CreateIndexRequest request = new CreateIndexRequest(indexName);
-            CreateIndexResponse createIndexResponse = client.indices().create(request, RequestOptions.DEFAULT);
-            if (createIndexResponse.isAcknowledged()) {
-                RestClient lowLevelClient = client.getLowLevelClient();
-
-                Request requestMapping = new Request("PUT", "/" + indexName + "/_mapping");
-                requestMapping.setJsonEntity(mapping);
-                Response responseMapping = lowLevelClient.performRequest(requestMapping);
-                if (responseMapping.getStatusLine().getStatusCode() == HttpStatus.SC_OK
-                        || responseMapping.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
-                    return true;
+            ElasticsearchClient client = getElasticsearchClient();
+            CreateIndexResponse createIndexResponse = client.indices().create(c -> c.index(indexName));
+            if (createIndexResponse.acknowledged()) {
+                try (StringReader mappingReader = new StringReader(mapping)) {
+                    PutMappingResponse putMappingResponse = client.indices().putMapping(p -> p.index(indexName).withJson(mappingReader));
+                    if (putMappingResponse.acknowledged()) {
+                        return true;
+                    }
                 }
             }
         }
@@ -424,17 +402,15 @@ public class EsSearchServiceImpl implements SearchService {
     @Override
     public void dropIndex(final String indexName) throws IOException {
         if (StringUtils.isNotBlank(indexName)) {
-            RestHighLevelClient client = getElasticsearchClient();
-            DeleteIndexRequest request = new DeleteIndexRequest(indexName);
-            client.indices().delete(request, RequestOptions.DEFAULT);
+            ElasticsearchClient client = getElasticsearchClient();
+            client.indices().delete(d -> d.index(indexName));
         }
     }
 
     @Override
     public void commit() throws IOException {
-        RestHighLevelClient client = getElasticsearchClient();
-        RefreshRequest request = new RefreshRequest(ITEMS_ALIAS_INDEX_NAME);
-        client.indices().refresh(request, RequestOptions.DEFAULT);
+        ElasticsearchClient client = getElasticsearchClient();
+        client.indices().refresh(r -> r.index(ITEMS_ALIAS_INDEX_NAME));
     }
 
     @Override
@@ -446,6 +422,13 @@ public class EsSearchServiceImpl implements SearchService {
             reindexStatus.setStopSignalReceived(true);
             if (reindexAllFuture != null) {
                 int attempt = 0;
+                // CompletableFuture.cancel(true) does not actually interrupt a supplyAsync task
+                // (its mayInterruptIfRunning has no effect there) - it only marks the future itself
+                // cancelled, which happens almost immediately regardless of whether the background
+                // task is still running. So this loop just gives the cooperative stop signal above
+                // a moment to be noticed; it must NOT null out reindexStatus afterwards, since the
+                // still-running task keeps dereferencing that same field until its own finally block
+                // (which sets the end time and clears reindexRunning) completes.
                 while (!reindexAllFuture.isCancelled() && attempt <= stopAttempts) {
                     attempt++;
                     reindexAllFuture.cancel(true);
@@ -456,12 +439,6 @@ public class EsSearchServiceImpl implements SearchService {
                         stopped = false;
                     }
                 }
-                if (reindexAllFuture.isCancelled()) {
-                    reindexStatus = null;
-                    stopped = true;
-                }
-            } else {
-                reindexStatus = null;
             }
         }
 
@@ -516,7 +493,7 @@ public class EsSearchServiceImpl implements SearchService {
 
         reindexAllFuture = CompletableFuture.supplyAsync(() -> {
 
-            RestHighLevelClient client = getElasticsearchClient();
+            ElasticsearchClient client = getElasticsearchClient();
             try {
                 if (StringUtils.isBlank(indexName)) {
                     if (!createNewIndex(client)) {
@@ -598,40 +575,25 @@ public class EsSearchServiceImpl implements SearchService {
 
                 // If in the meanwhile some new object has been inserted, reindex the new Items
                 if (!reindexStatus.isStopSignalReceived()) {
-                    RestClient lowLevelClient = client.getLowLevelClient();
-                    // Switch alias from old index to new one
+                    // Switch alias from old index to new one in a single atomic request
                     LOGGER.info("REINDEX status: Remove all old aliases of {}", ITEMS_ALIAS_INDEX_NAME);
                     List<String> allIndices = getAllIndexNames(client);
-                    for (final String pickedIndex : allIndices) {
-                        Request requestDeleteOldAlias = new Request("POST", "/_aliases");
-                        requestDeleteOldAlias
-                                .setJsonEntity("{\n" + "    \"actions\" : [\n" + "        { \"remove\" : { \"index\" : \"" + pickedIndex
-                                        + "\", \"alias\" : \"" + ITEMS_ALIAS_INDEX_NAME + "\" } }\n" + "    ]\n" + "}");
-                        LOGGER.info("REINDEX status: execute remove alias " + ITEMS_ALIAS_INDEX_NAME + " to " + pickedIndex);
-                        try {
-                            Response responseDeleteOldAlias = lowLevelClient.performRequest(requestDeleteOldAlias);
-                            LOGGER.info("REINDEX status: responseDeleteOldAlias.getStatusLine().getStatusCode(){}", responseDeleteOldAlias.getStatusLine().getStatusCode());
-                        } catch (Exception e) {
-                            if (e instanceof ResponseException
-                                    && ((ResponseException) e).getResponse().getStatusLine().getStatusCode() == 404) {
-                                LOGGER.info("REINDEX status: alias {} to {} not found to delete.", ITEMS_ALIAS_INDEX_NAME, pickedIndex);
-                            } else {
-                                LOGGER.error("REINDEX status: something went wrong while deleting alias {} to {}", ITEMS_ALIAS_INDEX_NAME, pickedIndex, e);
-                            }
+                    final String newIndexName = reindexStatus.getNewIndexName();
+
+                    UpdateAliasesResponse aliasResponse = client.indices().updateAliases(u -> {
+                        for (final String pickedIndex : allIndices) {
+                            LOGGER.info("REINDEX status: execute remove alias " + ITEMS_ALIAS_INDEX_NAME + " to " + pickedIndex);
+                            // mustExist(false): most of these indices never carried the alias in the
+                            // first place, only the currently-aliased one does - that's fine, not an error.
+                            u.actions(a -> a.remove(r -> r.index(pickedIndex).alias(ITEMS_ALIAS_INDEX_NAME).mustExist(false)));
                         }
-                    }
+                        LOGGER.info("REINDEX status: Add new alias " + ITEMS_ALIAS_INDEX_NAME + " to index " + newIndexName);
+                        u.actions(a -> a.add(add -> add.index(newIndexName).alias(ITEMS_ALIAS_INDEX_NAME)));
+                        return u;
+                    });
+                    LOGGER.info("REINDEX status: alias switch acknowledged: {}", aliasResponse.acknowledged());
 
-                    LOGGER.info("REINDEX status: Add new alias " + ITEMS_ALIAS_INDEX_NAME + " to index "
-                            + reindexStatus.getNewIndexName());
-                    Request requestNewAlias = new Request("POST", "/_aliases");
-                    requestNewAlias.setJsonEntity(
-                            "{\n" + "    \"actions\" : [\n" + "        { \"add\" : { \"index\" : \"" + reindexStatus.getNewIndexName()
-                                    + "\", \"alias\" : \"" + ITEMS_ALIAS_INDEX_NAME + "\" } }\n" + "    ]\n" + "}");
-                    LOGGER.info("REINDEX status: execute new alias");
-                    Response responseNewAlias = lowLevelClient.performRequest(requestNewAlias);
-                    LOGGER.info("REINDEX status: responseNewAlias.getStatusLine().getStatusCode(){}", responseNewAlias.getStatusLine().getStatusCode());
-
-                    if (responseNewAlias.getStatusLine().getStatusCode() < 300) {
+                    if (aliasResponse.acknowledged()) {
                         // Delete old index
                         dropIndex(reindexStatus.getOriginalIndexName());
                     }
@@ -761,23 +723,22 @@ public class EsSearchServiceImpl implements SearchService {
      * @return the identifiers that already exist in the index
      * @throws IOException if an error occurs while communicating with Elasticsearch
      */
-    private Set<String> findExistingIdentifiers(RestHighLevelClient client, String indexName, Collection<Item> items) throws IOException {
+    private Set<String> findExistingIdentifiers(ElasticsearchClient client, String indexName, Collection<Item> items) throws IOException {
         Set<String> existingIdentifiers = new HashSet<>();
         if (CollectionUtils.isEmpty(items)) {
             return existingIdentifiers;
         }
 
-        MultiGetRequest mgetRequest = new MultiGetRequest();
-        for (Item item : items) {
-            MultiGetRequest.Item mgetItem = new MultiGetRequest.Item(indexName, item.getIdentifier());
-            mgetItem.fetchSourceContext(FetchSourceContext.DO_NOT_FETCH_SOURCE);
-            mgetRequest.add(mgetItem);
-        }
+        List<String> ids = items.stream().map(Item::getIdentifier).toList();
 
-        MultiGetResponse response = client.mget(mgetRequest, RequestOptions.DEFAULT);
-        for (MultiGetItemResponse itemResponse : response.getResponses()) {
-            if (itemResponse.getResponse() != null && itemResponse.getResponse().isExists()) {
-                existingIdentifiers.add(itemResponse.getResponse().getId());
+        MgetResponse<Void> response = client.mget(m -> m
+                .index(indexName)
+                .ids(ids)
+                .source(s -> s.fetch(false)), Void.class);
+
+        for (MultiGetResponseItem<Void> itemResponse : response.docs()) {
+            if (itemResponse.isResult() && itemResponse.result().found()) {
+                existingIdentifiers.add(itemResponse.result().id());
             }
         }
         return existingIdentifiers;
@@ -793,22 +754,18 @@ public class EsSearchServiceImpl implements SearchService {
      * @param indexName the index to write into
      * @throws IOException if an error occurs while communicating with Elasticsearch
      */
-    private void bulkIndexDocuments(RestHighLevelClient client, Collection<Item> items, String indexName) throws IOException {
-        BulkRequest bulkRequest = new BulkRequest();
+    private void bulkIndexDocuments(ElasticsearchClient client, Collection<Item> items, String indexName) throws IOException {
+        BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
         for (Item item : items) {
-            IndexRequest indexRequest = new IndexRequest();
-            indexRequest.index(indexName);
-            indexRequest.type("_doc");
-            indexRequest.source(item.toMap());
-            indexRequest.id(item.getIdentifier());
-            bulkRequest.add(indexRequest);
+            Map<String, Object> itemMap = item.toMap();
+            bulkRequestBuilder.operations(op -> op.index(idx -> idx.index(indexName).id(item.getIdentifier()).document(itemMap)));
         }
 
-        BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
-        if (bulkResponse.hasFailures()) {
-            for (BulkItemResponse itemResponse : bulkResponse) {
-                if (itemResponse.isFailed()) {
-                    LOGGER.error("Reindex fails for {}: {}", itemResponse.getId(), itemResponse.getFailureMessage());
+        BulkResponse bulkResponse = client.bulk(bulkRequestBuilder.build());
+        if (bulkResponse.errors()) {
+            for (BulkResponseItem itemResponse : bulkResponse.items()) {
+                if (itemResponse.error() != null) {
+                    LOGGER.error("Reindex fails for {}: {}", itemResponse.id(), itemResponse.error().reason());
                 }
             }
         }
@@ -821,11 +778,9 @@ public class EsSearchServiceImpl implements SearchService {
      * @return a list of all index names
      * @throws IOException if an error occurs while communicating with Elasticsearch
      */
-    private List<String> getAllIndexNames(RestHighLevelClient client) throws IOException {
-        GetIndexRequest requestIndex = new GetIndexRequest("*");
-        GetIndexResponse responseIndex = client.indices().get(requestIndex, RequestOptions.DEFAULT);
-        String[] index = responseIndex.getIndices();
-        return List.of(index);
+    private List<String> getAllIndexNames(ElasticsearchClient client) throws IOException {
+        GetIndexResponse responseIndex = client.indices().get(g -> g.index("*"));
+        return new ArrayList<>(responseIndex.indices().keySet());
     }
 
     /**
@@ -836,14 +791,9 @@ public class EsSearchServiceImpl implements SearchService {
      * @return {@code true} if the index exists, {@code false} otherwise
      * @throws IOException if an error occurs while communicating with Elasticsearch
      */
-    private boolean checkIndexExists(RestHighLevelClient client, String indexName) throws IOException {
-        GetIndexRequest requestIndex = new GetIndexRequest(indexName);
-        GetIndexResponse responseIndex = client.indices().get(requestIndex, RequestOptions.DEFAULT);
-        String[] index = responseIndex.getIndices();
-        if (index != null && index.length > 0) {
-            return true;
-        }
-        return false;
+    private boolean checkIndexExists(ElasticsearchClient client, String indexName) throws IOException {
+        GetIndexResponse responseIndex = client.indices().get(g -> g.index(indexName));
+        return responseIndex.indices() != null && !responseIndex.indices().isEmpty();
     }
 
     /**
@@ -856,7 +806,7 @@ public class EsSearchServiceImpl implements SearchService {
      * @return {@code true} if the index was created successfully, {@code false} otherwise
      * @throws IOException if an error occurs while communicating with Elasticsearch
      */
-    private boolean createNewIndex(RestHighLevelClient client) throws IOException {
+    private boolean createNewIndex(ElasticsearchClient client) throws IOException {
         List<String> allIndices = getAllIndexNames(client);
 
         LOGGER.info("REINDEX status: Found {} indexes:", allIndices.size());
@@ -893,10 +843,8 @@ public class EsSearchServiceImpl implements SearchService {
             LOGGER.error("REINDEX status: Not able to retrieve mapping {}", filenameItemsMapping);
         }
 
-        RestClient lowLevelClient = client.getLowLevelClient();
-
         if (StringUtils.isBlank(reindexStatus.getOriginalIndexName())) {
-            if (!createFirstAliasForIndex(lowLevelClient, mapping)) {
+            if (!createFirstAliasForIndex(client, mapping)) {
                 return false;
             }
         }
@@ -911,24 +859,21 @@ public class EsSearchServiceImpl implements SearchService {
     /**
      * Creates the initial index and alias if no previous index exists.
      *
-     * @param lowLevelClient the Elasticsearch low-level client
+     * @param client the Elasticsearch client
      * @param mapping the JSON mapping definition for the index
      * @return {@code true} if the index and alias were created successfully, {@code false} otherwise
      * @throws IOException if an error occurs while communicating with Elasticsearch
      */
 
-    private boolean createFirstAliasForIndex(RestClient lowLevelClient, String mapping) throws IOException {
+    private boolean createFirstAliasForIndex(ElasticsearchClient client, String mapping) throws IOException {
         LOGGER.warn("No previous indices found.");
         reindexStatus.setOriginalIndexName(ITEMS_ALIAS_INDEX_NAME + "0");
         if (!createIndex(reindexStatus.getOriginalIndexName(), mapping)) {
             LOGGER.error("REINDEX status: Something went wrong while creating the first index {}", reindexStatus.getOriginalIndexName());
             return false;
         }
-        Request requestNewAlias = new Request("POST", "/_aliases");
-        requestNewAlias.setJsonEntity(
-                "{\n" + "    \"actions\" : [\n" + "        { \"add\" : { \"index\" : \"" + reindexStatus.getOriginalIndexName()
-                        + "\", \"alias\" : \"" + ITEMS_ALIAS_INDEX_NAME + "\" } }\n" + "    ]\n" + "}");
-        lowLevelClient.performRequest(requestNewAlias);
+        final String originalIndexName = reindexStatus.getOriginalIndexName();
+        client.indices().updateAliases(u -> u.actions(a -> a.add(add -> add.index(originalIndexName).alias(ITEMS_ALIAS_INDEX_NAME))));
         return true;
     }
 
@@ -936,9 +881,9 @@ public class EsSearchServiceImpl implements SearchService {
      * Returns the shared, long-lived Elasticsearch client. The underlying connection pool is
      * created once and reused for the lifetime of the application (see {@link ElasticsearchClientManager}).
      *
-     * @return the shared {@link RestHighLevelClient}
+     * @return the shared {@link ElasticsearchClient}
      */
-    private RestHighLevelClient getElasticsearchClient() {
+    private ElasticsearchClient getElasticsearchClient() {
         return ElasticsearchClientManager.getInstance().getClient();
     }
 

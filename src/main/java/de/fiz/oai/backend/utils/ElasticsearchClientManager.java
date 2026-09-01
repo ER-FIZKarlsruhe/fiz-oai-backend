@@ -17,12 +17,16 @@ package de.fiz.oai.backend.utils;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.ElasticsearchTransport;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
+
 /**
- * Holds a single, long-lived {@link RestHighLevelClient} shared across the application, instead of
+ * Holds a single, long-lived {@link ElasticsearchClient} shared across the application, instead of
  * opening and tearing down a new HTTP connection pool on every Elasticsearch call.
  */
 public class ElasticsearchClientManager {
@@ -31,14 +35,20 @@ public class ElasticsearchClientManager {
 
     private static ElasticsearchClientManager instance;
 
-    private final RestHighLevelClient client;
+    private final RestClient restClient;
+
+    private final ElasticsearchTransport transport;
+
+    private final ElasticsearchClient client;
 
     private ElasticsearchClientManager() {
         Configuration config = Configuration.getInstance();
         String host = config.getProperty("elasticsearch.host", "localhost");
         int port = Integer.parseInt(config.getProperty("elasticsearch.port", "8082"));
         LOGGER.info("Init Elasticsearch client for {}:{}", host, port);
-        client = new RestHighLevelClient(RestClient.builder(new HttpHost(host, port, "http")));
+        restClient = RestClient.builder(new HttpHost(host, port, "http")).build();
+        transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
+        client = new ElasticsearchClient(transport);
     }
 
     public static synchronized ElasticsearchClientManager getInstance() {
@@ -48,13 +58,13 @@ public class ElasticsearchClientManager {
         return instance;
     }
 
-    public RestHighLevelClient getClient() {
+    public ElasticsearchClient getClient() {
         return client;
     }
 
     public void shutdown() {
         try {
-            client.close();
+            transport.close();
         } catch (Exception e) {
             LOGGER.error("Exception on closing Elasticsearch client", e);
         }

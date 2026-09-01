@@ -8,7 +8,7 @@ This repository provides the backend service for the FIZ-OAI system, leveraging 
 - Tomcat 11
 - Apache Maven
 - Cassandra 4.1
-- Elasticsearch 7
+- Elasticsearch 9.5
 - Docker (for integration testing)
 
 ## Building the Project
