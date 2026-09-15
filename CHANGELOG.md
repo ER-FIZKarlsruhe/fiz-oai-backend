@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.1] – 2026-09-15
+
+### Changed
+
+* Bumped Jackson to 2.22.2.
+* Bumped Saxon to 13.0.
+* Bumped Log4j to 2.26.1.
+* Bumped Commons Lang to 3.20.0.
+* Bumped JUnit to 5.14.4.
+* Bumped Mockito to 5.23.0.
+* Bumped Swagger to 2.2.54.
+* Bumped Tomcat to 11.0.25.
+* Bumped Maven Properties, Compiler, WAR, Failsafe, and Dependency plugins to newer versions.
+
 ## [1.7.0] – 2026-09-01
 
 ### Changed

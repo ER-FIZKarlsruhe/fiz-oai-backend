@@ -48,14 +48,6 @@
 
    <suppress>
       <notes><![CDATA[
-	   file name: jackson-databind-2.22.1.jar
-	   ]]></notes>
-      <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson\-databind@.*$</packageUrl>
-      <cve>CVE-2026-68497</cve>
-   </suppress>
-
-   <suppress>
-      <notes><![CDATA[
 	   file name: lz4-java-1.8.0.jar
 	   ]]></notes>
       <packageUrl regex="true">^pkg:maven/org\.lz4/lz4\-java@.*$</packageUrl>
