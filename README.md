@@ -20,6 +20,11 @@ To build the project, run:
 mvn clean package -U -Djavax.xml.accessExternalDTD=all -Djavax.xml.accessExternalSchema=all
 ```
 
+The `package` phase also writes a CycloneDX SBOM to `target/bom.json` and `target/bom.xml`
+(or run `mvn cyclonedx:makeBom` on its own). It lists only what ships in the WAR: compile and
+runtime scope, no test or provided dependencies. The BOM is not attached to the build, so
+`mvn deploy` doesn't upload it.
+
 To run all test :
 
 ```bash
