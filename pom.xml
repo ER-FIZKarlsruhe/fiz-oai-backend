@@ -518,6 +518,30 @@
         </executions>
       </plugin>
 
+      <!-- Creates a security BOM (Bill Of Materials): target/bom.json and target/bom.xml -->
+      <plugin>
+        <groupId>org.cyclonedx</groupId>
+        <artifactId>cyclonedx-maven-plugin</artifactId>
+        <version>2.9.3</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>makeBom</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <outputFormat>all</outputFormat>
+          <!-- Only what ships in the WAR - test deps and the container-provided
+               servlet API would otherwise end up in the BOM -->
+          <includeTestScope>false</includeTestScope>
+          <includeProvidedScope>false</includeProvidedScope>
+          <includeSystemScope>false</includeSystemScope>
+          <!-- Keep the BOM local; don't deploy it to the repository alongside the war -->
+          <skipAttach>true</skipAttach>
+        </configuration>
+      </plugin>
 
       <plugin>
         <groupId>org.sonarsource.scanner.maven</groupId>
