@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.3] – 2026-11-21
+
+### Changed
+
+* Trigger build with new JRE
+* Add CycloneDX
+
 ## [1.7.2] – 2026-10-22
 
 ### Changed
